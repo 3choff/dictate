@@ -1,3 +1,15 @@
+## [0.3.1] - 2025-09-23
+
+### Added
+- New provider: Mistral (non‑streaming) via the Audio Transcriptions API (multipart/form-data).
+- Settings UI: Added Mistral to provider dropdown and a Mistral API Key field.
+
+### Changed
+- Main process now routes non‑streaming segments to Groq, Gemini, or Mistral based on selected provider, reusing the same formatting and command parsing path.
+
+### Fixed
+- N/A
+
 ## [0.3.0] - 2025-09-23
 
 ### Added

@@ -129,7 +129,7 @@
             if (!groqHadSpeech || msSinceBoundary < GROQ_MIN_SEGMENT_MS) return;
             const seg = groqSamples16k.slice(groqLastBoundary, boundaryIndex);
             const wavBytes = encodeWav16kMono(Int16Array.from(seg));
-            console.log('[Groq] Emit segment', { samples: seg.length, ms: Math.round(msSinceBoundary), bytes: wavBytes.length });
+            console.log('[Segmenter] Emit segment', { samples: seg.length, ms: Math.round(msSinceBoundary), bytes: wavBytes.length });
             window.electronAPI.saveAudioSegment(wavBytes);
             groqLastBoundary = boundaryIndex;
             groqHadSpeech = false;
@@ -305,7 +305,7 @@
                   mediaRecorder.start();
                 }
               } else {
-                console.log('[Groq] Silence chunker mode selected');
+                console.log('[Segmenter] Silence chunker mode selected');
                 groqActive = true;
                 groqAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 try { await groqAudioCtx.resume(); } catch (_) {}
@@ -329,7 +329,7 @@
                   }
                   const now = performance.now();
                   if (now - lastDebugLogTs > 1000) {
-                    console.debug('[Groq] dB:', Math.round(db), 'silenceMs:', Math.round(groqInSilenceMs), 'hadSpeech:', groqHadSpeech);
+                    console.debug('[Segmenter] dB:', Math.round(db), 'silenceMs:', Math.round(groqInSilenceMs), 'hadSpeech:', groqHadSpeech);
                     lastDebugLogTs = now;
                   }
                   const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);

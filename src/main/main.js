@@ -4,6 +4,7 @@ const robot = require('robotjs');
 const fs = require('fs');
 const { transcribeAudio } = require('../shared/groq.js');
 const { transcribeAudioGemini } = require('../shared/gemini.js');
+const { transcribeAudioMistral } = require('../shared/mistral.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
 
@@ -112,6 +113,7 @@ async function initialize() {
       groqApiKey: store.get('groqApiKey', ''),
       deepgramApiKey: store.get('deepgramApiKey', ''),
       geminiApiKey: store.get('geminiApiKey', ''),
+      mistralApiKey: store.get('mistralApiKey', ''),
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
@@ -149,6 +151,9 @@ async function initialize() {
       if (provider === 'gemini') {
         const key = store.get('geminiApiKey', '');
         transcription = await transcribeAudioGemini(buffer, key);
+      } else if (provider === 'mistral') {
+        const key = store.get('mistralApiKey', '');
+        transcription = await transcribeAudioMistral(buffer, key);
       } else {
         const key = store.get('groqApiKey', '');
         transcription = await transcribeAudio(buffer, key);
@@ -179,6 +184,9 @@ async function initialize() {
     }
     if (typeof settings.geminiApiKey === 'string') {
       store.set('geminiApiKey', settings.geminiApiKey);
+    }
+    if (typeof settings.mistralApiKey === 'string') {
+      store.set('mistralApiKey', settings.mistralApiKey);
     }
     store.set('apiService', settings.apiService);
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
@@ -230,6 +238,9 @@ async function initialize() {
     if (provider === 'gemini') {
       const key = store.get('geminiApiKey', '');
       transcription = await transcribeAudioGemini(buffer, key);
+    } else if (provider === 'mistral') {
+      const key = store.get('mistralApiKey', '');
+      transcription = await transcribeAudioMistral(buffer, key);
     } else {
       const key = store.get('groqApiKey', '');
       transcription = await transcribeAudio(buffer, key);

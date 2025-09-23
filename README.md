@@ -4,7 +4,7 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.3.0
+**Version:** 0.3.1
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
@@ -12,7 +12,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
 *   **Desktop Dictation:** Record your voice and have it transcribed into text.
 *   **Seamless Text Insertion:** Automatically pastes transcribed text into your active application.
 *   **Standalone Windows Executable:** Packaged as a portable `.exe` for easy distribution and use.
-*   **Interactive Settings:** Configure API keys, transcription services (Groq, Deepgram), and text insertion modes through a dedicated settings window.
+*   **Interactive Settings:** Configure API keys, transcription services (Groq, Gemini, Deepgram, Mistral), and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Hotkey:** Use `Ctrl+Shift+H` to toggle recording (start/stop) from anywhere on your system.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
@@ -20,14 +20,15 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
     *   **Groq:** Silence-based chunking with continuous capture; sends WAV segments on ~1s silence.
     *   **Deepgram:** Real-time streaming transcription for lower latency.
     *   **Gemini:** Non‑streaming transcription via Google Gemini API using inline audio.
+    *   **Mistral:** Non‑streaming transcription via Mistral Audio Transcriptions API (multipart/form-data).
 *   **Multilingual Understanding:** All providers support multilingual speech recognition. You can switch languages during dictation and the model will follow.
     * Deepgram is configured with `language=multi`.
     * Groq Whisper (whisper-large-v3-turbo) auto-detects language.
     * Gemini understands multilingual audio content.
-*   **Text Formatting Control:** Single "Text formatted" setting controls output for both providers:
-    * Groq: when unchecked, app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
-    * Deepgram: toggles the `smart_format` request parameter to match the setting.
-    * Gemini: same preserve vs normalize behavior as Groq (applied client-side).
+    * Mistral understands multilingual audio content; you can also force a language in the provider.
+*   **Text Formatting Control:** Single "Text formatted" setting controls output:
+    * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
+    * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
 *   **Voice Commands:** Execute common text manipulation actions (e.g., "enter", "backspace", "delete last word", "control C") directly through voice.
 
@@ -59,7 +60,7 @@ To set up and run Dictate:
     npm start
     ```
     Use `Ctrl+Shift+D` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.3.0.exe` (or similar) executable.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.3.1.exe` (or similar) executable.
 
 ### Recording and Transcribing
 
