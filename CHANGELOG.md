@@ -1,3 +1,17 @@
+## [0.3.2] - 2025-09-23
+
+### Added
+- Grammar correction action with abort-on-reclick (pulsing UI) for selected text.
+- Groq-based grammar correction via Chat Completions (model: openai/gpt-oss-120b).
+- Settings: new Grammar correction provider dropdown (Groq or Gemini).
+
+### Changed
+- Default grammar correction provider is now Groq; dropdown lists Groq first.
+- README updated to document grammar correction and defaults; version bumped to 0.3.2.
+
+### Fixed
+- Minor UI polish for sparkle button active/idle states.
+
 ## [0.3.1] - 2025-09-23
 
 ### Added
