@@ -20,8 +20,9 @@
         <div class="form-group">
             <label for="api-service">API Service</label>
             <select id="api-service">
-                <option value="groq">Whisper (Groq)</option>
-                <option value="deepgram">Deepgram (Streaming)</option>
+                <option value="groq">Whisper Groq</option>
+                <option value="gemini">Gemini Flash</option>
+                <option value="deepgram">Deepgram Nova 3 (Streaming)</option>
             </select>
         </div>
         <div class="form-group provider-key" data-provider="groq">
@@ -38,6 +39,15 @@
             <div class="input-with-eye">
                 <input type="password" id="deepgram-api-key" placeholder="Enter your Deepgram API key">
                 <button class="eye-toggle" type="button" data-target="deepgram-api-key" aria-label="Toggle Deepgram key visibility">
+                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group provider-key" data-provider="gemini">
+            <label for="gemini-api-key">Gemini API Key</label>
+            <div class="input-with-eye">
+                <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
+                <button class="eye-toggle" type="button" data-target="gemini-api-key" aria-label="Toggle Gemini key visibility">
                     <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
                 </button>
             </div>
@@ -62,11 +72,13 @@
         const apiServiceSelect = document.getElementById('api-service');
         const insertionModeSelect = document.getElementById('insertion-mode');
         const preserveFormattingCheckbox = document.getElementById('preserve-formatting');
+        const geminiApiKeyInput = document.getElementById('gemini-api-key');
 
         window.addEventListener('DOMContentLoaded', async () => {
             const settings = await window.electronAPI.getSettings();
             groqApiKeyInput.value = settings.groqApiKey || settings.apiKey || '';
             deepgramApiKeyInput.value = settings.deepgramApiKey || '';
+            geminiApiKeyInput.value = settings.geminiApiKey || '';
             apiServiceSelect.value = settings.apiService;
             insertionModeSelect.value = settings.insertionMode || 'clipboard';
             preserveFormattingCheckbox.checked = (settings.preserveFormatting !== false);
@@ -98,6 +110,7 @@
             const settings = {
                 groqApiKey: groqApiKeyInput.value,
                 deepgramApiKey: deepgramApiKeyInput.value,
+                geminiApiKey: geminiApiKeyInput.value,
                 apiService: apiServiceSelect.value,
                 insertionMode: insertionModeSelect.value,
                 preserveFormatting: !!preserveFormattingCheckbox.checked,

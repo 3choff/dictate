@@ -4,7 +4,7 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.2.2
+**Version:** 0.3.0
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
@@ -19,9 +19,15 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
 *   **Multiple Transcription Services:**
     *   **Groq:** Silence-based chunking with continuous capture; sends WAV segments on ~1s silence.
     *   **Deepgram:** Real-time streaming transcription for lower latency.
+    *   **Gemini:** Non‑streaming transcription via Google Gemini API using inline audio.
+*   **Multilingual Understanding:** All providers support multilingual speech recognition. You can switch languages during dictation and the model will follow.
+    * Deepgram is configured with `language=multi`.
+    * Groq Whisper (whisper-large-v3-turbo) auto-detects language.
+    * Gemini understands multilingual audio content.
 *   **Text Formatting Control:** Single "Text formatted" setting controls output for both providers:
     * Groq: when unchecked, app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Deepgram: toggles the `smart_format` request parameter to match the setting.
+    * Gemini: same preserve vs normalize behavior as Groq (applied client-side).
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
 *   **Voice Commands:** Execute common text manipulation actions (e.g., "enter", "backspace", "delete last word", "control C") directly through voice.
 
@@ -53,7 +59,7 @@ To set up and run Dictate:
     npm start
     ```
     Use `Ctrl+Shift+D` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.2.2.exe` (or similar) executable.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.3.0.exe` (or similar) executable.
 
 ### Recording and Transcribing
 
@@ -68,14 +74,14 @@ To set up and run Dictate:
 ### Settings
 
 Click the gear icon in the Dictate window to open the settings. Here you can:
-*   Enter your API keys for Groq and Deepgram.
+*   Enter your API keys for Groq, Deepgram, and Gemini.
 *   Select your preferred transcription service.
 *   Choose your text insertion mode (Native or Clipboard).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 
 ### Voice Commands
 
-Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined once in `src/shared/voice-commands.js` and used by both Groq and Deepgram. Here are a few examples:
+Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined once in `src/shared/voice-commands.js` and used by Groq, Deepgram, and Gemini. Here are a few examples:
 
 *   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"

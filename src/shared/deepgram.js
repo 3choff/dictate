@@ -14,7 +14,7 @@
     const {
       // Defaults centralized here
       model = 'nova-3',
-      language = 'en', // Change to 'multi' for multilingual support
+      language = 'multi', // Change to 'multi' for multilingual support
       punctuate = false,
       smart_format = false,
       interim_results = false,

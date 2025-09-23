@@ -1,3 +1,16 @@
+## [0.3.0] - 2025-09-23
+
+### Added
+- New provider: Google Gemini Flash (non‑streaming) with inline audio transcription via the Generative Language API.
+- Settings UI: Added Gemini to provider dropdown and a Gemini API Key field.
+
+### Changed
+- Main process now routes non‑streaming segments to Groq or Gemini based on selected provider, reusing formatting and unified command parsing.
+- The existing "Text formatted" setting applies to Gemini as well (preserve vs. normalize in-app).
+
+### Fixed
+- N/A
+
 ## [0.2.2] - 2025-09-23
 
 ### Added

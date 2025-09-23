@@ -3,6 +3,7 @@ const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
 const { transcribeAudio } = require('../shared/groq.js');
+const { transcribeAudioGemini } = require('../shared/gemini.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
 
@@ -110,6 +111,7 @@ async function initialize() {
       apiKey: store.get('apiKey', ''), // legacy
       groqApiKey: store.get('groqApiKey', ''),
       deepgramApiKey: store.get('deepgramApiKey', ''),
+      geminiApiKey: store.get('geminiApiKey', ''),
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
@@ -142,8 +144,15 @@ async function initialize() {
     try {
       const buffer = Buffer.from(audioData);
       debugLog('[Groq] Received segment:', buffer.length, 'bytes');
-      const apiKey = store.get('groqApiKey', '');
-      const transcription = await transcribeAudio(buffer, apiKey);
+      const provider = store.get('apiService', 'groq');
+      let transcription = null;
+      if (provider === 'gemini') {
+        const key = store.get('geminiApiKey', '');
+        transcription = await transcribeAudioGemini(buffer, key);
+      } else {
+        const key = store.get('groqApiKey', '');
+        transcription = await transcribeAudio(buffer, key);
+      }
       if (transcription && transcription.text) {
         debugLog('[Groq] Transcription received:', transcription.text);
         const normalized = formatGroqTranscript(transcription.text).trim();
@@ -167,6 +176,9 @@ async function initialize() {
     }
     if (typeof settings.deepgramApiKey === 'string') {
       store.set('deepgramApiKey', settings.deepgramApiKey);
+    }
+    if (typeof settings.geminiApiKey === 'string') {
+      store.set('geminiApiKey', settings.geminiApiKey);
     }
     store.set('apiService', settings.apiService);
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
@@ -213,8 +225,15 @@ async function initialize() {
 
   ipcMain.on('save-audio', async (event, audioData) => {
     const buffer = Buffer.from(audioData);
-    const apiKey = store.get('groqApiKey', '');
-    const transcription = await transcribeAudio(buffer, apiKey);
+    const provider = store.get('apiService', 'groq');
+    let transcription = null;
+    if (provider === 'gemini') {
+      const key = store.get('geminiApiKey', '');
+      transcription = await transcribeAudioGemini(buffer, key);
+    } else {
+      const key = store.get('groqApiKey', '');
+      transcription = await transcribeAudio(buffer, key);
+    }
 
     if (transcription && transcription.text) {
       const text = formatGroqTranscript(transcription.text).trim();
