@@ -12,6 +12,11 @@ const INSERTION_MODE = 'clipboard';
 let store;
 let mainWindow;
 let settingsWindow;
+let debugLogsEnabled = false; // toggled via Ctrl+Shift+D
+
+function debugLog(...args) {
+  if (debugLogsEnabled) console.log(...args);
+}
 
 async function initialize() {
   const { default: Store } = await import('electron-store');
@@ -46,6 +51,25 @@ async function initialize() {
     } catch (err) {
       console.error('get-asset-file-url error', err);
       return '';
+    }
+  });
+
+  // Handle Groq segments produced by renderer-side silence-based chunking
+  ipcMain.on('save-audio-segment', async (event, audioData) => {
+    try {
+      const buffer = Buffer.from(audioData);
+      debugLog('[Groq] Received segment:', buffer.length, 'bytes');
+      const apiKey = store.get('groqApiKey', '');
+      const transcription = await transcribeAudio(buffer, apiKey);
+      if (transcription && transcription.text) {
+        debugLog('[Groq] Transcription received:', transcription.text);
+        const finalText = transcription.text.trim() + ' ';
+        await injectAccordingToSettings(finalText);
+      } else {
+        debugLog('[Groq] No transcription text returned for segment');
+      }
+    } catch (e) {
+      console.error('save-audio-segment error', e);
     }
   });
 
@@ -151,6 +175,20 @@ async function initialize() {
       }
     });
 
+    // Debug: toggle DevTools and debug log mode for renderer/main
+    globalShortcut.register('Control+Shift+D', () => {
+      if (mainWindow) {
+        if (mainWindow.webContents.isDevToolsOpened()) {
+          mainWindow.webContents.closeDevTools();
+        } else {
+          mainWindow.webContents.openDevTools({ mode: 'detach' });
+        }
+        debugLogsEnabled = !debugLogsEnabled;
+        mainWindow.webContents.send('debug-mode', debugLogsEnabled);
+        debugLog('[Debug] Debug logs enabled:', debugLogsEnabled);
+      }
+    });
+
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
@@ -172,6 +210,10 @@ function createMainWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/main/index.html'));
+  // Send initial debug mode state when renderer is ready
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('debug-mode', debugLogsEnabled);
+  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

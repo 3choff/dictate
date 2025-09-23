@@ -1,3 +1,22 @@
+## [0.2.0] - 2025-09-23
+
+### Added
+- Groq (Whisper) silence-based chunking in the renderer:
+  - Continuous capture with simple RMS level detector.
+  - Segments are emitted on ~1s silence and sent as WAV to Groq.
+  - Safety cut for long utterances and a minimal segment filter.
+- Debug toggle via `Ctrl+Shift+D`:
+  - Opens/closes DevTools and toggles verbose logs in both renderer and main.
+
+### Changed
+- Tuned thresholds to improve reliability across environments.
+- Improved audio cue loading with base64/file URL fallback and preloading.
+
+### Fixed
+- Ensured audio processing node is connected so frames are processed in Groq mode.
+- Added detailed logs to diagnose networking/API issues with Groq.
+
+[0.2.0]: https://github.com/3choff/dictate/releases/tag/v0.2.0
 # Changelog
 
 All notable changes to this project will be documented in this file.

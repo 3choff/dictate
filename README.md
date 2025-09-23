@@ -4,7 +4,7 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
@@ -17,8 +17,8 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
 *   **Global Hotkey:** Use `Ctrl+Shift+H` to toggle recording (start/stop) from anywhere on your system.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Multiple Transcription Services:**
-    *   **Groq:** Supports file-based transcription.
-    *   **Deepgram:** Supports real-time streaming transcription for lower latency.
+    *   **Groq:** Silence-based chunking with continuous capture; sends WAV segments on ~1s silence.
+    *   **Deepgram:** Real-time streaming transcription for lower latency.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
 *   **Voice Commands:** Execute common text manipulation actions (e.g., "enter", "backspace", "delete last word", "control C") directly through voice.
 
@@ -45,11 +45,12 @@ To set up and run Dictate:
 
 ### Running the Application
 
-*   **Development Mode:** To run the app in development mode (with DevTools enabled):
+*   **Development Mode:** To run the app in development mode:
     ```bash
     npm start
     ```
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.1.0.exe` (or similar) executable.
+    Use `Ctrl+Shift+D` to toggle DevTools and verbose logs.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.2.0.exe` (or similar) executable.
 
 ### Recording and Transcribing
 
@@ -58,6 +59,8 @@ To set up and run Dictate:
 3.  **Speak:** Dictate your text.
 4.  **Stop Recording:** Press `Ctrl+Shift+H` again to stop recording. You will hear a "clack" sound.
 5.  **Text Insertion:** The transcribed text will automatically be pasted into your currently active application.
+   * Groq: Speak, pause ~1s to emit a segment; text is inserted per segment.
+   * Deepgram: Inserts finalized phrases as they arrive in streaming mode.
 
 ### Settings
 
@@ -77,16 +80,18 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 
 ## Development Notes
 
-*   **Asset Paths:** Audio assets are loaded using a base64 encoding method to ensure reliability in both development and packaged environments.
-*   **Icon:** The application icon is configured in `package.json` and located in the `build/icon.ico` path for optimal `electron-builder` compatibility.
+*   **Asset Paths:** Audio assets are bundled under `assets/` and resolved via base64 or file URL depending on environment.
+*   **Icon:** The Windows icon is configured in `package.json` at `assets/icon/icon.ico`.
+*   **Debug Toggle:** Use `Ctrl+Shift+D` to open DevTools and enable verbose logs; press again to disable.
 
 ## Contributing
 
 (Add contributing guidelines here if applicable)
 
-## Future Implementations
+## Troubleshooting
 
-*   **Voice Activity Detection (VAD) for Groq:** Integrate a VAD system to chunk audio dynamically, allowing for more efficient and responsive transcription when using the Groq provider. This will enable near real-time transcription for Groq, similar to Deepgram's streaming capabilities.
+*   **No audio cues:** Ensure `assets/` is present in packaged app. We use `extraResources` to ship assets.
+*   **No Groq transcription:** Verify Groq API Key in Settings and watch the terminal for segment logs. Toggle logs with `Ctrl+Shift+D`.
 
 ## License
 
