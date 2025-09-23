@@ -1,3 +1,28 @@
+## [0.2.2] - 2025-09-23
+
+### Added
+- Unified command parsing for Groq and Deepgram via a reusable `processAndInject()` in `src/main/main.js` that uses `src/shared/voice-commands.js` as the single source of truth.
+
+### Changed
+- Settings: single "Text formatted" option now controls both providers:
+  - Groq: when unchecked, we normalize text (lowercase + remove punctuation); when checked, preserve as returned.
+  - Deepgram: sets `smart_format` to match the setting (true when checked, false when unchecked).
+- Settings UI: label text updated to "Text formatted".
+
+### Fixed
+- N/A
+
+## [0.2.1] - 2025-09-23
+
+### Added
+- Settings: "Preserve original formatting (Groq only)" checkbox. When disabled, Groq transcriptions are lowercased and punctuation is removed before insertion.
+
+### Changed
+- None.
+
+### Fixed
+- None.
+
 ## [0.2.0] - 2025-09-23
 
 ### Added
@@ -16,7 +41,6 @@
 - Ensured audio processing node is connected so frames are processed in Groq mode.
 - Added detailed logs to diagnose networking/API issues with Groq.
 
-[0.2.0]: https://github.com/3choff/dictate/releases/tag/v0.2.0
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -42,5 +66,3 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Missing spaces between Deepgram segments while retaining command handling.
 - Audio cue reliability after packaging by adding base64/file URL fallback and robust asset path resolution.
 - Windows icon path for electron-builder (uses `assets/icon/`), avoiding default icon.
-
-[0.1.0]: https://github.com/3choff/dictate/releases/tag/v0.1.0

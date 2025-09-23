@@ -67,6 +67,25 @@ body {
     color: var(--label-color);
 }
 
+.form-group.checkbox-group {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Inline checkbox + label */
+.form-group label.checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0; /* override default label spacing */
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.form-group label.checkbox-inline input[type="checkbox"] {
+    margin: 0;
+}
+
 .form-group select,
 .form-group input {
     width: 100%;

@@ -18,6 +18,88 @@ function debugLog(...args) {
   if (debugLogsEnabled) console.log(...args);
 }
 
+function formatGroqTranscript(text) {
+  // When preserveFormatting is false: lowercase and strip punctuation
+  const preserve = store.get('preserveFormatting', true);
+  if (preserve) return text;
+  try {
+    const lower = text.toLowerCase();
+    // Remove most punctuation characters, keep letters/numbers/spaces
+    const cleaned = lower
+      .normalize('NFKC')
+      .replace(/[.,\/#!$%\^&*;:{}=_'`~()\[\]"<>?@+|\\-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned;
+  } catch (_) {
+    return text.toLowerCase();
+  }
+}
+
+// Unified command parsing and text insertion for both providers
+async function processAndInject(inputText) {
+  if (!inputText || typeof inputText !== 'string' || !inputText.trim()) return;
+  try {
+    let remainingText = inputText.trim();
+    let processed = '';
+    let didKeyAction = false; // enter/backspace/tab/space/ctrl+ combos/delete_last_word
+
+    // Parse and execute voice commands first
+    for (const [phrase, action] of Object.entries(voiceCommands)) {
+      const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'gi');
+      remainingText = remainingText.replace(regex, () => {
+        if (action === 'enter') {
+          robot.keyTap('enter');
+          didKeyAction = true;
+        } else if (action === 'backspace') {
+          robot.keyTap('backspace');
+          didKeyAction = true;
+        } else if (action === 'space') {
+          robot.keyTap('space');
+          didKeyAction = true;
+        } else if (action === 'tab') {
+          robot.keyTap('tab');
+          didKeyAction = true;
+        } else if (action === 'delete_last_word') {
+          const words = remainingText.trim().split(/\s+/);
+          if (words.length > 1) {
+            words.pop();
+            remainingText = words.join(' ');
+          } else {
+            remainingText = '';
+          }
+          didKeyAction = true;
+        } else if (action.startsWith('ctrl+')) {
+          const keys = action.split('+');
+          robot.keyTap(keys[1], keys[0]);
+          didKeyAction = true;
+        } else {
+          // Treat punctuation or text tokens as literal insertions (with trailing space)
+          processed += action + ' ';
+        }
+        return '';
+      });
+    }
+
+    // Insert remaining text, ensuring spacing policy
+    const rem = remainingText.trim();
+    const hasProcessed = processed.trim().length > 0;
+
+    if (rem) {
+      if (hasProcessed) {
+        await injectAccordingToSettings(rem);
+        await injectAccordingToSettings(processed);
+      } else {
+        await injectAccordingToSettings(didKeyAction ? rem : rem + ' ');
+      }
+    } else if (hasProcessed) {
+      await injectAccordingToSettings(processed);
+    }
+  } catch (err) {
+    console.error('processAndInject error', err);
+  }
+}
+
 async function initialize() {
   const { default: Store } = await import('electron-store');
   store = new Store();
@@ -30,6 +112,7 @@ async function initialize() {
       deepgramApiKey: store.get('deepgramApiKey', ''),
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
+      preserveFormatting: store.get('preserveFormatting', true),
     };
   });
 
@@ -63,8 +146,8 @@ async function initialize() {
       const transcription = await transcribeAudio(buffer, apiKey);
       if (transcription && transcription.text) {
         debugLog('[Groq] Transcription received:', transcription.text);
-        const finalText = transcription.text.trim() + ' ';
-        await injectAccordingToSettings(finalText);
+        const normalized = formatGroqTranscript(transcription.text).trim();
+        await processAndInject(normalized);
       } else {
         debugLog('[Groq] No transcription text returned for segment');
       }
@@ -89,6 +172,9 @@ async function initialize() {
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
       store.set('insertionMode', settings.insertionMode);
     }
+    if (typeof settings.preserveFormatting === 'boolean') {
+      store.set('preserveFormatting', settings.preserveFormatting);
+    }
   });
 
   ipcMain.on('open-settings-window', () => {
@@ -99,9 +185,9 @@ async function initialize() {
 
     const mainWindowBounds = mainWindow.getBounds();
     settingsWindow = new BrowserWindow({
-      width: 280,
-      height: 280,
-      x: mainWindowBounds.x - 290,
+      width: 300,
+      height: 320,
+      x: mainWindowBounds.x - 310,
       y: mainWindowBounds.y,
       frame: false,
       skipTaskbar: true,
@@ -131,11 +217,8 @@ async function initialize() {
     const transcription = await transcribeAudio(buffer, apiKey);
 
     if (transcription && transcription.text) {
-      // console.log('Transcription:', transcription.text);
-      const text = transcription.text.trim();
-      // Ensure text ends with a space for separation between transcriptions
-      const finalText = text + ' ';
-      await injectAccordingToSettings(finalText);
+      const text = formatGroqTranscript(transcription.text).trim();
+      await processAndInject(text);
     }
   });
 
