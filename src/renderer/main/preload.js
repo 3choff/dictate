@@ -16,4 +16,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   insertText: (text) => ipcRenderer.invoke('insert-text', text),
   // Get asset as base64 for reliable loading in packaged apps
   getAssetBase64: (relativePath) => ipcRenderer.invoke('get-asset-base64', relativePath),
+  // Trigger grammar correction of current selection
+  correctSelectionWithGemini: () => ipcRenderer.send('sparkle-correct-selection'),
+  // Abort current grammar correction request (if any)
+  abortSparkle: () => ipcRenderer.send('sparkle-abort'),
+  onSparkleDone: (callback) => ipcRenderer.on('sparkle-correct-done', callback),
 });

@@ -41,6 +41,40 @@ async function transcribeAudioGemini(audioBuffer, apiKey) {
   }
 }
 
+// Correct grammar of input text using Gemini 2.5 Flash
+// Returns corrected text string or null. Optional AbortSignal supported.
+async function correctGrammarGemini(text, apiKey, signal) {
+  if (!apiKey) {
+    return null; // silent: caller decides UX
+  }
+  try {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+    const body = {
+      contents: [
+        {
+          parts: [
+            { text: 'Rewrite the following text with correct grammar and punctuation while preserving the original meaning. Return only the corrected text with no extra commentary.' },
+            { text },
+          ],
+        },
+      ],
+    };
+    const resp = await axios.post(url, body, { headers: { 'Content-Type': 'application/json' }, signal });
+    const candidates = (resp && resp.data && resp.data.candidates) || [];
+    for (const c of candidates) {
+      const parts = c && c.content && c.content.parts;
+      if (Array.isArray(parts)) {
+        const textPart = parts.find((p) => typeof p.text === 'string' && p.text.trim().length > 0);
+        if (textPart) return textPart.text;
+      }
+    }
+    return null;
+  } catch (_) {
+    return null; // silent failure per UX requirement
+  }
+}
+
 module.exports = {
   transcribeAudioGemini,
+  correctGrammarGemini,
 };

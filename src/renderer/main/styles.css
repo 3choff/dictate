@@ -44,7 +44,7 @@ body {
 
 .drag-indicator-container {
     position: absolute;
-    left: 3px;
+    left: 0;
     right: 0;
     display: flex;
     justify-content: center;
@@ -84,6 +84,14 @@ body {
     -webkit-app-region: no-drag;
 }
 
+/* Sparkle button base: circular but transparent when idle */
+.sparkle-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: transparent;
+}
+
 .mic-button {
     background-color: var(--secondary-bg);
     border-radius: 50%;
@@ -102,8 +110,8 @@ body {
 }
 
 .icon-button svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .settings-icon svg {
@@ -112,8 +120,18 @@ body {
 }
 
 .help-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
+}
+
+/* Sparkle loading state -> pulsing effect + active mic styling */
+.sparkle-icon.loading {
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
+    background-color: var(--active-mic-bg);
+}
+.sparkle-icon.loading svg path {
+    fill: var(--active-mic-icon);
 }
 
 

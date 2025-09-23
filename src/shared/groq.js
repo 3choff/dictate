@@ -26,6 +26,42 @@ async function transcribeAudio(audioBuffer, apiKey) {
     }
 }
 
+// Correct grammar using Groq chat completions API
+// Returns corrected text string or null. Optional AbortSignal supported.
+async function correctGrammarGroq(text, apiKey, signal) {
+    if (!apiKey) return null;
+    try {
+        const url = 'https://api.groq.com/openai/v1/chat/completions';
+        const body = {
+            model: 'openai/gpt-oss-120b',
+            messages: [
+                {
+                    role: 'user',
+                    content: 'Rewrite the following text with correct grammar and punctuation while preserving the original meaning. Return only the corrected text with no extra commentary.\n\n' + text,
+                },
+            ],
+            temperature: 0.2,
+            top_p: 1,
+            stream: false,
+            max_completion_tokens: 1024,
+        };
+        const resp = await axios.post(url, body, {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            signal,
+        });
+        const choice = resp?.data?.choices?.[0];
+        const content = choice?.message?.content;
+        if (typeof content === 'string' && content.trim().length > 0) return content;
+        return null;
+    } catch (_) {
+        return null;
+    }
+}
+
 module.exports = {
     transcribeAudio,
+    correctGrammarGroq,
 };

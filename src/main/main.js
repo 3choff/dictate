@@ -2,8 +2,8 @@ const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut } = requir
 const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
-const { transcribeAudio } = require('../shared/groq.js');
-const { transcribeAudioGemini } = require('../shared/gemini.js');
+const { transcribeAudio, correctGrammarGroq } = require('../shared/groq.js');
+const { transcribeAudioGemini, correctGrammarGemini } = require('../shared/gemini.js');
 const { transcribeAudioMistral } = require('../shared/mistral.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
@@ -14,6 +14,8 @@ const INSERTION_MODE = 'clipboard';
 let store;
 let mainWindow;
 let settingsWindow;
+// Track in-flight sparkle requests per renderer (by webContents id)
+const sparkleRequests = new Map(); // id -> { controller, originalClipboard }
 let debugLogsEnabled = false; // toggled via Ctrl+Shift+D
 
 function debugLog(...args) {
@@ -117,6 +119,7 @@ async function initialize() {
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
+      grammarProvider: store.get('grammarProvider', 'groq'),
     };
   });
 
@@ -195,6 +198,9 @@ async function initialize() {
     if (typeof settings.preserveFormatting === 'boolean') {
       store.set('preserveFormatting', settings.preserveFormatting);
     }
+    if (typeof settings.grammarProvider === 'string') {
+      store.set('grammarProvider', settings.grammarProvider);
+    }
   });
 
   ipcMain.on('open-settings-window', () => {
@@ -206,7 +212,7 @@ async function initialize() {
     const mainWindowBounds = mainWindow.getBounds();
     settingsWindow = new BrowserWindow({
       width: 300,
-      height: 320,
+      height: 410,
       x: mainWindowBounds.x - 310,
       y: mainWindowBounds.y,
       frame: false,
@@ -249,6 +255,97 @@ async function initialize() {
     if (transcription && transcription.text) {
       const text = formatGroqTranscript(transcription.text).trim();
       await processAndInject(text);
+    }
+  });
+
+  // Sparkle action: correct selected text grammar with Gemini (abortable)
+  ipcMain.on('sparkle-correct-selection', async (event) => {
+    try {
+      const provider = store.get('grammarProvider', 'gemini');
+      const apiKey = provider === 'groq'
+        ? store.get('groqApiKey', '')
+        : store.get('geminiApiKey', '');
+      if (!apiKey) { event.sender.send('sparkle-correct-done'); return; } // silent no-op
+
+      // Copy current selection
+      const originalClipboard = clipboard.readText();
+      const controller = new AbortController();
+      const senderId = event.sender.id;
+      // Save request state so we can abort later
+      sparkleRequests.set(senderId, { controller, originalClipboard });
+      robot.keyTap('c', 'control');
+      await new Promise((r) => setTimeout(r, 200));
+      if (controller.signal.aborted) {
+        try { if (clipboard.readText() !== originalClipboard) clipboard.writeText(originalClipboard); } catch (_) {}
+        sparkleRequests.delete(senderId);
+        event.sender.send('sparkle-correct-done');
+        return;
+      }
+      const selectedText = clipboard.readText();
+      if (!selectedText || !selectedText.trim()) {
+        // restore and exit silently
+        if (clipboard.readText() !== originalClipboard) clipboard.writeText(originalClipboard);
+        sparkleRequests.delete(senderId);
+        event.sender.send('sparkle-correct-done');
+        return;
+      }
+
+      // Ask Gemini to correct grammar
+      const req = sparkleRequests.get(senderId);
+      const signal = req ? req.controller.signal : undefined;
+      const corrected = provider === 'groq'
+        ? await correctGrammarGroq(selectedText, apiKey, signal)
+        : await correctGrammarGemini(selectedText, apiKey, signal);
+      if (!corrected || !corrected.trim()) {
+        // restore and exit silently
+        if (clipboard.readText() !== originalClipboard) clipboard.writeText(originalClipboard);
+        sparkleRequests.delete(senderId);
+        event.sender.send('sparkle-correct-done');
+        return;
+      }
+
+      // Replace selection by pasting corrected text
+      clipboard.writeText(corrected);
+      robot.keyTap('v', 'control');
+      // notify renderer that we're done (response received and paste issued)
+      sparkleRequests.delete(senderId);
+      event.sender.send('sparkle-correct-done');
+      setTimeout(() => {
+        // restore clipboard shortly after paste
+        if (clipboard.readText() === corrected) {
+          clipboard.writeText(originalClipboard);
+        } else {
+          // Best effort restore even if current clipboard changed
+          clipboard.writeText(originalClipboard);
+        }
+      }, 300);
+    } catch (e) {
+      // Silent by design
+      try {
+        const senderId = event.sender.id;
+        const entry = sparkleRequests.get(senderId);
+        if (entry) {
+          try { if (clipboard.readText() !== entry.originalClipboard) clipboard.writeText(entry.originalClipboard); } catch (_) {}
+          sparkleRequests.delete(senderId);
+        }
+        event.sender.send('sparkle-correct-done');
+      } catch (_) {}
+      return;
+    }
+  });
+
+  // Abort current sparkle request for this renderer
+  ipcMain.on('sparkle-abort', (event) => {
+    try {
+      const senderId = event.sender.id;
+      const entry = sparkleRequests.get(senderId);
+      if (!entry) { event.sender.send('sparkle-correct-done'); return; }
+      entry.controller.abort();
+      try { if (clipboard.readText() !== entry.originalClipboard) clipboard.writeText(entry.originalClipboard); } catch (_) {}
+      sparkleRequests.delete(senderId);
+      event.sender.send('sparkle-correct-done');
+    } catch (_) {
+      try { event.sender.send('sparkle-correct-done'); } catch (_) {}
     }
   });
 

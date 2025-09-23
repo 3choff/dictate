@@ -129,3 +129,28 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Footer inside settings window */
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.help-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--label-color);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.help-link:hover {
+    border-color: var(--accent-color);
+    color: var(--text-color);
+}
