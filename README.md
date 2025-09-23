@@ -1,5 +1,7 @@
 # Dictate
 
+![Dictate Demo](https://github.com/3choff/dictate/blob/master/assets/demo/demo.gif?raw=true)
+
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
 **Version:** 0.1.0
@@ -66,15 +68,12 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 
 ### Voice Commands
 
-Dictate supports several voice commands for hands-free text manipulation. Simply speak these phrases during recording:
-*   "Enter" - Presses the Enter key.
-*   "Backspace" - Presses the Backspace key.
-*   "Space" - Presses the Spacebar.
-*   "Tab" - Presses the Tab key.
-*   "Delete last word" - Deletes the last word typed.
-*   "Control C" - Presses `Ctrl+C`.
-*   "Control V" - Presses `Ctrl+V`.
-*   (More commands can be added in `src/shared/voice-commands.js`)
+Dictate supports several voice commands for hands-free text manipulation. The full list of available commands can be found in `src/shared/voice-commands.js`. Here are a few examples:
+
+*   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
+*   **Key Presses:** "press enter", "backspace", "press space", "press tab"
+*   **Control Combinations:** "press control plus c" (Ctrl+C), "press control plus v" (Ctrl+V)
+*   **Text Manipulation:** "delete that" (deletes the last word)
 
 ## Development Notes
 
@@ -91,4 +90,4 @@ Dictate supports several voice commands for hands-free text manipulation. Simply
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the Apache License 2.0.
