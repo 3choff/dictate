@@ -258,10 +258,10 @@ async function initialize() {
     }
   });
 
-  // Sparkle action: correct selected text grammar with Gemini (abortable)
+  // Sparkle action: correct selected text grammar with Gemini/Groq (abortable)
   ipcMain.on('sparkle-correct-selection', async (event) => {
     try {
-      const provider = store.get('grammarProvider', 'gemini');
+      const provider = store.get('grammarProvider', 'groq');
       const apiKey = provider === 'groq'
         ? store.get('groqApiKey', '')
         : store.get('geminiApiKey', '');
@@ -370,8 +370,8 @@ async function initialize() {
   app.whenReady().then(() => {
     createMainWindow();
 
-    // Register the global shortcut
-    globalShortcut.register('Control+Shift+H', () => {
+    // Recording toggle: Ctrl+Shift+D
+    globalShortcut.register('Control+Shift+D', () => {
       if (!mainWindow) {
         createMainWindow();
         // Give a moment for the window to be ready before sending the IPC
@@ -385,8 +385,8 @@ async function initialize() {
       }
     });
 
-    // Debug: toggle DevTools and debug log mode for renderer/main
-    globalShortcut.register('Control+Shift+D', () => {
+    // Debug: Ctrl+Shift+H toggles DevTools and debug log mode for renderer/main
+    globalShortcut.register('Control+Shift+L', () => {
       if (mainWindow) {
         if (mainWindow.webContents.isDevToolsOpened()) {
           mainWindow.webContents.closeDevTools();
@@ -396,6 +396,18 @@ async function initialize() {
         debugLogsEnabled = !debugLogsEnabled;
         mainWindow.webContents.send('debug-mode', debugLogsEnabled);
         debugLog('[Debug] Debug logs enabled:', debugLogsEnabled);
+      }
+    });
+
+    // Grammar correction: Ctrl+Shift+G triggers sparkle action in renderer
+    globalShortcut.register('Control+Shift+G', () => {
+      if (!mainWindow) {
+        createMainWindow();
+        setTimeout(() => {
+          if (mainWindow) mainWindow.webContents.send('sparkle-trigger');
+        }, 500);
+      } else {
+        mainWindow.webContents.send('sparkle-trigger');
       }
     });
 

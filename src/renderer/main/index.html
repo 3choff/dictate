@@ -232,6 +232,15 @@
           });
         }
 
+        // Global shortcut (Ctrl+Shift+G) handler from main process
+        if (window.electronAPI && typeof window.electronAPI.onSparkleTrigger === 'function') {
+          window.electronAPI.onSparkleTrigger(() => {
+            if (sparkleButton) {
+              sparkleButton.click();
+            }
+          });
+        }
+
         window.electronAPI.onToggleMic(() => {
           micButton.click();
         });

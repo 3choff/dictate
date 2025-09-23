@@ -21,4 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Abort current grammar correction request (if any)
   abortSparkle: () => ipcRenderer.send('sparkle-abort'),
   onSparkleDone: (callback) => ipcRenderer.on('sparkle-correct-done', callback),
+  // Listen for global shortcut to trigger sparkle
+  onSparkleTrigger: (callback) => ipcRenderer.on('sparkle-trigger', callback),
 });

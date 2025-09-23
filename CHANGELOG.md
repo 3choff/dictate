@@ -1,3 +1,16 @@
+## [0.3.3] - 2025-09-23
+
+### Added
+- Global shortcut: Ctrl+Shift+G to trigger Grammar Correction (sparkle) on the current selection.
+
+### Changed
+- Recording shortcut changed to Ctrl+Shift+D.
+- Debug/DevTools toggle moved to Ctrl+Shift+L.
+- README updated to reflect new shortcuts and version bumped to 0.3.3.
+
+### Fixed
+- N/A
+
 ## [0.3.2] - 2025-09-23
 
 ### Added
