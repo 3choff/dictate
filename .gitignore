@@ -1,0 +1,82 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+.report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.temp/
+.cache/
+.docusaurus/
+.yarn/
+.pnp/
+.pnp.js
+.pnp.cjs
+
+# Directory for compiled output
+dist/
+out/
+build/
+versions/
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional IDE directories
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+*.stackdump
+
+# Electron-specific
+*.asar
+*.asar.unpacked
+release/
+builder-debug.yml
+electron-builder.env
+
+# Local .env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Misc
+*.swp

@@ -1,0 +1,112 @@
+:root {
+    --primary-bg: #202124;
+    --secondary-bg: #3c3c3c;
+    --handle-color: #5f6368;
+    --text-color: white;
+    --label-color: #b0b0b0;
+    --border-color: #555;
+    --accent-color: #00a9ff;
+    --accent-hover: #0087cc;
+}
+
+body {
+    background-color: var(--primary-bg);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+}
+
+.top-bar {
+    position: relative;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    -webkit-app-region: drag; /* Make only the top bar draggable */
+}
+
+.drag-indicator-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.drag-indicator {
+    width: 40px;
+    height: 4px;
+    background-color: var(--handle-color);
+    border-radius: 2px;
+}
+
+.close-button {
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    z-index: 10;
+}
+
+.close-button svg {
+    width: 10px;
+    height: 10px;
+}
+
+.settings-popup {
+    padding: 0 15px 15px 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: var(--label-color);
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Eye icon inside input (right aligned) */
+.input-with-eye {
+    position: relative;
+}
+.input-with-eye input {
+    padding-right: 36px; /* space for the eye button */
+}
+.eye-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.eye-toggle:hover svg path {
+    fill: var(--text-color);
+}
+
+/* Utility */
+.hidden {
+    display: none !important;
+}

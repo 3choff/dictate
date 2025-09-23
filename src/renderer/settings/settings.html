@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="stylesheet" href="../settings/settings.css">
+</head>
+<body>
+    <div class="top-bar">
+        <div class="drag-indicator-container">
+            <div class="drag-indicator"></div>
+        </div>
+        <div class="close-button" id="close-settings-btn">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L11 11M1 11L11 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </div>
+    <div class="settings-popup">
+        <div class="form-group">
+            <label for="api-service">API Service</label>
+            <select id="api-service">
+                <option value="groq">Whisper (Groq)</option>
+                <option value="deepgram">Deepgram (Streaming)</option>
+            </select>
+        </div>
+        <div class="form-group provider-key" data-provider="groq">
+            <label for="groq-api-key">Groq API Key</label>
+            <div class="input-with-eye">
+                <input type="password" id="groq-api-key" placeholder="Enter your Groq API key">
+                <button class="eye-toggle" type="button" data-target="groq-api-key" aria-label="Toggle Groq key visibility">
+                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group provider-key" data-provider="deepgram">
+            <label for="deepgram-api-key">Deepgram API Key</label>
+            <div class="input-with-eye">
+                <input type="password" id="deepgram-api-key" placeholder="Enter your Deepgram API key">
+                <button class="eye-toggle" type="button" data-target="deepgram-api-key" aria-label="Toggle Deepgram key visibility">
+                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="insertion-mode">Insertion Mode</label>
+            <select id="insertion-mode">
+                <option value="clipboard">Clipboard (Paste)</option>
+                <option value="native">Native (SendKeys)</option>
+            </select>
+        </div>
+    </div>
+    <script>
+        const groqApiKeyInput = document.getElementById('groq-api-key');
+        const deepgramApiKeyInput = document.getElementById('deepgram-api-key');
+        const apiServiceSelect = document.getElementById('api-service');
+        const insertionModeSelect = document.getElementById('insertion-mode');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const settings = await window.electronAPI.getSettings();
+            groqApiKeyInput.value = settings.groqApiKey || settings.apiKey || '';
+            deepgramApiKeyInput.value = settings.deepgramApiKey || '';
+            apiServiceSelect.value = settings.apiService;
+            insertionModeSelect.value = settings.insertionMode || 'clipboard';
+            // Hook up eye toggles
+            document.querySelectorAll('.eye-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if (!input) return;
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                });
+            });
+            // Toggle provider key visibility based on selected service
+            const updateKeyVisibility = () => {
+                const provider = apiServiceSelect.value;
+                document.querySelectorAll('.provider-key').forEach(group => {
+                    if (group.getAttribute('data-provider') === provider) {
+                        group.classList.remove('hidden');
+                    } else {
+                        group.classList.add('hidden');
+                    }
+                });
+            };
+            apiServiceSelect.addEventListener('change', updateKeyVisibility);
+            updateKeyVisibility();
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            const settings = {
+                groqApiKey: groqApiKeyInput.value,
+                deepgramApiKey: deepgramApiKeyInput.value,
+                apiService: apiServiceSelect.value,
+                insertionMode: insertionModeSelect.value,
+            };
+            window.electronAPI.setSettings(settings);
+            window.electronAPI.closeSettingsWindow();
+        });
+    </script>
+</body>
+</html>
