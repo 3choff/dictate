@@ -6,6 +6,7 @@ const { transcribeAudio, rewriteTextGroq } = require('../shared/groq.js');
 const { transcribeAudioGemini, rewriteTextGemini } = require('../shared/gemini.js');
 const { transcribeAudioMistral, rewriteTextMistral } = require('../shared/mistral.js');
 const { transcribeAudioSambaNova, rewriteTextSambaNova } = require('../shared/sambanova.js');
+const { transcribeAudioFireworks, rewriteTextFireworks } = require('../shared/fireworks.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
 
@@ -125,6 +126,7 @@ async function initialize() {
       geminiApiKey: store.get('geminiApiKey', ''),
       mistralApiKey: store.get('mistralApiKey', ''),
       sambanovaApiKey: store.get('sambanovaApiKey', ''),
+      fireworksApiKey: store.get('fireworksApiKey', ''),
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
@@ -169,6 +171,9 @@ async function initialize() {
       } else if (provider === 'sambanova') {
         const key = store.get('sambanovaApiKey', '');
         transcription = await transcribeAudioSambaNova(buffer, key);
+      } else if (provider === 'fireworks') {
+        const key = store.get('fireworksApiKey', '');
+        transcription = await transcribeAudioFireworks(buffer, key);
       } else {
         const key = store.get('groqApiKey', '');
         transcription = await transcribeAudio(buffer, key);
@@ -206,6 +211,9 @@ async function initialize() {
     if (typeof settings.sambanovaApiKey === 'string') {
       store.set('sambanovaApiKey', settings.sambanovaApiKey);
     }
+    if (typeof settings.fireworksApiKey === 'string') {
+      store.set('fireworksApiKey', settings.fireworksApiKey);
+    }
     store.set('apiService', settings.apiService);
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
       store.set('insertionMode', settings.insertionMode);
@@ -227,10 +235,11 @@ async function initialize() {
     const mainWindowBounds = mainWindow.getBounds();
     settingsWindow = new BrowserWindow({
       width: 300,
-      height: 410,
+      height: 420,
       x: mainWindowBounds.x - 310,
       y: mainWindowBounds.y,
       frame: false,
+      alwaysOnTop: true,
       skipTaskbar: true,
       webPreferences: {
         preload: path.join(__dirname, '../renderer/settings/settings-preload.js'),
@@ -265,6 +274,9 @@ async function initialize() {
     } else if (provider === 'sambanova') {
       const key = store.get('sambanovaApiKey', '');
       transcription = await transcribeAudioSambaNova(buffer, key);
+    } else if (provider === 'fireworks') {
+      const key = store.get('fireworksApiKey', '');
+      transcription = await transcribeAudioFireworks(buffer, key);
     } else {
       const key = store.get('groqApiKey', '');
       transcription = await transcribeAudio(buffer, key);
@@ -291,6 +303,8 @@ async function initialize() {
         apiKey = store.get('mistralApiKey', '');
       } else if (provider === 'sambanova') {
         apiKey = store.get('sambanovaApiKey', '');
+      } else if (provider === 'fireworks') {
+        apiKey = store.get('fireworksApiKey', '');
       } else {
         apiKey = '';
       }
@@ -331,6 +345,8 @@ async function initialize() {
         corrected = await rewriteTextMistral(selectedText, prompt, apiKey, signal);
       } else if (provider === 'sambanova') {
         corrected = await rewriteTextSambaNova(selectedText, prompt, apiKey, signal);
+      } else if (provider === 'fireworks') {
+        corrected = await rewriteTextFireworks(selectedText, prompt, apiKey, signal);
       }
       if (!corrected || !corrected.trim()) {
         // restore and exit silently

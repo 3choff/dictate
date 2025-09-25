@@ -12,7 +12,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
 *   **Desktop Dictation:** Record your voice and have it transcribed into text.
 *   **Seamless Text Insertion:** Automatically pastes transcribed text into your active application.
 *   **Standalone Windows Executable:** Packaged as a portable `.exe` for easy distribution and use.
-*   **Interactive Settings:** Configure API keys, transcription services (Groq, Gemini, Mistral, Deepgram, SambaNova), grammar correction provider (Groq, Gemini, Mistral, SambaNova), and text insertion modes through a dedicated settings window.
+*   **Interactive Settings:** Configure API keys, transcription services (Groq, Gemini, Mistral, Deepgram, SambaNova, Fireworks), grammar correction provider (Groq, Gemini, Mistral, SambaNova, Fireworks), and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Hotkey:** Use `Ctrl+Shift+D` to toggle recording (start/stop) from anywhere on your system.
 *   **Grammar Correction:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+G`) to correct grammar with your chosen provider (default: Groq). Click again while pulsing to abort.
@@ -23,6 +23,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
     *   **Gemini:** Non‑streaming transcription via Google Gemini API using inline audio.
     *   **Mistral:** Non‑streaming transcription via Mistral Audio Transcriptions API (multipart/form-data).
     *   **SambaNova:** Non‑streaming transcription via SambaNova Whisper-Large-v3 endpoint.
+    *   **Fireworks:** Non‑streaming transcription via Fireworks Whisper endpoint.
 *   **Multilingual Understanding:** All providers support multilingual speech recognition. You can switch languages during dictation and the model will follow.
     * Deepgram is configured with `language=multi`.
     * Groq Whisper (whisper-large-v3-turbo) auto-detects language.
@@ -77,9 +78,9 @@ To set up and run Dictate:
 ### Settings
 
 Click the gear icon in the Dictate window to open the settings. Here you can:
-*   Enter your API keys for Groq, Deepgram, Gemini, Mistral, and SambaNova.
+*   Enter your API keys for Groq, Deepgram, Gemini, Mistral, SambaNova, and Fireworks.
 *   Select your preferred transcription service.
-*   Select grammar correction provider (Groq gpt-oss-120b, Gemini 2.5 Flash, Mistral Small, or Llama-3.3-70B). Default is Groq.
+*   Select grammar correction provider (Groq GPT-OSS-120B, Gemini 2.5 Flash, Mistral Small, Llama-3.3-70B, or Fireworks GPT-OSS-20B). Default is Groq.
 *   Choose your text insertion mode (Native or Clipboard).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 

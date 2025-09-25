@@ -2,13 +2,15 @@
 
 ### Added
 - New provider: SambaNova Whisper-Large-v3 for transcription and Llama-3.3-70B for rewrite actions.
+- New provider: Fireworks Whisper transcription and GPT-OSS-20B rewrite helper.
 - Mistral now exposes a text rewrite helper alongside transcription support.
-- Settings UI now supports SambaNova API keys for both transcription and grammar rewrite providers.
+- Settings UI now supports SambaNova and Fireworks API keys for both transcription and grammar rewrite providers.
 
 ### Changed
 - Grammar rewrite prompts are now managed in `src/main/main.js`, making provider helpers prompt-agnostic.
 - README updated to reflect SambaNova support across transcription and grammar correction providers.
-- Settings grammar provider dropdown includes Groq, Gemini, Mistral, and SambaNova.
+- Settings grammar provider dropdown includes Groq, Gemini, Mistral, SambaNova, and Fireworks.
+- Settings UI refinements: toggle switch for "Text formatted", updated labels/icons.
 
 ### Fixed
 - N/A

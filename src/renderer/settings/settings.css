@@ -67,23 +67,68 @@ body {
     color: var(--label-color);
 }
 
-.form-group.checkbox-group {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-}
 
-/* Inline checkbox + label */
-.form-group label.checkbox-inline {
+.form-group.toggle-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 0; /* override default label spacing */
-    white-space: nowrap; /* Prevent wrapping */
+    justify-content: space-between;
+    gap: 16px;
 }
 
-.form-group label.checkbox-inline input[type="checkbox"] {
-    margin: 0;
+.toggle-label {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    display: inline-block;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-track {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-track::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--text-color);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-track {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.toggle-switch input:checked + .toggle-track::before {
+    transform: translate(18px, -50%);
+}
+
+.toggle-switch input:focus-visible + .toggle-track {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
 
 .form-group select,
@@ -97,6 +142,24 @@ body {
     font-size: 14px;
     box-sizing: border-box;
 }
+
+.form-group select:focus,
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* .form-group select option {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+}
+
+.form-group select option:checked,
+.form-group select option:hover,
+.form-group select option:focus {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+} */
 
 /* Eye icon inside input (right aligned) */
 .input-with-eye {

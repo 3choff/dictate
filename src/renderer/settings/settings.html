@@ -18,13 +18,14 @@
     </div>
     <div class="settings-popup">
         <div class="form-group">
-            <label for="api-service">API Service</label>
+            <label for="api-service">Transcription Model</label>
             <select id="api-service">
                 <option value="groq">Groq Whisper </option>
                 <option value="gemini">Gemini 2.5 Flash</option>
                 <option value="mistral">Mistral Voxtral</option>
-                <option value="deepgram">Deepgram Nova 3 (Streaming)</option>
+                <option value="deepgram">Deepgram Nova 3 (Realtime)</option>
                 <option value="sambanova">SambaNova Whisper</option>
+                <option value="fireworks">Fireworks Whisper</option>
             </select>
         </div>
         <div class="form-group provider-key" data-provider="groq">
@@ -32,7 +33,7 @@
             <div class="input-with-eye">
                 <input type="password" id="groq-api-key" placeholder="Enter your Groq API key">
                 <button class="eye-toggle" type="button" data-target="groq-api-key" aria-label="Toggle Groq key visibility">
-                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
                 </button>
             </div>
         </div>
@@ -41,7 +42,7 @@
             <div class="input-with-eye">
                 <input type="password" id="deepgram-api-key" placeholder="Enter your Deepgram API key">
                 <button class="eye-toggle" type="button" data-target="deepgram-api-key" aria-label="Toggle Deepgram key visibility">
-                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
                 </button>
             </div>
         </div>
@@ -50,7 +51,7 @@
             <div class="input-with-eye">
                 <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
                 <button class="eye-toggle" type="button" data-target="gemini-api-key" aria-label="Toggle Gemini key visibility">
-                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
                 </button>
             </div>
         </div>
@@ -59,7 +60,7 @@
             <div class="input-with-eye">
                 <input type="password" id="mistral-api-key" placeholder="Enter your Mistral API key">
                 <button class="eye-toggle" type="button" data-target="mistral-api-key" aria-label="Toggle Mistral key visibility">
-                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
                 </button>
             </div>
         </div>
@@ -68,9 +69,28 @@
             <div class="input-with-eye">
                 <input type="password" id="sambanova-api-key" placeholder="Enter your SambaNova API key">
                 <button class="eye-toggle" type="button" data-target="sambanova-api-key" aria-label="Toggle SambaNova key visibility">
-                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
                 </button>
             </div>
+        </div>
+        <div class="form-group provider-key" data-provider="fireworks">
+            <label for="fireworks-api-key">Fireworks API Key</label>
+            <div class="input-with-eye">
+                <input type="password" id="fireworks-api-key" placeholder="Enter your Fireworks API key">
+                <button class="eye-toggle" type="button" data-target="fireworks-api-key" aria-label="Toggle Fireworks key visibility">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="grammar-provider">Grammar Correction Model</label>
+            <select id="grammar-provider">
+                <option value="groq">Groq GPT-OSS-120B</option>
+                <option value="gemini">Gemini 2.5 Flash</option>
+                <option value="mistral">Mistral Small</option>
+                <option value="sambanova">Llama-3.3-70B</option>
+                <option value="fireworks">Fireworks GPT-OSS-20B</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="insertion-mode">Insertion Mode</label>
@@ -79,19 +99,11 @@
                 <option value="native">Native (SendKeys)</option>
             </select>
         </div>
-        <div class="form-group">
-            <label for="grammar-provider">Grammar correction</label>
-            <select id="grammar-provider">
-                <option value="groq">Groq gpt-oss-120b</option>
-                <option value="gemini">Gemini 2.5 Flash</option>
-                <option value="mistral">Mistral Small</option>
-                <option value="sambanova">Llama-3.3-70B</option>
-            </select>
-        </div>
-        <div class="form-group checkbox-group">
-            <label for="preserve-formatting" class="checkbox-inline">
+        <div class="form-group toggle-row">
+            <span class="toggle-label">Text formatted</span>
+            <label class="toggle-switch" for="preserve-formatting">
                 <input type="checkbox" id="preserve-formatting" />
-                <span>Text formatted</span>
+                <span class="toggle-track"></span>
             </label>
         </div>
         <div class="settings-footer">
@@ -115,6 +127,7 @@
         const geminiApiKeyInput = document.getElementById('gemini-api-key');
         const mistralApiKeyInput = document.getElementById('mistral-api-key');
         const sambanovaApiKeyInput = document.getElementById('sambanova-api-key');
+        const fireworksApiKeyInput = document.getElementById('fireworks-api-key');
 
         window.addEventListener('DOMContentLoaded', async () => {
             const settings = await window.electronAPI.getSettings();
@@ -123,6 +136,7 @@
             geminiApiKeyInput.value = settings.geminiApiKey || '';
             mistralApiKeyInput.value = settings.mistralApiKey || '';
             sambanovaApiKeyInput.value = settings.sambanovaApiKey || '';
+            fireworksApiKeyInput.value = settings.fireworksApiKey || '';
             apiServiceSelect.value = settings.apiService;
             insertionModeSelect.value = settings.insertionMode || 'clipboard';
             grammarProviderSelect.value = settings.grammarProvider || 'groq';
@@ -158,6 +172,7 @@
                 geminiApiKey: geminiApiKeyInput.value,
                 mistralApiKey: mistralApiKeyInput.value,
                 sambanovaApiKey: sambanovaApiKeyInput.value,
+                fireworksApiKey: fireworksApiKeyInput.value,
                 apiService: apiServiceSelect.value,
                 insertionMode: insertionModeSelect.value,
                 preserveFormatting: !!preserveFormattingCheckbox.checked,
