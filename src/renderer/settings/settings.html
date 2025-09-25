@@ -20,10 +20,11 @@
         <div class="form-group">
             <label for="api-service">API Service</label>
             <select id="api-service">
-                <option value="groq">Whisper Groq</option>
+                <option value="groq">Groq Whisper </option>
                 <option value="gemini">Gemini 2.5 Flash</option>
                 <option value="mistral">Mistral Voxtral</option>
                 <option value="deepgram">Deepgram Nova 3 (Streaming)</option>
+                <option value="sambanova">SambaNova Whisper</option>
             </select>
         </div>
         <div class="form-group provider-key" data-provider="groq">
@@ -62,6 +63,15 @@
                 </button>
             </div>
         </div>
+        <div class="form-group provider-key" data-provider="sambanova">
+            <label for="sambanova-api-key">SambaNova API Key</label>
+            <div class="input-with-eye">
+                <input type="password" id="sambanova-api-key" placeholder="Enter your SambaNova API key">
+                <button class="eye-toggle" type="button" data-target="sambanova-api-key" aria-label="Toggle SambaNova key visibility">
+                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="#b0b0b0" d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                </button>
+            </div>
+        </div>
         <div class="form-group">
             <label for="insertion-mode">Insertion Mode</label>
             <select id="insertion-mode">
@@ -74,6 +84,8 @@
             <select id="grammar-provider">
                 <option value="groq">Groq gpt-oss-120b</option>
                 <option value="gemini">Gemini 2.5 Flash</option>
+                <option value="mistral">Mistral Small</option>
+                <option value="sambanova">Llama-3.3-70B</option>
             </select>
         </div>
         <div class="form-group checkbox-group">
@@ -102,6 +114,7 @@
         const grammarProviderSelect = document.getElementById('grammar-provider');
         const geminiApiKeyInput = document.getElementById('gemini-api-key');
         const mistralApiKeyInput = document.getElementById('mistral-api-key');
+        const sambanovaApiKeyInput = document.getElementById('sambanova-api-key');
 
         window.addEventListener('DOMContentLoaded', async () => {
             const settings = await window.electronAPI.getSettings();
@@ -109,6 +122,7 @@
             deepgramApiKeyInput.value = settings.deepgramApiKey || '';
             geminiApiKeyInput.value = settings.geminiApiKey || '';
             mistralApiKeyInput.value = settings.mistralApiKey || '';
+            sambanovaApiKeyInput.value = settings.sambanovaApiKey || '';
             apiServiceSelect.value = settings.apiService;
             insertionModeSelect.value = settings.insertionMode || 'clipboard';
             grammarProviderSelect.value = settings.grammarProvider || 'groq';
@@ -143,6 +157,7 @@
                 deepgramApiKey: deepgramApiKeyInput.value,
                 geminiApiKey: geminiApiKeyInput.value,
                 mistralApiKey: mistralApiKeyInput.value,
+                sambanovaApiKey: sambanovaApiKeyInput.value,
                 apiService: apiServiceSelect.value,
                 insertionMode: insertionModeSelect.value,
                 preserveFormatting: !!preserveFormattingCheckbox.checked,

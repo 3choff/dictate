@@ -41,11 +41,15 @@ async function transcribeAudioGemini(audioBuffer, apiKey) {
   }
 }
 
-// Correct grammar of input text using Gemini 2.5 Flash
-// Returns corrected text string or null. Optional AbortSignal supported.
-async function correctGrammarGemini(text, apiKey, signal) {
+// Rewrite input text using Gemini 2.5 Flash with a customizable prompt
+// Returns rewritten text string or null. Optional AbortSignal supported.
+async function rewriteTextGemini(text, prompt, apiKey, signal) {
   if (!apiKey) {
     return null; // silent: caller decides UX
+  }
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    console.warn('rewriteTextGemini called without a prompt');
+    return null;
   }
   try {
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
@@ -53,7 +57,7 @@ async function correctGrammarGemini(text, apiKey, signal) {
       contents: [
         {
           parts: [
-            { text: 'Rewrite the following text with correct grammar and punctuation while preserving the original meaning. Return only the corrected text with no extra commentary.' },
+            { text: prompt },
             { text },
           ],
         },
@@ -76,5 +80,5 @@ async function correctGrammarGemini(text, apiKey, signal) {
 
 module.exports = {
   transcribeAudioGemini,
-  correctGrammarGemini,
+  rewriteTextGemini,
 };

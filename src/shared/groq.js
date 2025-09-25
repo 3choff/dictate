@@ -26,10 +26,14 @@ async function transcribeAudio(audioBuffer, apiKey) {
     }
 }
 
-// Correct grammar using Groq chat completions API
-// Returns corrected text string or null. Optional AbortSignal supported.
-async function correctGrammarGroq(text, apiKey, signal) {
+// Rewrite text using Groq chat completions API with customizable prompt
+// Returns rewritten text string or null. Optional AbortSignal supported.
+async function rewriteTextGroq(text, prompt, apiKey, signal) {
     if (!apiKey) return null;
+    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+        console.warn('rewriteTextGroq called without a prompt');
+        return null;
+    }
     try {
         const url = 'https://api.groq.com/openai/v1/chat/completions';
         const body = {
@@ -37,7 +41,7 @@ async function correctGrammarGroq(text, apiKey, signal) {
             messages: [
                 {
                     role: 'user',
-                    content: 'Rewrite the following text with correct grammar and punctuation while preserving the original meaning. Return only the corrected text with no extra commentary.\n\n' + text,
+                    content: prompt + '\n\n' + text,
                 },
             ],
             temperature: 0.2,
@@ -63,5 +67,5 @@ async function correctGrammarGroq(text, apiKey, signal) {
 
 module.exports = {
     transcribeAudio,
-    correctGrammarGroq,
+    rewriteTextGroq,
 };

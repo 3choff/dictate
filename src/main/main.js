@@ -2,9 +2,10 @@ const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut } = requir
 const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
-const { transcribeAudio, correctGrammarGroq } = require('../shared/groq.js');
-const { transcribeAudioGemini, correctGrammarGemini } = require('../shared/gemini.js');
-const { transcribeAudioMistral } = require('../shared/mistral.js');
+const { transcribeAudio, rewriteTextGroq } = require('../shared/groq.js');
+const { transcribeAudioGemini, rewriteTextGemini } = require('../shared/gemini.js');
+const { transcribeAudioMistral, rewriteTextMistral } = require('../shared/mistral.js');
+const { transcribeAudioSambaNova, rewriteTextSambaNova } = require('../shared/sambanova.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
 
@@ -17,6 +18,13 @@ let settingsWindow;
 // Track in-flight sparkle requests per renderer (by webContents id)
 const sparkleRequests = new Map(); // id -> { controller, originalClipboard }
 let debugLogsEnabled = false; // toggled via Ctrl+Shift+D
+
+// Rewriting prompts (future configurable map)
+const REWRITE_PROMPTS = {
+  grammar: 'Rewrite the following text with correct grammar and punctuation while preserving the original meaning. Return only the corrected text with no extra commentary.',
+};
+const DEFAULT_REWRITE_MODE = 'grammar';
+const DEFAULT_GRAMMAR_PROVIDER = 'groq';
 
 function debugLog(...args) {
   if (debugLogsEnabled) console.log(...args);
@@ -116,6 +124,7 @@ async function initialize() {
       deepgramApiKey: store.get('deepgramApiKey', ''),
       geminiApiKey: store.get('geminiApiKey', ''),
       mistralApiKey: store.get('mistralApiKey', ''),
+      sambanovaApiKey: store.get('sambanovaApiKey', ''),
       apiService: store.get('apiService', 'groq'),
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
@@ -157,6 +166,9 @@ async function initialize() {
       } else if (provider === 'mistral') {
         const key = store.get('mistralApiKey', '');
         transcription = await transcribeAudioMistral(buffer, key);
+      } else if (provider === 'sambanova') {
+        const key = store.get('sambanovaApiKey', '');
+        transcription = await transcribeAudioSambaNova(buffer, key);
       } else {
         const key = store.get('groqApiKey', '');
         transcription = await transcribeAudio(buffer, key);
@@ -190,6 +202,9 @@ async function initialize() {
     }
     if (typeof settings.mistralApiKey === 'string') {
       store.set('mistralApiKey', settings.mistralApiKey);
+    }
+    if (typeof settings.sambanovaApiKey === 'string') {
+      store.set('sambanovaApiKey', settings.sambanovaApiKey);
     }
     store.set('apiService', settings.apiService);
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
@@ -247,6 +262,9 @@ async function initialize() {
     } else if (provider === 'mistral') {
       const key = store.get('mistralApiKey', '');
       transcription = await transcribeAudioMistral(buffer, key);
+    } else if (provider === 'sambanova') {
+      const key = store.get('sambanovaApiKey', '');
+      transcription = await transcribeAudioSambaNova(buffer, key);
     } else {
       const key = store.get('groqApiKey', '');
       transcription = await transcribeAudio(buffer, key);
@@ -258,13 +276,24 @@ async function initialize() {
     }
   });
 
-  // Sparkle action: correct selected text grammar with Gemini/Groq (abortable)
+  // Sparkle action: rewrite selected text via chosen provider (abortable)
   ipcMain.on('sparkle-correct-selection', async (event) => {
     try {
-      const provider = store.get('grammarProvider', 'groq');
-      const apiKey = provider === 'groq'
-        ? store.get('groqApiKey', '')
-        : store.get('geminiApiKey', '');
+      const provider = store.get('grammarProvider', DEFAULT_GRAMMAR_PROVIDER);
+      const prompt = REWRITE_PROMPTS[DEFAULT_REWRITE_MODE];
+
+      let apiKey;
+      if (provider === 'groq') {
+        apiKey = store.get('groqApiKey', '');
+      } else if (provider === 'gemini') {
+        apiKey = store.get('geminiApiKey', '');
+      } else if (provider === 'mistral') {
+        apiKey = store.get('mistralApiKey', '');
+      } else if (provider === 'sambanova') {
+        apiKey = store.get('sambanovaApiKey', '');
+      } else {
+        apiKey = '';
+      }
       if (!apiKey) { event.sender.send('sparkle-correct-done'); return; } // silent no-op
 
       // Copy current selection
@@ -290,12 +319,19 @@ async function initialize() {
         return;
       }
 
-      // Ask Gemini to correct grammar
+      // Rewrite selection via chosen provider
       const req = sparkleRequests.get(senderId);
       const signal = req ? req.controller.signal : undefined;
-      const corrected = provider === 'groq'
-        ? await correctGrammarGroq(selectedText, apiKey, signal)
-        : await correctGrammarGemini(selectedText, apiKey, signal);
+      let corrected = null;
+      if (provider === 'groq') {
+        corrected = await rewriteTextGroq(selectedText, prompt, apiKey, signal);
+      } else if (provider === 'gemini') {
+        corrected = await rewriteTextGemini(selectedText, prompt, apiKey, signal);
+      } else if (provider === 'mistral') {
+        corrected = await rewriteTextMistral(selectedText, prompt, apiKey, signal);
+      } else if (provider === 'sambanova') {
+        corrected = await rewriteTextSambaNova(selectedText, prompt, apiKey, signal);
+      }
       if (!corrected || !corrected.trim()) {
         // restore and exit silently
         if (clipboard.readText() !== originalClipboard) clipboard.writeText(originalClipboard);
