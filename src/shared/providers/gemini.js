@@ -8,7 +8,7 @@ async function transcribeAudioGemini(audioBuffer, apiKey) {
     return null;
   }
   try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=' + encodeURIComponent(apiKey);
     const base64 = Buffer.from(audioBuffer).toString('base64');
     const body = {
       contents: [
@@ -52,7 +52,7 @@ async function rewriteTextGemini(text, prompt, apiKey, signal) {
     return null;
   }
   try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=' + encodeURIComponent(apiKey);
     const body = {
       contents: [
         {

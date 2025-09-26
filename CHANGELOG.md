@@ -1,3 +1,16 @@
+## [0.4.0] - 2025-09-26
+
+### Added
+- Transcription language selector in the settings window with support for multilingual fallback.
+
+### Changed
+- Migrated all provider integrations into `src/shared/providers/` and updated imports across the app.
+- Updated Gemini transcription and rewrite endpoints to `gemini-flash-lite-latest`.
+- Mistral, SambaNova, Fireworks, and Deepgram providers now consume the saved transcription language when available.
+
+### Fixed
+- SambaNova Whisper requests now retry with the correct model casing to avoid `Model not found` responses.
+
 ## [0.3.4] - 2025-09-25
 
 ### Added

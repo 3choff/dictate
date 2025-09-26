@@ -2,11 +2,12 @@ const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut } = requir
 const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
-const { transcribeAudio, rewriteTextGroq } = require('../shared/groq.js');
-const { transcribeAudioGemini, rewriteTextGemini } = require('../shared/gemini.js');
-const { transcribeAudioMistral, rewriteTextMistral } = require('../shared/mistral.js');
-const { transcribeAudioSambaNova, rewriteTextSambaNova } = require('../shared/sambanova.js');
-const { transcribeAudioFireworks, rewriteTextFireworks } = require('../shared/fireworks.js');
+const { transcribeAudio, rewriteTextGroq } = require('../shared/providers/groq.js');
+const { transcribeAudioGemini, rewriteTextGemini } = require('../shared/providers/gemini.js');
+const { transcribeAudioMistral, rewriteTextMistral } = require('../shared/providers/mistral.js');
+const { transcribeAudioSambaNova, rewriteTextSambaNova } = require('../shared/providers/sambanova.js');
+const { transcribeAudioFireworks, rewriteTextFireworks } = require('../shared/providers/fireworks.js');
+const { getWhisperLanguage } = require('../shared/language-map.js');
 const { injectTextNative } = require('./win-inject.js');
 const { voiceCommands } = require('../shared/voice-commands.js');
 
@@ -16,6 +17,7 @@ const INSERTION_MODE = 'clipboard';
 let store;
 let mainWindow;
 let settingsWindow;
+let settingsWindowContentSize = { width: 300, height: 400 };
 // Track in-flight sparkle requests per renderer (by webContents id)
 const sparkleRequests = new Map(); // id -> { controller, originalClipboard }
 let debugLogsEnabled = false; // toggled via Ctrl+Shift+D
@@ -131,6 +133,7 @@ async function initialize() {
       insertionMode: store.get('insertionMode', 'clipboard'),
       preserveFormatting: store.get('preserveFormatting', true),
       grammarProvider: store.get('grammarProvider', 'groq'),
+      transcriptionLanguage: store.get('transcriptionLanguage', 'multilingual'),
     };
   });
 
@@ -161,22 +164,24 @@ async function initialize() {
       const buffer = Buffer.from(audioData);
       debugLog('[Groq] Received segment:', buffer.length, 'bytes');
       const provider = store.get('apiService', 'groq');
+      const selection = store.get('transcriptionLanguage', 'multilingual');
+      const whisperLanguage = getWhisperLanguage(selection);
       let transcription = null;
       if (provider === 'gemini') {
         const key = store.get('geminiApiKey', '');
         transcription = await transcribeAudioGemini(buffer, key);
       } else if (provider === 'mistral') {
         const key = store.get('mistralApiKey', '');
-        transcription = await transcribeAudioMistral(buffer, key);
+        transcription = await transcribeAudioMistral(buffer, key, { language: whisperLanguage });
       } else if (provider === 'sambanova') {
         const key = store.get('sambanovaApiKey', '');
-        transcription = await transcribeAudioSambaNova(buffer, key);
+        transcription = await transcribeAudioSambaNova(buffer, key, { language: whisperLanguage });
       } else if (provider === 'fireworks') {
         const key = store.get('fireworksApiKey', '');
-        transcription = await transcribeAudioFireworks(buffer, key);
+        transcription = await transcribeAudioFireworks(buffer, key, { language: whisperLanguage });
       } else {
         const key = store.get('groqApiKey', '');
-        transcription = await transcribeAudio(buffer, key);
+        transcription = await transcribeAudio(buffer, key, { language: whisperLanguage });
       }
       if (transcription && transcription.text) {
         debugLog('[Groq] Transcription received:', transcription.text);
@@ -215,6 +220,9 @@ async function initialize() {
       store.set('fireworksApiKey', settings.fireworksApiKey);
     }
     store.set('apiService', settings.apiService);
+    if (typeof settings.transcriptionLanguage === 'string') {
+      store.set('transcriptionLanguage', settings.transcriptionLanguage);
+    }
     if (settings.insertionMode === 'native' || settings.insertionMode === 'clipboard') {
       store.set('insertionMode', settings.insertionMode);
     }
@@ -233,13 +241,16 @@ async function initialize() {
     }
 
     const mainWindowBounds = mainWindow.getBounds();
+    const settingsWidth = settingsWindowContentSize?.width || 300;
+    const gap = 10;
     settingsWindow = new BrowserWindow({
-      width: 300,
-      height: 420,
-      x: mainWindowBounds.x - 310,
+      width: settingsWidth,
+      height: settingsWindowContentSize?.height || 400,
+      x: mainWindowBounds.x - settingsWidth - gap,
       y: mainWindowBounds.y,
       frame: false,
       alwaysOnTop: true,
+      resizable: false,
       skipTaskbar: true,
       webPreferences: {
         preload: path.join(__dirname, '../renderer/settings/settings-preload.js'),
@@ -255,6 +266,22 @@ async function initialize() {
     });
   });
 
+  ipcMain.on('settings-size', (event, size) => {
+    if (!settingsWindow || !size) return;
+    const { width, height } = size;
+    if (typeof width === 'number' && typeof height === 'number') {
+      const paddedWidth = Math.ceil(width);
+      const paddedHeight = Math.ceil(height);
+      settingsWindowContentSize = { width: paddedWidth, height: paddedHeight };
+      settingsWindow.setContentSize(paddedWidth, paddedHeight);
+      const mainWindowBounds = mainWindow?.getBounds();
+      if (mainWindowBounds) {
+        const gap = 10;
+        settingsWindow.setPosition(mainWindowBounds.x - paddedWidth - gap, mainWindowBounds.y);
+      }
+    }
+  });
+
   ipcMain.on('close-settings-window', () => {
     if (settingsWindow) {
       settingsWindow.close();
@@ -264,22 +291,24 @@ async function initialize() {
   ipcMain.on('save-audio', async (event, audioData) => {
     const buffer = Buffer.from(audioData);
     const provider = store.get('apiService', 'groq');
+    const selection = store.get('transcriptionLanguage', 'multilingual');
+    const whisperLanguage = getWhisperLanguage(selection);
     let transcription = null;
     if (provider === 'gemini') {
       const key = store.get('geminiApiKey', '');
       transcription = await transcribeAudioGemini(buffer, key);
     } else if (provider === 'mistral') {
       const key = store.get('mistralApiKey', '');
-      transcription = await transcribeAudioMistral(buffer, key);
+      transcription = await transcribeAudioMistral(buffer, key, { language: whisperLanguage });
     } else if (provider === 'sambanova') {
       const key = store.get('sambanovaApiKey', '');
-      transcription = await transcribeAudioSambaNova(buffer, key);
+      transcription = await transcribeAudioSambaNova(buffer, key, { language: whisperLanguage });
     } else if (provider === 'fireworks') {
       const key = store.get('fireworksApiKey', '');
-      transcription = await transcribeAudioFireworks(buffer, key);
+      transcription = await transcribeAudioFireworks(buffer, key, { language: whisperLanguage });
     } else {
       const key = store.get('groqApiKey', '');
-      transcription = await transcribeAudio(buffer, key);
+      transcription = await transcribeAudio(buffer, key, { language: whisperLanguage });
     }
 
     if (transcription && transcription.text) {

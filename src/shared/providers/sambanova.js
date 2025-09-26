@@ -9,28 +9,45 @@ async function transcribeAudioSambaNova(audioBuffer, apiKey, opts = {}) {
     return null;
   }
   try {
-    const form = new FormData();
-    const model = opts.model || 'Whisper-Large-v3';
     const language = opts.language;
     const responseFormat = opts.responseFormat || 'json';
     const stream = typeof opts.stream === 'boolean' ? opts.stream : false;
+    const primaryModel = opts.model || 'Whisper-Large-v3';
 
-    form.append('file', audioBuffer, { filename: 'segment.wav' });
-    form.append('model', model);
-    form.append('response_format', responseFormat);
-    form.append('stream', String(stream));
-    if (language) form.append('language', language);
+    async function postOnce(modelName) {
+      const form = new FormData();
+      form.append('file', audioBuffer, { filename: 'segment.wav' });
+      form.append('model', modelName);
+      form.append('response_format', responseFormat);
+      form.append('stream', String(stream));
+      if (language) form.append('language', language);
 
-    const resp = await axios.post('https://api.sambanova.ai/v1/audio/transcriptions', form, {
-      headers: {
-        ...form.getHeaders(),
-        Authorization: `Bearer ${apiKey}`,
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
+      const resp = await axios.post('https://api.sambanova.ai/v1/audio/transcriptions', form, {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${apiKey}`,
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      });
+      return resp && resp.data ? resp.data : null;
+    }
 
-    const data = resp && resp.data ? resp.data : null;
+    let data = null;
+    try {
+      data = await postOnce(primaryModel);
+    } catch (err) {
+      const status = err && err.response ? err.response.status : 0;
+      const body = err && err.response ? err.response.data : null;
+      if (status === 404 && body && /Model not found/i.test(String(body))) {
+        const altModel = typeof primaryModel === 'string' ? primaryModel.toLowerCase() : primaryModel;
+        console.warn('[SambaNova] Retrying with model:', altModel);
+        data = await postOnce(altModel);
+      } else {
+        throw err;
+      }
+    }
+
     if (!data) return null;
     if (typeof data.text === 'string') return { text: data.text };
     if (data.results && Array.isArray(data.results)) {

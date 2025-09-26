@@ -26,6 +26,9 @@ async function transcribeAudioFireworks(audioBuffer, apiKey, opts = {}) {
     }
 
     form.append('timestamp_granularities', opts.timestampGranularities || 'segment');
+    if (opts.language) {
+      form.append('language', opts.language);
+    }
 
     const resp = await axios.post('https://audio-prod.us-virginia-1.direct.fireworks.ai/v1/audio/transcriptions', form, {
       headers: {

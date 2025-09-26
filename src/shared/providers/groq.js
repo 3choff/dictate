@@ -1,7 +1,7 @@
 const axios = require('axios');
 const FormData = require('form-data');
 
-async function transcribeAudio(audioBuffer, apiKey) {
+async function transcribeAudio(audioBuffer, apiKey, opts = {}) {
     if (!apiKey) {
         console.error('API key is not configured.');
         return null;
@@ -11,6 +11,9 @@ async function transcribeAudio(audioBuffer, apiKey) {
     form.append('file', audioBuffer, { filename: 'output.wav' });
     form.append('model', 'whisper-large-v3-turbo');
     form.append('response_format', 'verbose_json');
+    if (opts.language) {
+        form.append('language', opts.language);
+    }
 
     try {
         const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', form, {

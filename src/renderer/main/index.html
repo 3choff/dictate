@@ -35,6 +35,7 @@
             </div>
         </div>
     </div>
+    <script src="../../shared/language-map.js"></script>
     <script src="../../shared/deepgram.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
@@ -286,6 +287,10 @@
               const dgKey = ((settings && (settings.deepgramApiKey || settings.apiKey)) || '').trim();
               const preserveFormatting = settings && settings.preserveFormatting !== false; // default true
               const useDeepgram = settings.apiService === 'deepgram' && dgKey.length > 0;
+              const transcriptionLanguage = (settings && settings.transcriptionLanguage) || 'multilingual';
+              const deepgramLanguage = (window.LanguageMap && window.LanguageMap.getDeepgramLanguage)
+                ? window.LanguageMap.getDeepgramLanguage(transcriptionLanguage)
+                : 'multi';
 
               audioChunks = [];
 
@@ -296,7 +301,7 @@
                 mediaRecorder = new MediaRecorder(stream, pref.mimeType ? { mimeType: pref.mimeType } : undefined);
 
                 const wsUrl = (window.Deepgram && Deepgram.buildUrl)
-                  ? Deepgram.buildUrl({ encoding: pref.encoding, smart_format: preserveFormatting })
+                  ? Deepgram.buildUrl({ encoding: pref.encoding, smart_format: preserveFormatting, language: deepgramLanguage })
                   : 'wss://api.deepgram.com/v1/listen';
                 try {
                   dgSocket = (window.Deepgram && Deepgram.createSocket) ? Deepgram.createSocket(dgKey, wsUrl) : new WebSocket(wsUrl, ['token', dgKey]);
