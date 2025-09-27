@@ -1,6 +1,6 @@
 {
   "name": "dictate",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
@@ -42,6 +42,7 @@
     "express": "^5.1.0",
     "form-data": "^4.0.4",
     "multer": "^2.0.2",
-    "robotjs": "^0.6.0"
+    "robotjs": "^0.6.0",
+    "ws": "^8.18.0"
   }
 }

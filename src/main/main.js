@@ -18,6 +18,25 @@ let store;
 let mainWindow;
 let settingsWindow;
 let settingsWindowContentSize = { width: 300, height: 400 };
+let mainWindowBoundsSaveTimer = null;
+
+function persistMainWindowBounds() {
+  if (!store || !mainWindow) return;
+  try {
+    const bounds = mainWindow.getBounds();
+    store.set('mainWindowBounds', bounds);
+  } catch (err) {
+    console.error('Failed to persist main window bounds', err);
+  }
+}
+
+function scheduleMainWindowBoundsSave() {
+  if (!store || !mainWindow) return;
+  clearTimeout(mainWindowBoundsSaveTimer);
+  mainWindowBoundsSaveTimer = setTimeout(() => {
+    persistMainWindowBounds();
+  }, 150);
+}
 
 function clamp(value, min, max) {
   if (max < min) return min;
@@ -642,9 +661,13 @@ async function initialize() {
 }
 
 function createMainWindow() {
-  mainWindow = new BrowserWindow({
-    width: 160,
-    height: 100,
+  const defaultWidth = 160;
+  const defaultHeight = 100;
+  const savedBounds = store?.get('mainWindowBounds');
+
+  const windowOptions = {
+    width: typeof savedBounds?.width === 'number' ? savedBounds.width : defaultWidth,
+    height: typeof savedBounds?.height === 'number' ? savedBounds.height : defaultHeight,
     frame: false,
     alwaysOnTop: true,
     focusable: false,
@@ -653,13 +676,37 @@ function createMainWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-  });
+  };
+
+  if (savedBounds && typeof savedBounds.x === 'number' && typeof savedBounds.y === 'number') {
+    const display = screen.getDisplayMatching({
+      x: savedBounds.x,
+      y: savedBounds.y,
+      width: windowOptions.width,
+      height: windowOptions.height,
+    });
+    const workArea = display?.workArea;
+    if (workArea) {
+      const maxX = workArea.x + workArea.width - windowOptions.width;
+      const maxY = workArea.y + workArea.height - windowOptions.height;
+      windowOptions.x = clamp(savedBounds.x, workArea.x, maxX);
+      windowOptions.y = clamp(savedBounds.y, workArea.y, maxY);
+    } else {
+      windowOptions.x = savedBounds.x;
+      windowOptions.y = savedBounds.y;
+    }
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/main/index.html'));
   // Send initial debug mode state when renderer is ready
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('debug-mode', debugLogsEnabled);
   });
+  mainWindow.on('move', scheduleMainWindowBoundsSave);
+  mainWindow.on('resize', scheduleMainWindowBoundsSave);
+  mainWindow.on('close', persistMainWindowBounds);
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

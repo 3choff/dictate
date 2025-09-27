@@ -4,7 +4,7 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.5.0
+**Version:** 0.5.1
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
@@ -64,7 +64,7 @@ To set up and run Dictate:
     npm start
     ```
     Use `Ctrl+Shift+H` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.5.0.exe` (or similar) executable.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.5.1.exe` (or similar) executable.
 
 ### Recording and Transcribing
 

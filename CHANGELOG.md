@@ -1,3 +1,14 @@
+## [0.5.1] - 2025-09-27
+
+### Added
+- Persist main window position and size across launches, restoring to the last location within the active display work area.
+
+### Changed
+- Cleanup timer-based saving of main window bounds when the window moves or resizes to reduce disk writes.
+
+### Fixed
+- Prevent main window from reopening off-screen by clamping saved bounds to the current monitor.
+
 ## [0.5.0] - 2025-09-27
 
 ### Added
