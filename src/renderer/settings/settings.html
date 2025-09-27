@@ -20,7 +20,8 @@
         <div class="form-group">
             <label for="api-service">Transcription Model</label>
             <select id="api-service">
-                <option value="deepgram">Deepgram Nova 3 (Real time)</option>
+                <option value="deepgram">Deepgram Nova 3 (Real-time)</option>
+                <option value="cartesia">Cartesia Whisper (Real-time)</option>
                 <option value="groq">Groq Whisper </option>
                 <option value="fireworks">Fireworks Whisper</option>
                 <option value="sambanova">SambaNova Whisper</option>
@@ -28,60 +29,7 @@
                 <option value="mistral">Mistral Voxtral</option>
             </select>
         </div>
-        <div class="form-group provider-key" data-provider="groq">
-            <label for="groq-api-key">Groq API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="groq-api-key" placeholder="Enter your Groq API key">
-                <button class="eye-toggle" type="button" data-target="groq-api-key" aria-label="Toggle Groq key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
-        <div class="form-group provider-key" data-provider="deepgram">
-            <label for="deepgram-api-key">Deepgram API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="deepgram-api-key" placeholder="Enter your Deepgram API key">
-                <button class="eye-toggle" type="button" data-target="deepgram-api-key" aria-label="Toggle Deepgram key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
-        <div class="form-group provider-key" data-provider="gemini">
-            <label for="gemini-api-key">Gemini API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API key">
-                <button class="eye-toggle" type="button" data-target="gemini-api-key" aria-label="Toggle Gemini key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
-        <div class="form-group provider-key" data-provider="mistral">
-            <label for="mistral-api-key">Mistral API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="mistral-api-key" placeholder="Enter your Mistral API key">
-                <button class="eye-toggle" type="button" data-target="mistral-api-key" aria-label="Toggle Mistral key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
-        <div class="form-group provider-key" data-provider="sambanova">
-            <label for="sambanova-api-key">SambaNova API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="sambanova-api-key" placeholder="Enter your SambaNova API key">
-                <button class="eye-toggle" type="button" data-target="sambanova-api-key" aria-label="Toggle SambaNova key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
-        <div class="form-group provider-key" data-provider="fireworks">
-            <label for="fireworks-api-key">Fireworks API Key</label>
-            <div class="input-with-eye">
-                <input type="password" id="fireworks-api-key" placeholder="Enter your Fireworks API key">
-                <button class="eye-toggle" type="button" data-target="fireworks-api-key" aria-label="Toggle Fireworks key visibility">
-                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path></g></svg>
-                </button>
-            </div>
-        </div>
+        <div id="provider-keys"></div>
         <div class="form-group">
             <label for="transcription-language">Transcription Language</label>
             <select id="transcription-language">
@@ -138,92 +86,6 @@
             </button>
         </div>
     </div>
-    <script>
-        const groqApiKeyInput = document.getElementById('groq-api-key');
-        const deepgramApiKeyInput = document.getElementById('deepgram-api-key');
-        const apiServiceSelect = document.getElementById('api-service');
-        const transcriptionLanguageSelect = document.getElementById('transcription-language');
-        const insertionModeSelect = document.getElementById('insertion-mode');
-        const preserveFormattingCheckbox = document.getElementById('preserve-formatting');
-        const voiceCommandsCheckbox = document.getElementById('voice-commands-enabled');
-        const grammarProviderSelect = document.getElementById('grammar-provider');
-        const geminiApiKeyInput = document.getElementById('gemini-api-key');
-        const mistralApiKeyInput = document.getElementById('mistral-api-key');
-        const sambanovaApiKeyInput = document.getElementById('sambanova-api-key');
-        const fireworksApiKeyInput = document.getElementById('fireworks-api-key');
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            const settings = await window.electronAPI.getSettings();
-            groqApiKeyInput.value = settings.groqApiKey || settings.apiKey || '';
-            deepgramApiKeyInput.value = settings.deepgramApiKey || '';
-            geminiApiKeyInput.value = settings.geminiApiKey || '';
-            mistralApiKeyInput.value = settings.mistralApiKey || '';
-            sambanovaApiKeyInput.value = settings.sambanovaApiKey || '';
-            fireworksApiKeyInput.value = settings.fireworksApiKey || '';
-            apiServiceSelect.value = settings.apiService;
-            transcriptionLanguageSelect.value = settings.transcriptionLanguage || 'multilingual';
-            insertionModeSelect.value = settings.insertionMode || 'clipboard';
-            grammarProviderSelect.value = settings.grammarProvider || 'groq';
-            preserveFormattingCheckbox.checked = (settings.preserveFormatting !== false);
-            voiceCommandsCheckbox.checked = (settings.voiceCommandsEnabled !== false);
-            // Hook up eye toggles
-            document.querySelectorAll('.eye-toggle').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const targetId = btn.getAttribute('data-target');
-                    const input = document.getElementById(targetId);
-                    if (!input) return;
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                });
-            });
-            // Toggle provider key visibility based on selected service
-            const updateKeyVisibility = () => {
-                const provider = apiServiceSelect.value;
-                document.querySelectorAll('.provider-key').forEach(group => {
-                    if (group.getAttribute('data-provider') === provider) {
-                        group.classList.remove('hidden');
-                    } else {
-                        group.classList.add('hidden');
-                    }
-                });
-            };
-            apiServiceSelect.addEventListener('change', updateKeyVisibility);
-            updateKeyVisibility();
-
-            requestAnimationFrame(() => {
-                const rect = document.body.getBoundingClientRect();
-                window.electronAPI.reportSettingsSize?.({
-                    width: rect.width,
-                    height: rect.height,
-                });
-            });
-        });
-
-        document.getElementById('close-settings-btn').addEventListener('click', () => {
-            const settings = {
-                groqApiKey: groqApiKeyInput.value,
-                deepgramApiKey: deepgramApiKeyInput.value,
-                geminiApiKey: geminiApiKeyInput.value,
-                mistralApiKey: mistralApiKeyInput.value,
-                sambanovaApiKey: sambanovaApiKeyInput.value,
-                fireworksApiKey: fireworksApiKeyInput.value,
-                apiService: apiServiceSelect.value,
-                transcriptionLanguage: transcriptionLanguageSelect.value,
-                insertionMode: insertionModeSelect.value,
-                preserveFormatting: !!preserveFormattingCheckbox.checked,
-                voiceCommandsEnabled: !!voiceCommandsCheckbox.checked,
-                grammarProvider: grammarProviderSelect.value,
-            };
-            window.electronAPI.setSettings(settings);
-            window.electronAPI.closeSettingsWindow();
-        });
-
-        // Help button -> open issues page in default browser
-        const helpBtn = document.getElementById('settings-help');
-        if (helpBtn && window.electronAPI && typeof window.electronAPI.openExternalLink === 'function') {
-            helpBtn.addEventListener('click', () => {
-                window.electronAPI.openExternalLink('https://github.com/3choff/dictate/issues');
-            });
-        }
-    </script>
+    <script src="./settings.js"></script>
 </body>
 </html>

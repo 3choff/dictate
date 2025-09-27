@@ -1,3 +1,15 @@
+## [0.6.0] - 2025-09-27
+
+### Added
+- Real-time Cartesia streaming provider with manual PCM audio pipeline and settings UI selection.
+
+### Changed
+- Extracted `settings.js` and `index.js` to remove inline scripts from renderer HTML files, improving maintainability.
+- Settings provider API key inputs are now generated dynamically from a single configuration.
+
+### Fixed
+- Voice commands (pause dictation, grammar correction, etc.) now also work for streaming providers by routing transcripts through `processAndInject()`.
+
 ## [0.5.1] - 2025-09-27
 
 ### Added

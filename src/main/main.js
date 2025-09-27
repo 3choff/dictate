@@ -276,6 +276,7 @@ async function initialize() {
       apiKey: store.get('apiKey', ''), // legacy
       groqApiKey: store.get('groqApiKey', ''),
       deepgramApiKey: store.get('deepgramApiKey', ''),
+      cartesiaApiKey: store.get('cartesiaApiKey', ''),
       geminiApiKey: store.get('geminiApiKey', ''),
       mistralApiKey: store.get('mistralApiKey', ''),
       sambanovaApiKey: store.get('sambanovaApiKey', ''),
@@ -287,6 +288,16 @@ async function initialize() {
       transcriptionLanguage: store.get('transcriptionLanguage', 'multilingual'),
       voiceCommandsEnabled: store.get('voiceCommandsEnabled', true),
     };
+  });
+
+  ipcMain.handle('process-transcript', async (_event, text) => {
+    try {
+      await processAndInject(text);
+      return true;
+    } catch (err) {
+      console.error('process-transcript error', err);
+      throw err;
+    }
   });
 
   // Provide renderer with a file:// URL for an asset, works in dev and packaged apps.
@@ -358,6 +369,9 @@ async function initialize() {
     }
     if (typeof settings.deepgramApiKey === 'string') {
       store.set('deepgramApiKey', settings.deepgramApiKey);
+    }
+    if (typeof settings.cartesiaApiKey === 'string') {
+      store.set('cartesiaApiKey', settings.cartesiaApiKey);
     }
     if (typeof settings.geminiApiKey === 'string') {
       store.set('geminiApiKey', settings.geminiApiKey);
