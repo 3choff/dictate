@@ -4,7 +4,7 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.4.0
+**Version:** 0.5.0
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
@@ -34,7 +34,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
     * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
-*   **Voice Commands:** Execute common text manipulation actions (e.g., "enter", "backspace", "delete last word", "control C") directly through voice.
+*   **Voice Commands:** Execute rich text manipulation actions (e.g., "enter", "backspace", "delete that", "select all", "correct grammar") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them.
 
 ## Installation
 
@@ -64,7 +64,7 @@ To set up and run Dictate:
     npm start
     ```
     Use `Ctrl+Shift+H` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.4.0.exe` (or similar) executable.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.5.0.exe` (or similar) executable.
 
 ### Recording and Transcribing
 
@@ -92,7 +92,9 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 *   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"
 *   **Control Combinations:** "press control plus c" (Ctrl+C), "press control plus v" (Ctrl+V)
-*   **Text Manipulation:** "delete that" (deletes the last word)
+*   **Text Manipulation:** "delete that" (removes the most recent word), "select all" (Ctrl+A)
+*   **Grammar:** "correct grammar" / "correct the grammar" (selects all text and runs the grammar shortcut)
+*   **Dictation Controls:** "pause voice typing", "stop dictation", "pause voice mode", etc. (sends Ctrl+Shift+D to pause voice typing)
 
 ## Development Notes
 

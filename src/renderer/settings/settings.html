@@ -120,6 +120,13 @@
                 <span class="toggle-track"></span>
             </label>
         </div>
+        <div class="form-group toggle-row">
+            <span class="toggle-label">Voice commands</span>
+            <label class="toggle-switch" for="voice-commands-enabled">
+                <input type="checkbox" id="voice-commands-enabled" />
+                <span class="toggle-track"></span>
+            </label>
+        </div>
         <div class="settings-footer">
             <button id="settings-help" class="help-link" type="button" aria-label="Open project help">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -138,6 +145,7 @@
         const transcriptionLanguageSelect = document.getElementById('transcription-language');
         const insertionModeSelect = document.getElementById('insertion-mode');
         const preserveFormattingCheckbox = document.getElementById('preserve-formatting');
+        const voiceCommandsCheckbox = document.getElementById('voice-commands-enabled');
         const grammarProviderSelect = document.getElementById('grammar-provider');
         const geminiApiKeyInput = document.getElementById('gemini-api-key');
         const mistralApiKeyInput = document.getElementById('mistral-api-key');
@@ -157,6 +165,7 @@
             insertionModeSelect.value = settings.insertionMode || 'clipboard';
             grammarProviderSelect.value = settings.grammarProvider || 'groq';
             preserveFormattingCheckbox.checked = (settings.preserveFormatting !== false);
+            voiceCommandsCheckbox.checked = (settings.voiceCommandsEnabled !== false);
             // Hook up eye toggles
             document.querySelectorAll('.eye-toggle').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -201,6 +210,7 @@
                 transcriptionLanguage: transcriptionLanguageSelect.value,
                 insertionMode: insertionModeSelect.value,
                 preserveFormatting: !!preserveFormattingCheckbox.checked,
+                voiceCommandsEnabled: !!voiceCommandsCheckbox.checked,
                 grammarProvider: grammarProviderSelect.value,
             };
             window.electronAPI.setSettings(settings);

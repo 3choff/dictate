@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut, screen } = require('electron');
 const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
@@ -18,6 +18,70 @@ let store;
 let mainWindow;
 let settingsWindow;
 let settingsWindowContentSize = { width: 300, height: 400 };
+
+function clamp(value, min, max) {
+  if (max < min) return min;
+  return Math.min(Math.max(value, min), max);
+}
+
+function getSettingsWindowPosition(mainBounds, settingsSize) {
+  const display = screen.getDisplayMatching(mainBounds);
+  const workArea = display?.workArea || { x: 0, y: 0, width: 1920, height: 1080 };
+  const gap = 10;
+  const settingsWidth = settingsSize.width;
+  const settingsHeight = settingsSize.height;
+  const workAreaRight = workArea.x + workArea.width;
+  const workAreaBottom = workArea.y + workArea.height;
+  const maxX = workAreaRight - settingsWidth;
+  const maxY = workAreaBottom - settingsHeight;
+
+  const candidates = [];
+
+  // Left of main window (preferred)
+  const leftX = mainBounds.x - settingsWidth - gap;
+  if (leftX >= workArea.x) {
+    candidates.push({
+      x: leftX,
+      y: clamp(mainBounds.y, workArea.y, maxY),
+    });
+  }
+
+  // Right of main window (second preference)
+  const rightX = mainBounds.x + mainBounds.width + gap;
+  if (rightX + settingsWidth <= workAreaRight) {
+    candidates.push({
+      x: rightX,
+      y: clamp(mainBounds.y, workArea.y, maxY),
+    });
+  }
+
+  // Below main window
+  const belowY = mainBounds.y + mainBounds.height + gap;
+  if (belowY + settingsHeight <= workAreaBottom) {
+    candidates.push({
+      x: clamp(mainBounds.x, workArea.x, maxX),
+      y: belowY,
+    });
+  }
+
+  // Above main window
+  const aboveY = mainBounds.y - settingsHeight - gap;
+  if (aboveY >= workArea.y) {
+    candidates.push({
+      x: clamp(mainBounds.x, workArea.x, maxX),
+      y: aboveY,
+    });
+  }
+
+  if (candidates.length > 0) {
+    return candidates[0];
+  }
+
+  return {
+    x: clamp(mainBounds.x, workArea.x, maxX),
+    y: clamp(mainBounds.y, workArea.y, maxY),
+  };
+}
 // Track in-flight sparkle requests per renderer (by webContents id)
 const sparkleRequests = new Map(); // id -> { controller, originalClipboard }
 let debugLogsEnabled = false; // toggled via Ctrl+Shift+D
@@ -59,9 +123,76 @@ async function processAndInject(inputText) {
     let processed = '';
     let didKeyAction = false; // enter/backspace/tab/space/ctrl+ combos/delete_last_word
 
-    // Parse and execute voice commands first
+  // First, check for command phrases
+  if (store.get('voiceCommandsEnabled', true) !== false) {
     for (const [phrase, action] of Object.entries(voiceCommands)) {
-      const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'gi');
+      const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+
+      if (action === 'delete_last_word') {
+        let match;
+        while ((match = regex.exec(remainingText)) !== null) {
+          const before = remainingText.slice(0, match.index);
+          const after = remainingText.slice(match.index + match[0].length);
+          const beforeWithoutWord = before.replace(/\s*\S+\s*$/, '');
+          remainingText = `${beforeWithoutWord}${after}`;
+          processed = processed.replace(/\s*\S+\s*$/, '');
+          try {
+            robot.keyTap('backspace', 'control');
+          } catch (e) {
+            console.error('keyTap error', action, e);
+          }
+          didKeyAction = true;
+          regex.lastIndex = beforeWithoutWord.length;
+        }
+        continue;
+      }
+
+      if (action === 'grammar_correct') {
+        const hasMatch = regex.test(remainingText);
+        regex.lastIndex = 0; // reset because of .test() on /g regex
+        if (!hasMatch) {
+          continue;
+        }
+
+        remainingText = remainingText.replace(regex, '').trim();
+        processed = processed.trimEnd();
+
+        try {
+          robot.keyTap('a', 'control');
+          setTimeout(() => {
+            try {
+              robot.keyTap('g', ['control', 'shift']);
+            } catch (err) {
+              console.error('grammar shortcut error', err);
+            }
+          }, 150); // ensure select-all lands first
+          didKeyAction = true;
+        } catch (err) {
+          console.error('grammar command error', err);
+        }
+        continue;
+      }
+
+      if (action === 'pause_dictation') {
+        const hasMatch = regex.test(remainingText);
+        regex.lastIndex = 0;
+        if (!hasMatch) {
+          continue;
+        }
+
+        remainingText = remainingText.replace(regex, '').trim();
+        processed = processed.trimEnd();
+
+        try {
+          robot.keyTap('d', ['control', 'shift']);
+          didKeyAction = true;
+        } catch (err) {
+          console.error('pause command error', err);
+        }
+        continue;
+      }
+
       remainingText = remainingText.replace(regex, () => {
         if (action === 'enter') {
           robot.keyTap('enter');
@@ -75,26 +206,27 @@ async function processAndInject(inputText) {
         } else if (action === 'tab') {
           robot.keyTap('tab');
           didKeyAction = true;
-        } else if (action === 'delete_last_word') {
-          const words = remainingText.trim().split(/\s+/);
-          if (words.length > 1) {
-            words.pop();
-            remainingText = words.join(' ');
-          } else {
-            remainingText = '';
+        } else if (action.includes('+')) {
+          const [rawMod, rawKey] = action.split('+');
+          const mod = (rawMod || '').toLowerCase();
+          const key = (rawKey || '').toLowerCase();
+          const robotMod =
+            mod === 'ctrl' ? 'control' :
+            mod === 'cmd' ? 'command' :
+            mod;
+          try {
+            robot.keyTap(key, robotMod);
+            didKeyAction = true;
+          } catch (e) {
+            console.error('keyTap error', action, e);
           }
-          didKeyAction = true;
-        } else if (action.startsWith('ctrl+')) {
-          const keys = action.split('+');
-          robot.keyTap(keys[1], keys[0]);
-          didKeyAction = true;
         } else {
-          // Treat punctuation or text tokens as literal insertions (with trailing space)
           processed += action + ' ';
         }
         return '';
       });
     }
+  }
 
     // Insert remaining text, ensuring spacing policy
     const rem = remainingText.trim();
@@ -134,6 +266,7 @@ async function initialize() {
       preserveFormatting: store.get('preserveFormatting', true),
       grammarProvider: store.get('grammarProvider', 'groq'),
       transcriptionLanguage: store.get('transcriptionLanguage', 'multilingual'),
+      voiceCommandsEnabled: store.get('voiceCommandsEnabled', true),
     };
   });
 
@@ -232,6 +365,9 @@ async function initialize() {
     if (typeof settings.grammarProvider === 'string') {
       store.set('grammarProvider', settings.grammarProvider);
     }
+    if (typeof settings.voiceCommandsEnabled === 'boolean') {
+      store.set('voiceCommandsEnabled', settings.voiceCommandsEnabled);
+    }
   });
 
   ipcMain.on('open-settings-window', () => {
@@ -242,12 +378,16 @@ async function initialize() {
 
     const mainWindowBounds = mainWindow.getBounds();
     const settingsWidth = settingsWindowContentSize?.width || 300;
-    const gap = 10;
+    const settingsHeight = settingsWindowContentSize?.height || 400;
+    const position = getSettingsWindowPosition(mainWindowBounds, {
+      width: settingsWidth,
+      height: settingsHeight,
+    });
     settingsWindow = new BrowserWindow({
       width: settingsWidth,
-      height: settingsWindowContentSize?.height || 400,
-      x: mainWindowBounds.x - settingsWidth - gap,
-      y: mainWindowBounds.y,
+      height: settingsHeight,
+      x: position.x,
+      y: position.y,
       frame: false,
       alwaysOnTop: true,
       resizable: false,
@@ -276,8 +416,11 @@ async function initialize() {
       settingsWindow.setContentSize(paddedWidth, paddedHeight);
       const mainWindowBounds = mainWindow?.getBounds();
       if (mainWindowBounds) {
-        const gap = 10;
-        settingsWindow.setPosition(mainWindowBounds.x - paddedWidth - gap, mainWindowBounds.y);
+        const position = getSettingsWindowPosition(mainWindowBounds, {
+          width: paddedWidth,
+          height: paddedHeight,
+        });
+        settingsWindow.setPosition(position.x, position.y);
       }
     }
   });
@@ -570,41 +713,55 @@ ipcMain.handle('insert-text', async (event, text) => {
     let didKeyAction = false; // enter/backspace/tab/space/ctrl+ combos/delete_last_word
 
     // First, check for command phrases
-    for (const [phrase, action] of Object.entries(voiceCommands)) {
-      const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      remainingText = remainingText.replace(regex, (match) => {
-        if (action === 'enter') {
-          robot.keyTap('enter');
-          didKeyAction = true;
-        } else if (action === 'backspace') {
-          robot.keyTap('backspace');
-          didKeyAction = true;
-        } else if (action === 'space') {
-          robot.keyTap('space');
-          didKeyAction = true;
-        } else if (action === 'tab') {
-          robot.keyTap('tab');
-          didKeyAction = true;
-        } else if (action === 'delete_last_word') {
-          // Delete the last word in remainingText
-          const words = remainingText.trim().split(/\s+/);
-          if (words.length > 1) {
-            words.pop();
-            remainingText = words.join(' ');
+    // Parse and execute voice commands first
+    if (store.get('voiceCommandsEnabled', true) !== false) {
+      for (const [phrase, action] of Object.entries(voiceCommands)) {
+        const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'gi');
+        remainingText = remainingText.replace(regex, () => {
+          if (action === 'enter') {
+            robot.keyTap('enter');
+            didKeyAction = true;
+          } else if (action === 'backspace') {
+            robot.keyTap('backspace');
+            didKeyAction = true;
+          } else if (action === 'space') {
+            robot.keyTap('space');
+            didKeyAction = true;
+          } else if (action === 'tab') {
+            robot.keyTap('tab');
+            didKeyAction = true;
+          } else if (action === 'delete_last_word') {
+            const words = remainingText.trim().split(/\s+/);
+            if (words.length > 1) {
+              words.pop();
+              remainingText = words.join(' ');
+            } else {
+              remainingText = '';
+            }
+            didKeyAction = true;
+          } else if (action.includes('+')) {
+            const [rawMod, rawKey] = action.split('+');
+            const mod = (rawMod || '').toLowerCase();
+            const key = (rawKey || '').toLowerCase();
+          
+            const robotMod =
+              mod === 'ctrl' ? 'control' :
+              mod === 'cmd' ? 'command' :
+              mod;
+          
+            try {
+              robot.keyTap(key, robotMod);
+              didKeyAction = true;
+            } catch (e) {
+              console.error('keyTap error', action, e);
+            }
           } else {
-            remainingText = '';
+            // Treat punctuation or text tokens as literal insertions (with trailing space)
+            processed += action + ' ';
           }
-          didKeyAction = true;
-        } else if (action.startsWith('ctrl+')) {
-          const keys = action.split('+');
-          robot.keyTap(keys[1], keys[0]);
-          didKeyAction = true;
-        } else {
-          // Treat as text to insert (e.g., punctuation). Preserve trailing space here.
-          processed += action + ' ';
-        }
-        return ''; // Remove the command from text
-      });
+          return '';
+        });
+      }
     }
 
     // Insert using user-selected insertion mode while ensuring a trailing separator when appropriate

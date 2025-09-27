@@ -1,3 +1,20 @@
+## [0.5.0] - 2025-09-27
+
+### Added
+- Voice command phrases for "select all" (Ctrl+A), grammar correction macro, and pausing dictation (Ctrl+Shift+D).
+
+### Changed
+- Voice commands can now be toggled via settings and the parser respects the toggle in both injection flows.
+- Grammar correction voice commands trigger select-all before running the shortcut to ensure the provider works on the current text.
+
+### Fixed
+- "Delete that" voice command removes the last spoken word reliably and no longer reinserts the command text.
+
+## [0.4.1] - 2025-09-27
+
+### Changed
+- Settings window now positions itself relative to available screen space (prefers left, then right, below, above) instead of always shifting left.
+
 ## [0.4.0] - 2025-09-26
 
 ### Added
