@@ -1,4 +1,15 @@
-const { app, BrowserWindow, ipcMain, clipboard, shell, globalShortcut, screen } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  clipboard,
+  shell,
+  globalShortcut,
+  screen,
+  Tray,
+  Menu,
+  nativeImage,
+} = require('electron');
 const path = require('path');
 const robot = require('robotjs');
 const fs = require('fs');
@@ -19,9 +30,16 @@ let mainWindow;
 let settingsWindow;
 let settingsWindowContentSize = { width: 300, height: 400 };
 let mainWindowBoundsSaveTimer = null;
+const DEFAULT_MAIN_WINDOW_WIDTH = 150;
+const DEFAULT_MAIN_WINDOW_HEIGHT = 100;
+const COMPACT_MAIN_WINDOW_WIDTH = 70;
+const COMPACT_MAIN_WINDOW_HEIGHT = 80;
+let mainWindowCompact = false;
+let mainWindowStoredSize = null;
+let tray = null;
 
 function persistMainWindowBounds() {
-  if (!store || !mainWindow) return;
+  if (!store || !mainWindow || mainWindowCompact) return;
   try {
     const bounds = mainWindow.getBounds();
     store.set('mainWindowBounds', bounds);
@@ -31,7 +49,7 @@ function persistMainWindowBounds() {
 }
 
 function scheduleMainWindowBoundsSave() {
-  if (!store || !mainWindow) return;
+  if (!store || !mainWindow || mainWindowCompact) return;
   clearTimeout(mainWindowBoundsSaveTimer);
   mainWindowBoundsSaveTimer = setTimeout(() => {
     persistMainWindowBounds();
@@ -614,6 +632,34 @@ async function initialize() {
     }
   });
 
+  ipcMain.on('toggle-compact-mode', (_event, enabled) => {
+    if (!mainWindow) {
+      return;
+    }
+
+    const shouldEnable = Boolean(enabled);
+    if (shouldEnable === mainWindowCompact) {
+      return;
+    }
+
+    if (shouldEnable) {
+      const currentBounds = mainWindow.getBounds();
+      mainWindowStoredSize = {
+        width: currentBounds.width,
+        height: currentBounds.height,
+      };
+      mainWindowCompact = true;
+      mainWindow.setContentSize(COMPACT_MAIN_WINDOW_WIDTH, COMPACT_MAIN_WINDOW_HEIGHT);
+    } else {
+      mainWindowCompact = false;
+      const stored = mainWindowStoredSize || store?.get('mainWindowBounds') || {};
+      const width = typeof stored.width === 'number' ? stored.width : DEFAULT_MAIN_WINDOW_WIDTH;
+      const height = typeof stored.height === 'number' ? stored.height : DEFAULT_MAIN_WINDOW_HEIGHT;
+      mainWindow.setContentSize(width, height);
+      mainWindowStoredSize = null;
+    }
+  });
+
   // Provide renderer with base64 encoded asset data for reliable loading in packaged apps
   ipcMain.handle('get-asset-base64', async (event, relativePath) => {
     try {
@@ -683,16 +729,28 @@ async function initialize() {
 }
 
 function createMainWindow() {
-  const defaultWidth = 160;
-  const defaultHeight = 100;
   const savedBounds = store?.get('mainWindowBounds');
 
+  let iconPath;
+  if (app.isPackaged) {
+    iconPath = path.join(process.resourcesPath, 'assets', 'icon', 'icon.ico');
+  } else {
+    iconPath = path.join(__dirname, '..', '..', 'assets', 'icon', 'icon.ico');
+  }
+
+  let resolvedIconPath = iconPath;
+  if (!fs.existsSync(resolvedIconPath)) {
+    const fallbackPath = path.join(__dirname, '..', '..', 'build', 'icon.ico');
+    resolvedIconPath = fs.existsSync(fallbackPath) ? fallbackPath : null;
+  }
+
   const windowOptions = {
-    width: typeof savedBounds?.width === 'number' ? savedBounds.width : defaultWidth,
-    height: typeof savedBounds?.height === 'number' ? savedBounds.height : defaultHeight,
+    width: typeof savedBounds?.width === 'number' ? savedBounds.width : DEFAULT_MAIN_WINDOW_WIDTH,
+    height: typeof savedBounds?.height === 'number' ? savedBounds.height : DEFAULT_MAIN_WINDOW_HEIGHT,
     frame: false,
     alwaysOnTop: true,
-    focusable: false,
+    focusable: true,
+    skipTaskbar: false,
     backgroundColor: '#202124',
     show: false,
     webPreferences: {
@@ -701,6 +759,10 @@ function createMainWindow() {
       contextIsolation: true,
     },
   };
+
+  if (resolvedIconPath) {
+    windowOptions.icon = resolvedIconPath;
+  }
 
   if (savedBounds && typeof savedBounds.x === 'number' && typeof savedBounds.y === 'number') {
     const display = screen.getDisplayMatching({
@@ -727,6 +789,7 @@ function createMainWindow() {
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
       mainWindow.show();
+      mainWindow.setSkipTaskbar(false);
     }
   });
   // Send initial debug mode state when renderer is ready
@@ -738,6 +801,75 @@ function createMainWindow() {
   mainWindow.on('close', persistMainWindowBounds);
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // setupTray(); // Temporarily disabled tray icon
+}
+
+function setupTray() {
+  if (tray || !mainWindow) {
+    return;
+  }
+
+  let iconPath;
+  if (app.isPackaged) {
+    iconPath = path.join(process.resourcesPath, 'assets', 'icon', 'icon.ico');
+  } else {
+    iconPath = path.join(__dirname, '..', '..', 'assets', 'icon', 'icon.ico');
+  }
+
+  let trayImage = nativeImage.createFromPath(iconPath);
+
+  if (!trayImage || trayImage.isEmpty()) {
+    const fallbackPath = path.join(__dirname, '..', '..', 'build', 'icon.ico');
+    trayImage = nativeImage.createFromPath(fallbackPath);
+  }
+
+  if (!trayImage || trayImage.isEmpty()) {
+    trayImage = nativeImage.createEmpty();
+  }
+
+  tray = new Tray(trayImage);
+  tray.setToolTip('Dictate');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show Dictate',
+      click: () => {
+        if (!mainWindow) return;
+        if (!mainWindow.isVisible()) {
+          mainWindow.showInactive();
+        } else {
+          mainWindow.focus();
+        }
+      },
+    },
+    {
+      label: 'Hide Dictate',
+      click: () => {
+        if (mainWindow?.isVisible()) {
+          mainWindow.hide();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.showInactive();
+    }
   });
 }
 
@@ -877,6 +1009,13 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
     globalShortcut.unregisterAll(); // Unregister all shortcuts
     app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  if (tray) {
+    tray.destroy();
+    tray = null;
   }
 });
 

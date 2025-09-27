@@ -24,4 +24,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Listen for global shortcut to trigger sparkle
   onSparkleTrigger: (callback) => ipcRenderer.on('sparkle-trigger', callback),
   processTranscript: (text) => ipcRenderer.invoke('process-transcript', text),
+  toggleCompactMode: (enabled) => ipcRenderer.send('toggle-compact-mode', enabled),
 });

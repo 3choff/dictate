@@ -24,7 +24,24 @@ body {
     margin: 0;
     overflow: hidden;
     height: 100vh;
-    -webkit-app-region: drag;
+    -webkit-app-region: no-drag;
+    transform: scale(1);
+    opacity: 1;
+}
+
+body.transitioning {
+    transform-origin: top center;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+body.transitioning.compact-enter {
+    transform: scale(0.98);
+    opacity: 0.95;
+}
+
+body.transitioning.compact-exit {
+    transform: scale(1.02);
+    opacity: 0.95;
 }
 
 .container {
@@ -35,7 +52,8 @@ body {
 
 .top-bar {
     position: relative;
-    padding: 8px 12px;
+    padding: 6px 10px;
+    min-height: 10px;
     -webkit-app-region: drag;
     display: flex;
     justify-content: flex-end;
@@ -73,7 +91,7 @@ body {
     justify-content: space-between;
     align-items: center;
     flex-grow: 1;
-    padding: 0 15px 20px 15px;
+    padding: 0 10px 12px 10px;
 }
 
 .icon-button, .mic-button {
@@ -154,4 +172,23 @@ body {
 
 .mic-button.recording svg path {
     fill: var(--active-mic-icon);
+}
+
+body.compact-mode .main-content {
+    justify-content: center;
+    padding: 0 0 16px 0;
+}
+
+body.compact-mode .settings-icon,
+body.compact-mode .help-icon,
+body.compact-mode .sparkle-icon {
+    display: none;
+}
+
+body.compact-mode .close-button {
+    display: none;
+}
+
+body.compact-mode .mic-button {
+    margin: 0 auto;
 }

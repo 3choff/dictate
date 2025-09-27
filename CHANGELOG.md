@@ -1,3 +1,13 @@
+## [0.6.2] - 2025-09-27
+
+### Added
+- Smooth compact/expanded window transitions and state animations in `src/renderer/main/styles.css` for a more polished layout switch.
+- Optional system tray support (currently commented) that can be re-enabled via `setupTray()` to provide quick access without the main window.
+
+### Changed
+- Main window now uses the bundled `assets/icon/icon.ico`, so the Windows taskbar shows the Dictate glyph instead of the default Electron icon.
+- Default window styling keeps the dark theme consistent during mode switches by harmonizing body padding and background settings.
+
 ## [0.6.1] - 2025-09-27
 
 ### Changed

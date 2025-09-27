@@ -532,5 +532,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const COMPACT_CLASS = 'compact-mode';
+  const TRANSITIONING_CLASS = 'transitioning';
+  const ENTER_CLASS = 'compact-enter';
+  const EXIT_CLASS = 'compact-exit';
+
+  function toggleCompactMode(targetState) {
+    const isCompact = document.body.classList.contains(COMPACT_CLASS);
+    const shouldCompact = typeof targetState === 'boolean' ? targetState : !isCompact;
+
+    if (shouldCompact === isCompact) {
+      return;
+    }
+
+    const enteringCompact = shouldCompact;
+
+    document.body.classList.add(TRANSITIONING_CLASS);
+    document.body.classList.remove(ENTER_CLASS, EXIT_CLASS);
+    document.body.classList.add(enteringCompact ? ENTER_CLASS : EXIT_CLASS);
+
+    requestAnimationFrame(() => {
+      if (enteringCompact) {
+        document.body.classList.add(COMPACT_CLASS);
+      } else {
+        document.body.classList.remove(COMPACT_CLASS);
+      }
+
+      setTimeout(() => {
+        document.body.classList.remove(TRANSITIONING_CLASS, ENTER_CLASS, EXIT_CLASS);
+      }, 200);
+    });
+
+    if (window.electronAPI && typeof window.electronAPI.toggleCompactMode === 'function') {
+      window.electronAPI.toggleCompactMode(shouldCompact);
+    }
+  }
+
+  document.body.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    toggleCompactMode();
+  });
+
   loadAudio();
 });
