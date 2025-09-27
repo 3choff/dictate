@@ -1,3 +1,9 @@
+## [0.6.1] - 2025-09-27
+
+### Changed
+- Windows now wait for their renderers to finish loading before displaying, eliminating the white flash on the main and settings windows.
+- Electron windows explicitly use the app's dark theme background color to prevent flicker during startup.
+
 ## [0.6.0] - 2025-09-27
 
 ### Added

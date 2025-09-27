@@ -425,6 +425,8 @@ async function initialize() {
       alwaysOnTop: true,
       resizable: false,
       skipTaskbar: true,
+      backgroundColor: '#202124',
+      show: false,
       webPreferences: {
         preload: path.join(__dirname, '../renderer/settings/settings-preload.js'),
         nodeIntegration: false,
@@ -433,6 +435,12 @@ async function initialize() {
     });
 
     settingsWindow.loadFile(path.join(__dirname, '../renderer/settings/settings.html'));
+
+    settingsWindow.once('ready-to-show', () => {
+      if (settingsWindow) {
+        settingsWindow.show();
+      }
+    });
 
     settingsWindow.on('closed', () => {
       settingsWindow = null;
@@ -685,6 +693,8 @@ function createMainWindow() {
     frame: false,
     alwaysOnTop: true,
     focusable: false,
+    backgroundColor: '#202124',
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, '../renderer/main/preload.js'),
       nodeIntegration: false,
@@ -714,6 +724,11 @@ function createMainWindow() {
   mainWindow = new BrowserWindow(windowOptions);
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/main/index.html'));
+  mainWindow.once('ready-to-show', () => {
+    if (mainWindow) {
+      mainWindow.show();
+    }
+  });
   // Send initial debug mode state when renderer is ready
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('debug-mode', debugLogsEnabled);

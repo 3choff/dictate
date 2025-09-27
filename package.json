@@ -1,6 +1,6 @@
 {
   "name": "dictate",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",

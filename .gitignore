@@ -29,6 +29,7 @@ dist/
 out/
 build/
 versions/
+test/
 
 # Dependencies
 node_modules/
