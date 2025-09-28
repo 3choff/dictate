@@ -1,3 +1,15 @@
+## [0.6.5] - 2025-09-28
+
+### Added
+- Automated version sync (`npm run sync-doc-version`) now reads the latest entry in `CHANGELOG.md` and updates both `package.json` and `README.md` to match.
+
+### Changed
+- Settings label now calls the non-clipboard mode "Simulated Typing (SendKeys)" to clarify the behavior.
+
+### Fixed
+- Taskbar icon is hidden immediately when the window closes, eliminating orphaned entries.
+- Window position persistence now saves during movement only, improving shutdown responsiveness.
+
 ## [0.6.4] - 2025-09-28
 
 ### Added

@@ -4,15 +4,15 @@
 
 Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.6.4
+**Version:** 0.6.5
 **All changes will be documented in the `CHANGELOG.md` file.**
 
 ## Features
 
 *   **Desktop Dictation:** Record your voice and have it transcribed into text.
-*   **Seamless Text Insertion:** Automatically pastes transcribed text into your active application.
+*   **Seamless Text Insertion:** Automatically pastes or types the transcribed text into your active application.
 *   **Standalone Windows Executable:** Packaged as a portable `.exe` for easy distribution and use.
-*   **Interactive Settings:** Configure API keys, transcription services (Groq, Gemini, Mistral, Deepgram, Cartesia, SambaNova, Fireworks), grammar correction provider (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
+*   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), grammar correction provider (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Hotkey:** Use `Ctrl+Shift+D` to toggle recording (start/stop) from anywhere on your system.
 *   **Grammar Correction:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+G`) to correct grammar with your chosen provider (default: Groq). Click again while pulsing to abort.
@@ -35,7 +35,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
     * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
-*   **Voice Commands:** Execute rich text manipulation actions (e.g., "enter", "backspace", "delete that", "select all", "correct grammar") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
+*   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "correct grammar") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
 
 ## Installation
 
@@ -64,8 +64,8 @@ To set up and run Dictate:
     ```bash
     npm start
     ```
-    Use `Ctrl+Shift+H` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.6.4.exe` (or similar) executable.
+    Use `Ctrl+Shift+L` to toggle DevTools and verbose logs.
+*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.6.5.exe` (or similar) executable.
 
 ### Window Views
 
@@ -76,10 +76,10 @@ Right-click anywhere on the main window to quickly toggle between the compact an
 1.  **Launch Dictate.**
 2.  **Global Hotkey:** Press `Ctrl+Shift+D` to start recording. You will hear a "beep" sound.
 3.  **Speak:** Dictate your text.
-4.  **Stop Recording:** Press `Ctrl+Shift+D` again to stop recording. You will hear a "clack" sound.
+4.  **Stop Recording:** Press `Ctrl+Shift+D` again to stop recording or say "stop listening". You will hear a "clack" sound.
 5.  **Text Insertion:** The transcribed text will automatically be pasted into your currently active application.
-   * Groq: Speak, pause ~1s to emit a segment; text is inserted per segment.
-   * Deepgram: Inserts finalized phrases as they arrive in streaming mode.
+   * Groq, Mistral, SambaNova, Fireworks, Gemini: Speak, pause ~1s to emit a segment; text is inserted per segment.
+   * Deepgram and Cartesia: Inserts finalized phrases as they arrive in streaming mode.
 
 ### Settings
 
@@ -87,7 +87,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 *   Enter your API keys for Groq, Deepgram, Cartesia, Gemini, Mistral, SambaNova, and Fireworks.
 *   Select your preferred transcription service and transcription language (or leave `Multilingual`).
 *   Select grammar correction provider (Groq GPT-OSS-120B, Gemini 2.5 Flash, Mistral Small, Llama-3.3-70B, or Fireworks GPT-OSS-20B). Default is Groq.
-*   Choose your text insertion mode (Native or Clipboard).
+*   Choose your text insertion mode (Simulated Typing via SendKeys or Clipboard paste).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 
 ### Voice Commands
@@ -103,7 +103,7 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 
 ## Development Notes
 
-*   **Debug Toggle:** Use `Ctrl+Shift+H` to open DevTools and enable verbose logs; press again to disable.
+*   **Debug Toggle:** Use `Ctrl+Shift+L` to open DevTools and enable verbose logs; press again to disable.
 
 ## License
 

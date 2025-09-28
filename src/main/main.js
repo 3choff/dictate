@@ -53,7 +53,7 @@ function scheduleMainWindowPositionSave() {
   clearTimeout(mainWindowPositionSaveTimer);
   mainWindowPositionSaveTimer = setTimeout(() => {
     persistMainWindowPosition();
-  }, 150);
+  }, 75);
 }
 
 function clamp(value, min, max) {
@@ -797,12 +797,16 @@ function createMainWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('debug-mode', debugLogsEnabled);
   });
-  mainWindow.on('move', scheduleMainWindowPositionSave);
   mainWindow.on('close', () => {
-    persistMainWindowPosition();
-    mainWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setSkipTaskbar(true);
+      mainWindow.hide();
+    }
   });
+  mainWindow.on('move', scheduleMainWindowPositionSave);
   mainWindow.on('closed', () => {
+    clearTimeout(mainWindowPositionSaveTimer);
+    mainWindowPositionSaveTimer = null;
     mainWindow = null;
   });
 

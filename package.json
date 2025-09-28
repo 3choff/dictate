@@ -1,12 +1,14 @@
 {
   "name": "dictate",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "rebuild": "electron-rebuild -f -w robotjs",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "sync-doc-version": "node scripts/sync-doc-version.js",
+    "postversion": "npm run sync-doc-version && git add README.md"
   },
   "keywords": [],
   "author": "",
