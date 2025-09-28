@@ -29,30 +29,30 @@ let store;
 let mainWindow;
 let settingsWindow;
 let settingsWindowContentSize = { width: 300, height: 400 };
-let mainWindowBoundsSaveTimer = null;
 const DEFAULT_MAIN_WINDOW_WIDTH = 150;
 const DEFAULT_MAIN_WINDOW_HEIGHT = 100;
 const COMPACT_MAIN_WINDOW_WIDTH = 70;
 const COMPACT_MAIN_WINDOW_HEIGHT = 80;
 let mainWindowCompact = false;
 let mainWindowStoredSize = null;
+let mainWindowPositionSaveTimer = null;
 let tray = null;
 
-function persistMainWindowBounds() {
-  if (!store || !mainWindow || mainWindowCompact) return;
+function persistMainWindowPosition() {
+  if (!store || !mainWindow || mainWindow.isDestroyed()) return;
   try {
-    const bounds = mainWindow.getBounds();
-    store.set('mainWindowBounds', bounds);
+    const [x, y] = mainWindow.getPosition();
+    store.set('mainWindowPosition', { x, y });
   } catch (err) {
-    console.error('Failed to persist main window bounds', err);
+    console.error('Failed to persist main window position', err);
   }
 }
 
-function scheduleMainWindowBoundsSave() {
-  if (!store || !mainWindow || mainWindowCompact) return;
-  clearTimeout(mainWindowBoundsSaveTimer);
-  mainWindowBoundsSaveTimer = setTimeout(() => {
-    persistMainWindowBounds();
+function scheduleMainWindowPositionSave() {
+  if (!store || !mainWindow || mainWindow.isDestroyed()) return;
+  clearTimeout(mainWindowPositionSaveTimer);
+  mainWindowPositionSaveTimer = setTimeout(() => {
+    persistMainWindowPosition();
   }, 150);
 }
 
@@ -652,7 +652,7 @@ async function initialize() {
       mainWindow.setContentSize(COMPACT_MAIN_WINDOW_WIDTH, COMPACT_MAIN_WINDOW_HEIGHT);
     } else {
       mainWindowCompact = false;
-      const stored = mainWindowStoredSize || store?.get('mainWindowBounds') || {};
+      const stored = mainWindowStoredSize || {};
       const width = typeof stored.width === 'number' ? stored.width : DEFAULT_MAIN_WINDOW_WIDTH;
       const height = typeof stored.height === 'number' ? stored.height : DEFAULT_MAIN_WINDOW_HEIGHT;
       mainWindow.setContentSize(width, height);
@@ -729,7 +729,7 @@ async function initialize() {
 }
 
 function createMainWindow() {
-  const savedBounds = store?.get('mainWindowBounds');
+  const savedPosition = store?.get('mainWindowPosition');
 
   let iconPath;
   if (app.isPackaged) {
@@ -745,8 +745,8 @@ function createMainWindow() {
   }
 
   const windowOptions = {
-    width: typeof savedBounds?.width === 'number' ? savedBounds.width : DEFAULT_MAIN_WINDOW_WIDTH,
-    height: typeof savedBounds?.height === 'number' ? savedBounds.height : DEFAULT_MAIN_WINDOW_HEIGHT,
+    width: DEFAULT_MAIN_WINDOW_WIDTH,
+    height: DEFAULT_MAIN_WINDOW_HEIGHT,
     frame: false,
     alwaysOnTop: true,
     focusable: false,
@@ -764,10 +764,10 @@ function createMainWindow() {
     windowOptions.icon = resolvedIconPath;
   }
 
-  if (savedBounds && typeof savedBounds.x === 'number' && typeof savedBounds.y === 'number') {
+  if (savedPosition && typeof savedPosition.x === 'number' && typeof savedPosition.y === 'number') {
     const display = screen.getDisplayMatching({
-      x: savedBounds.x,
-      y: savedBounds.y,
+      x: savedPosition.x,
+      y: savedPosition.y,
       width: windowOptions.width,
       height: windowOptions.height,
     });
@@ -775,11 +775,11 @@ function createMainWindow() {
     if (workArea) {
       const maxX = workArea.x + workArea.width - windowOptions.width;
       const maxY = workArea.y + workArea.height - windowOptions.height;
-      windowOptions.x = clamp(savedBounds.x, workArea.x, maxX);
-      windowOptions.y = clamp(savedBounds.y, workArea.y, maxY);
+      windowOptions.x = clamp(savedPosition.x, workArea.x, maxX);
+      windowOptions.y = clamp(savedPosition.y, workArea.y, maxY);
     } else {
-      windowOptions.x = savedBounds.x;
-      windowOptions.y = savedBounds.y;
+      windowOptions.x = savedPosition.x;
+      windowOptions.y = savedPosition.y;
     }
   }
 
@@ -797,9 +797,11 @@ function createMainWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('debug-mode', debugLogsEnabled);
   });
-  mainWindow.on('move', scheduleMainWindowBoundsSave);
-  mainWindow.on('resize', scheduleMainWindowBoundsSave);
-  mainWindow.on('close', persistMainWindowBounds);
+  mainWindow.on('move', scheduleMainWindowPositionSave);
+  mainWindow.on('close', () => {
+    persistMainWindowPosition();
+    mainWindow = null;
+  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

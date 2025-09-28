@@ -1,3 +1,13 @@
+## [0.6.4] - 2025-09-28
+
+### Added
+
+### Changed
+- Main window launches at the default size but restores your last on-screen position to stay out of the way between sessions.
+
+### Fixed
+- Voice command rearraged and removed duplicated commands.
+
 ## [0.6.3] - 2025-09-28
 
 ### Added
