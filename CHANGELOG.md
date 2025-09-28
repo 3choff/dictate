@@ -1,3 +1,14 @@
+## [0.6.3] - 2025-09-28
+
+### Added
+- Deepgram streaming now always loads the provider bundle (`src/shared/providers/deepgram.js`) and forwards the selected language or `multi` plus `endpointing=100` for reliable multilingual transcripts.
+
+### Changed
+- Main window is created with `focusable: false`, so clicking Dictate no longer steals focus from the target application while issuing commands.
+
+### Fixed
+- Non-ASCII characters are now handled correctly in native injection using the clipboard fallback.
+
 ## [0.6.2] - 2025-09-27
 
 ### Added

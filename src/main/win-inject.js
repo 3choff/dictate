@@ -34,6 +34,8 @@ function startNativeInjector() {
 
   const script = [
     'Add-Type -AssemblyName System.Windows.Forms',
+    '[Console]::InputEncoding = [System.Text.Encoding]::UTF8',
+    '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
     "$in = [Console]::In",
     'while ($true) {',
     '  $line = $in.ReadLine()',

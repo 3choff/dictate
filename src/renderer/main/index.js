@@ -340,8 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const pref = window.Deepgram && Deepgram.pickPreferredMime ? Deepgram.pickPreferredMime() : { mimeType: undefined, encoding: undefined };
           mediaRecorder = new MediaRecorder(stream, pref.mimeType ? { mimeType: pref.mimeType } : undefined);
 
+          const isMultilingual = !deepgramLanguage || deepgramLanguage === 'multi';
+          const deepgramUrlOptions = {
+            encoding: pref.encoding,
+            smart_format: preserveFormatting,
+            language: isMultilingual ? 'multi' : deepgramLanguage,
+            endpointing: 100,
+          };
+
           const wsUrl = window.Deepgram && Deepgram.buildUrl
-            ? Deepgram.buildUrl({ encoding: pref.encoding, smart_format: preserveFormatting, language: deepgramLanguage })
+            ? Deepgram.buildUrl(deepgramUrlOptions)
             : 'wss://api.deepgram.com/v1/listen';
           try {
             dgSocket = window.Deepgram && Deepgram.createSocket ? Deepgram.createSocket(dgKey, wsUrl) : new WebSocket(wsUrl, ['token', dgKey]);

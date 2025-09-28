@@ -749,7 +749,7 @@ function createMainWindow() {
     height: typeof savedBounds?.height === 'number' ? savedBounds.height : DEFAULT_MAIN_WINDOW_HEIGHT,
     frame: false,
     alwaysOnTop: true,
-    focusable: true,
+    focusable: false,
     skipTaskbar: false,
     backgroundColor: '#202124',
     show: false,
@@ -785,7 +785,8 @@ function createMainWindow() {
 
   mainWindow = new BrowserWindow(windowOptions);
 
-  mainWindow.loadFile(path.join(__dirname, '../renderer/main/index.html'));
+  const mainWindowUrl = path.join(__dirname, '../renderer/main/index.html');
+  mainWindow.loadFile(mainWindowUrl);
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
       mainWindow.show();
@@ -873,43 +874,37 @@ function setupTray() {
   });
 }
 
+async function injectViaClipboard(text) {
+  const originalClipboard = clipboard.readText();
+  clipboard.writeText(text);
+  robot.keyTap('v', 'control');
+  setTimeout(() => {
+    if (clipboard.readText() === text) {
+      clipboard.writeText(originalClipboard);
+    }
+  }, 500);
+}
+
 async function injectAccordingToSettings(text) {
   const insertionMode = store.get('insertionMode', 'clipboard');
+  const containsNonAscii = /[^\x00-\x7F]/.test(text);
+
   if (insertionMode === 'native') {
+    if (containsNonAscii) {
+      debugLog('[Native Inject] Non-ASCII detected; using clipboard fallback');
+      await injectViaClipboard(text);
+      return;
+    }
     try {
       await injectTextNative(text);
     } catch (e) {
       console.error('Native injection failed; falling back to clipboard paste', e);
-      // Fallback to clipboard approach if native injection fails
-      const originalClipboard = clipboard.readText();
-      clipboard.writeText(text);
-      robot.keyTap('v', 'control');
-      setTimeout(() => {
-        if (clipboard.readText() === text) {
-          clipboard.writeText(originalClipboard);
-        }
-      }, 500);
+      await injectViaClipboard(text);
     }
   } else if (insertionMode === 'clipboard') {
-    // Clipboard mode: temporary clipboard write, paste, then restore
-    const originalClipboard = clipboard.readText();
-    clipboard.writeText(text);
-    robot.keyTap('v', 'control');
-    setTimeout(() => {
-      if (clipboard.readText() === text) {
-        clipboard.writeText(originalClipboard);
-      }
-    }, 500);
+    await injectViaClipboard(text);
   } else {
-    // Default to clipboard if mode is unknown
-    const originalClipboard = clipboard.readText();
-    clipboard.writeText(text);
-    robot.keyTap('v', 'control');
-    setTimeout(() => {
-      if (clipboard.readText() === text) {
-        clipboard.writeText(originalClipboard);
-      }
-    }, 500);
+    await injectViaClipboard(text);
   }
 }
 
