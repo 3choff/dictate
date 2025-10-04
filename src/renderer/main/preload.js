@@ -25,4 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSparkleTrigger: (callback) => ipcRenderer.on('sparkle-trigger', callback),
   processTranscript: (text) => ipcRenderer.invoke('process-transcript', text),
   toggleCompactMode: (enabled) => ipcRenderer.send('toggle-compact-mode', enabled),
+  // Listen for global shortcut to toggle view
+  onToggleView: (callback) => ipcRenderer.on('toggle-view', callback),
+  // Listen for restore compact mode state on load
+  onRestoreCompactMode: (callback) => ipcRenderer.on('restore-compact-mode', (_evt, enabled) => callback(enabled)),
 });

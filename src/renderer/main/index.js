@@ -581,5 +581,19 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleCompactMode();
   });
 
+  if (window.electronAPI && typeof window.electronAPI.onToggleView === 'function') {
+    window.electronAPI.onToggleView(() => {
+      toggleCompactMode();
+    });
+  }
+
+  if (window.electronAPI && typeof window.electronAPI.onRestoreCompactMode === 'function') {
+    window.electronAPI.onRestoreCompactMode((enabled) => {
+      if (enabled) {
+        document.body.classList.add(COMPACT_CLASS);
+      }
+    });
+  }
+
   loadAudio();
 });

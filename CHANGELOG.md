@@ -1,3 +1,9 @@
+## [0.6.6] - 2025-10-04
+
+### Added
+- Global shortcut `Ctrl+Shift+V` toggles between compact and expanded window layouts.
+- Compact mode preference is now persisted and restored on launch, so the window reopens in the last chosen view.
+
 ## [0.6.5] - 2025-09-28
 
 ### Added

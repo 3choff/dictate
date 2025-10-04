@@ -658,6 +658,11 @@ async function initialize() {
       mainWindow.setContentSize(width, height);
       mainWindowStoredSize = null;
     }
+
+    // Persist compact mode preference
+    if (store) {
+      store.set('compactMode', mainWindowCompact);
+    }
   });
 
   // Provide renderer with base64 encoded asset data for reliable loading in packaged apps
@@ -722,6 +727,18 @@ async function initialize() {
       }
     });
 
+    // View toggle: Ctrl+Shift+V switches between compact and expanded layouts
+    globalShortcut.register('Control+Shift+V', () => {
+      if (!mainWindow) {
+        createMainWindow();
+        setTimeout(() => {
+          if (mainWindow) mainWindow.webContents.send('toggle-view');
+        }, 500);
+      } else {
+        mainWindow.webContents.send('toggle-view');
+      }
+    });
+
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
     });
@@ -730,6 +747,7 @@ async function initialize() {
 
 function createMainWindow() {
   const savedPosition = store?.get('mainWindowPosition');
+  const savedCompactMode = store?.get('compactMode', false);
 
   let iconPath;
   if (app.isPackaged) {
@@ -745,8 +763,8 @@ function createMainWindow() {
   }
 
   const windowOptions = {
-    width: DEFAULT_MAIN_WINDOW_WIDTH,
-    height: DEFAULT_MAIN_WINDOW_HEIGHT,
+    width: savedCompactMode ? COMPACT_MAIN_WINDOW_WIDTH : DEFAULT_MAIN_WINDOW_WIDTH,
+    height: savedCompactMode ? COMPACT_MAIN_WINDOW_HEIGHT : DEFAULT_MAIN_WINDOW_HEIGHT,
     frame: false,
     alwaysOnTop: true,
     focusable: false,
@@ -759,6 +777,8 @@ function createMainWindow() {
       contextIsolation: true,
     },
   };
+
+  mainWindowCompact = savedCompactMode;
 
   if (resolvedIconPath) {
     windowOptions.icon = resolvedIconPath;
@@ -793,9 +813,10 @@ function createMainWindow() {
       mainWindow.setSkipTaskbar(false);
     }
   });
-  // Send initial debug mode state when renderer is ready
+  // Send initial debug mode state and compact mode state when renderer is ready
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.send('debug-mode', debugLogsEnabled);
+    mainWindow.webContents.send('restore-compact-mode', mainWindowCompact);
   });
   mainWindow.on('close', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
