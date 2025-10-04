@@ -69,7 +69,13 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Check if settings window already exists
     if let Some(window) = app.get_webview_window("settings") {
-        window.set_focus().map_err(|e| e.to_string())?;
+        // Toggle visibility
+        if window.is_visible().map_err(|e| e.to_string())? {
+            window.hide().map_err(|e| e.to_string())?;
+        } else {
+            window.show().map_err(|e| e.to_string())?;
+            window.set_focus().map_err(|e| e.to_string())?;
+        }
         return Ok(());
     }
 
@@ -83,8 +89,15 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     .inner_size(400.0, 300.0)
     .resizable(false)
     .center()
+    .decorations(false)
+    .transparent(true)
     .build()
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn exit_app(_app: AppHandle) {
+    std::process::exit(0);
 }

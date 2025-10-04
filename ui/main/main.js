@@ -31,6 +31,7 @@ const SEGMENT_MIN_DURATION_MS = 200;   // Min 200ms (ignore noise)
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
 const grammarBtn = document.getElementById('grammarBtn');
+const closeBtn = document.getElementById('close-btn');
 
 // API key will be loaded from settings
 let GROQ_API_KEY = '';
@@ -167,12 +168,25 @@ async function loadSettings() {
     }
 }
 
-// Open settings window
-settingsBtn.addEventListener('click', async () => {
+// Toggle settings window
+settingsBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
         await invoke('open_settings_window');
     } catch (error) {
         console.error('Failed to open settings:', error);
+    }
+});
+
+// Close button handler - exits the app
+closeBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+        await invoke('exit_app');
+    } catch (error) {
+        console.error('Failed to exit app:', error);
     }
 });
 

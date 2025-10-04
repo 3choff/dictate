@@ -1,11 +1,9 @@
 const { invoke } = window.__TAURI__?.core || {};
-const { getCurrent } = window.__TAURI__?.window || {};
+const { getCurrentWindow } = window.__TAURI__?.window || {};
 
 const groqApiKeyInput = document.getElementById('groqApiKey');
 const toggleVisibilityBtn = document.getElementById('toggleVisibility');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const statusDiv = document.getElementById('status');
+const closeBtn = document.getElementById('close-settings-btn');
 
 // Load settings on startup
 async function loadSettings() {
@@ -14,11 +12,10 @@ async function loadSettings() {
         groqApiKeyInput.value = settings.groq_api_key || '';
     } catch (error) {
         console.error('Failed to load settings:', error);
-        showStatus('Failed to load settings', 'error');
     }
 }
 
-// Save settings
+// Save settings silently
 async function saveSettings() {
     try {
         const settings = {
@@ -26,15 +23,9 @@ async function saveSettings() {
         };
 
         await invoke('save_settings', { settings });
-        showStatus('Settings saved successfully!', 'success');
-        
-        // Close window after a short delay
-        setTimeout(() => {
-            getCurrent().close();
-        }, 1000);
+        console.log('Settings saved');
     } catch (error) {
         console.error('Failed to save settings:', error);
-        showStatus('Failed to save settings', 'error');
     }
 }
 
@@ -42,31 +33,54 @@ async function saveSettings() {
 function togglePasswordVisibility() {
     const type = groqApiKeyInput.type === 'password' ? 'text' : 'password';
     groqApiKeyInput.type = type;
-    toggleVisibilityBtn.textContent = type === 'password' ? '👁️' : '🙈';
 }
 
-// Show status message
-function showStatus(message, type) {
-    statusDiv.textContent = message;
-    statusDiv.className = `status ${type} show`;
-    
-    setTimeout(() => {
-        statusDiv.classList.remove('show');
-    }, 3000);
+// Close window and save
+async function closeWindow() {
+    await saveSettings();
+    try {
+        // Use the same toggle command as the main window
+        await invoke('open_settings_window');
+    } catch (error) {
+        console.error('Failed to hide window:', error);
+    }
 }
 
 // Event listeners
-saveBtn.addEventListener('click', saveSettings);
-cancelBtn.addEventListener('click', () => {
-    getCurrent().close();
-});
-toggleVisibilityBtn.addEventListener('click', togglePasswordVisibility);
+if (closeBtn) {
+    closeBtn.addEventListener('click', async (e) => {
+        console.log('Close button clicked');
+        e.preventDefault();
+        e.stopPropagation();
+        await closeWindow();
+    });
+} else {
+    console.error('Close button not found!');
+}
+
+if (toggleVisibilityBtn) {
+    toggleVisibilityBtn.addEventListener('click', togglePasswordVisibility);
+}
 
 // Save on Enter key
-groqApiKeyInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        saveSettings();
-    }
+if (groqApiKeyInput) {
+    groqApiKeyInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            await closeWindow();
+        }
+    });
+
+    // Auto-save when input changes (debounced)
+    let saveTimeout;
+    groqApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveSettings, 500);
+    });
+}
+
+// Save before window closes
+window.addEventListener('beforeunload', async (e) => {
+    await saveSettings();
 });
 
 // Load settings when page loads
