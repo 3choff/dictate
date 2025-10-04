@@ -40,18 +40,10 @@
         // Debug logging
         window.addEventListener('error', (e) => {
             console.error('Global error:', e.error);
-            document.getElementById('status').textContent = 'Error: ' + e.error.message;
         });
         
         window.addEventListener('unhandledrejection', (e) => {
             console.error('Unhandled promise rejection:', e.reason);
-            document.getElementById('status').textContent = 'Error: ' + e.reason;
-        });
-
-        // Enable right-click context menu for debugging
-        document.addEventListener('contextmenu', (e) => {
-            // Allow default context menu (inspect element)
-            // Don't prevent default
         });
     </script>
     <script type="module" src="./main.js"></script>

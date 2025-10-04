@@ -9,6 +9,8 @@ pub struct Settings {
     pub groq_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
+    #[serde(default)]
+    pub compact_mode: bool,
 }
 
 fn default_prompts() -> HashMap<String, String> {
@@ -25,6 +27,7 @@ impl Default for Settings {
         Self {
             groq_api_key: String::new(),
             prompts: default_prompts(),
+            compact_mode: false,
         }
     }
 }
@@ -100,4 +103,52 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub async fn exit_app(_app: AppHandle) {
     std::process::exit(0);
+}
+
+const DEFAULT_MAIN_WINDOW_WIDTH: f64 = 145.0;
+const DEFAULT_MAIN_WINDOW_HEIGHT: f64 = 90.0;
+const COMPACT_MAIN_WINDOW_WIDTH: f64 = 65.0;
+const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 75.0;
+
+#[tauri::command]
+pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), String> {
+    println!("[COMPACT] Toggle called with enabled={}", enabled);
+    
+    // Get main window
+    let main_window = app.get_webview_window("main")
+        .ok_or("Main window not found")?;
+    
+    // Load current settings
+    let mut settings = get_settings(app.clone()).await?;
+    
+    println!("[COMPACT] Current settings.compact_mode={}", settings.compact_mode);
+    
+    // Only proceed if state is actually changing
+    if settings.compact_mode == enabled {
+        println!("[COMPACT] No change needed, already in target state");
+        return Ok(());
+    }
+    
+    // Simple fixed size toggle - like Electron
+    if enabled {
+        println!("[COMPACT] Setting compact size: {}x{}", COMPACT_MAIN_WINDOW_WIDTH, COMPACT_MAIN_WINDOW_HEIGHT);
+        main_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+            width: COMPACT_MAIN_WINDOW_WIDTH,
+            height: COMPACT_MAIN_WINDOW_HEIGHT,
+        })).map_err(|e| e.to_string())?;
+    } else {
+        println!("[COMPACT] Setting normal size: {}x{}", DEFAULT_MAIN_WINDOW_WIDTH, DEFAULT_MAIN_WINDOW_HEIGHT);
+        main_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+            width: DEFAULT_MAIN_WINDOW_WIDTH,
+            height: DEFAULT_MAIN_WINDOW_HEIGHT,
+        })).map_err(|e| e.to_string())?;
+    }
+    
+    // Save compact mode preference
+    settings.compact_mode = enabled;
+    save_settings(app, settings).await?;
+    
+    println!("[COMPACT] Toggle complete, saved settings");
+    
+    Ok(())
 }

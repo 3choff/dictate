@@ -31,6 +31,22 @@ pub fn run() {
                 }
             })?;
 
+            // Register Ctrl+Shift+V for compact view toggle
+            let view_shortcut: Shortcut = "Ctrl+Shift+V".parse().unwrap();
+            app.global_shortcut().on_shortcut(view_shortcut, |app, _event, _shortcut| {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.emit("toggle-view", ());
+                }
+            })?;
+
+            // Register Ctrl+Shift+G for grammar correction
+            let grammar_shortcut: Shortcut = "Ctrl+Shift+G".parse().unwrap();
+            app.global_shortcut().on_shortcut(grammar_shortcut, |app, _event, _shortcut| {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.emit("sparkle-trigger", ());
+                }
+            })?;
+
             // Apply Windows-specific no-activate style to prevent focus stealing
             #[cfg(target_os = "windows")]
             if let Some(window) = app.get_webview_window("main") {
@@ -45,6 +61,21 @@ pub fn run() {
                 }
             }
 
+            // Restore window size based on compact mode preference
+            if let Some(window) = app.get_webview_window("main") {
+                let app_handle = app.app_handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Ok(settings) = commands::settings::get_settings(app_handle).await {
+                        if settings.compact_mode {
+                            let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                                width: 65.0,
+                                height: 75.0,
+                            }));
+                        }
+                    }
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -57,6 +88,7 @@ pub fn run() {
             commands::save_settings,
             commands::open_settings_window,
             commands::exit_app,
+            commands::toggle_compact_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

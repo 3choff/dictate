@@ -22,8 +22,8 @@
     "windows": [
       {
         "title": "Dictate",
-        "width": 150,
-        "height": 100,
+        "width": 145,
+        "height": 90,
         "resizable": true,
         "fullscreen": false,
         "decorations": false,

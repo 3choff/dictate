@@ -32,6 +32,7 @@ const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
 const grammarBtn = document.getElementById('grammarBtn');
 const closeBtn = document.getElementById('close-btn');
+const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
 // API key will be loaded from settings
 let GROQ_API_KEY = '';
@@ -158,11 +159,16 @@ async function emitSegmentIfReady(boundaryIndex) {
     }
 }
 
-// Load API key from settings
+// Load API key from settings and restore compact mode
 async function loadSettings() {
     try {
         const settings = await invoke('get_settings');
         GROQ_API_KEY = settings.groq_api_key || '';
+        
+        // Restore compact mode state
+        if (settings.compact_mode) {
+            document.body.classList.add('compact-mode');
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -361,6 +367,86 @@ async function stopRecording() {
     micButton.classList.remove('recording');
     status.textContent = 'Press to record';
 }
+
+// Compact mode toggle functionality
+const COMPACT_CLASS = 'compact-mode';
+const TRANSITIONING_CLASS = 'transitioning';
+const ENTER_CLASS = 'compact-enter';
+const EXIT_CLASS = 'compact-exit';
+
+async function toggleCompactMode(targetState) {
+    const isCompact = document.body.classList.contains(COMPACT_CLASS);
+    const shouldCompact = typeof targetState === 'boolean' ? targetState : !isCompact;
+    
+    console.log('[COMPACT] toggleCompactMode called - Current state:', isCompact, '→ Target state:', shouldCompact);
+    
+    if (shouldCompact === isCompact) {
+        console.log('[COMPACT] No change needed, already in target state');
+        return;
+    }
+    
+    const enteringCompact = shouldCompact;
+    
+    // Call backend FIRST to update window size and save preference
+    try {
+        await invoke('toggle_compact_mode', { enabled: shouldCompact });
+        console.log('[COMPACT] Backend updated successfully');
+    } catch (error) {
+        console.error('[COMPACT] Failed to toggle compact mode:', error);
+        return; // Don't update UI if backend fails
+    }
+    
+    // Then add transition classes
+    document.body.classList.add(TRANSITIONING_CLASS);
+    document.body.classList.remove(ENTER_CLASS, EXIT_CLASS);
+    document.body.classList.add(enteringCompact ? ENTER_CLASS : EXIT_CLASS);
+    
+    requestAnimationFrame(() => {
+        if (enteringCompact) {
+            document.body.classList.add(COMPACT_CLASS);
+            console.log('[COMPACT] Compact mode enabled');
+        } else {
+            document.body.classList.remove(COMPACT_CLASS);
+            console.log('[COMPACT] Compact mode disabled');
+        }
+        
+        setTimeout(() => {
+            document.body.classList.remove(TRANSITIONING_CLASS, ENTER_CLASS, EXIT_CLASS);
+        }, 200);
+    });
+}
+
+// Right-click to toggle compact mode
+document.body.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    toggleCompactMode();
+});
+
+// Listen for global shortcut (Ctrl+Shift+V) with debounce
+let lastToggleTime = 0;
+listen('toggle-view', () => {
+    const now = Date.now();
+    if (now - lastToggleTime < 300) {
+        console.log('[COMPACT] Ignoring duplicate toggle event');
+        return;
+    }
+    lastToggleTime = now;
+    toggleCompactMode();
+});
+
+// Listen for grammar correction shortcut (Ctrl+Shift+G)
+let lastGrammarTime = 0;
+listen('sparkle-trigger', async () => {
+    const now = Date.now();
+    if (now - lastGrammarTime < 300) {
+        console.log('[GRAMMAR] Ignoring duplicate trigger event');
+        return;
+    }
+    lastGrammarTime = now;
+    
+    // Trigger grammar correction (same as clicking the button)
+    grammarBtn.click();
+});
 
 // Load settings on startup
 loadSettings();
