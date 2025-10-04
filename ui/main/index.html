@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dictate</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="drag-region"></div>
+    <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+    <div class="container">
+        <button class="mic-button" id="micButton">
+            <svg class="mic-icon" viewBox="0 0 24 24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+        </button>
+        <div class="status" id="status">Press to record</div>
+    </div>
+    
+    <script>
+        // Debug logging
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+            document.getElementById('status').textContent = 'Error: ' + e.error.message;
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+            document.getElementById('status').textContent = 'Error: ' + e.reason;
+        });
+
+        // Enable right-click context menu for debugging
+        document.addEventListener('contextmenu', (e) => {
+            // Allow default context menu (inspect element)
+            // Don't prevent default
+        });
+    </script>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

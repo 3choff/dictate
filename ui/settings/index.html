@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - Dictate</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="settings-container">
+        <h1>Settings</h1>
+        
+        <div class="form-group">
+            <label for="groqApiKey">Groq API Key</label>
+            <input 
+                type="password" 
+                id="groqApiKey" 
+                placeholder="Enter your Groq API key"
+                autocomplete="off"
+            />
+            <button id="toggleVisibility" class="toggle-btn" type="button">👁️</button>
+        </div>
+
+        <div class="button-group">
+            <button id="saveBtn" class="btn btn-primary">Save</button>
+            <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script type="module" src="./settings.js"></script>
+</body>
+</html>
