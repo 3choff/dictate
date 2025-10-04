@@ -14,7 +14,6 @@
     "core:window:allow-show",
     "core:window:allow-hide",
     "core:window:allow-close",
-    "core:window:allow-set-focus",
     "core:app:allow-version",
     "core:app:allow-name"
   ]

@@ -44,11 +44,10 @@ settingsBtn.addEventListener('click', async () => {
     }
 });
 
-// Prevent focus on mousedown and handle click without stealing focus
+// Handle mic button click
 micButton.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    // Trigger recording toggle without allowing default focus behavior
     toggleRecording();
 });
 
@@ -65,7 +64,6 @@ listen('toggle-recording', () => {
 });
 
 async function toggleRecording() {
-    console.log('Toggle recording called, isRecording:', isRecording);
     if (!isRecording) {
         await startRecording();
     } else {
@@ -91,12 +89,6 @@ async function startRecording() {
             status.textContent = 'Transcribing...';
             
             try {
-                console.log('Sending transcription request:', {
-                    audioDataLength: audioData.length,
-                    hasApiKey: !!GROQ_API_KEY,
-                    apiKeyLength: GROQ_API_KEY?.length
-                });
-                
                 const text = await invoke('transcribe_audio', {
                     audioData,
                     apiKey: GROQ_API_KEY

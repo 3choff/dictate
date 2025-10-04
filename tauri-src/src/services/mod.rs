@@ -1,5 +1,6 @@
 // Service modules
 pub mod keyboard;
+pub mod windows_focus;
 
 // Future services (placeholders)
 // pub mod audio_processor;

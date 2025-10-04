@@ -31,14 +31,25 @@ pub fn run() {
                 }
             })?;
 
-            // Window focus is controlled by the "focus": false setting in tauri.conf.json
+            // Apply Windows-specific no-activate style to prevent focus stealing
+            #[cfg(target_os = "windows")]
+            if let Some(window) = app.get_webview_window("main") {
+                use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+                
+                if let Ok(handle) = window.window_handle() {
+                    if let RawWindowHandle::Win32(win32_handle) = handle.as_raw() {
+                        let hwnd = win32_handle.hwnd.get() as isize;
+                        println!("[SETUP] Applying WS_EX_NOACTIVATE to main window");
+                        let _ = services::windows_focus::set_window_no_activate(hwnd);
+                    }
+                }
+            }
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::transcribe_audio,
             commands::insert_text,
-            commands::prevent_focus,
             commands::get_settings,
             commands::save_settings,
             commands::open_settings_window,
