@@ -49,6 +49,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::transcribe_audio,
+            commands::transcribe_audio_segment,
             commands::insert_text,
             commands::get_settings,
             commands::save_settings,

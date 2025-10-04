@@ -7,7 +7,7 @@
     "frontendDist": "../ui"
   },
   "bundle": {
-    "active": true,
+    "active": false,
     "targets": "all",
     "icon": [
       "../assets/icon/icon.ico"
