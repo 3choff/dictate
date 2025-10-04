@@ -1,3 +1,12 @@
+## [0.6.7] - 2025-10-04
+
+### Changed
+- Optimized build configuration to include only required dependencies, reducing bundle size and improving startup performance.
+- Enabled ASAR packaging for faster file I/O and compressed app code.
+
+### Removed
+- Unused dependencies (`express`, `multer`) that were inflating the build size.
+
 ## [0.6.6] - 2025-10-04
 
 ### Added
