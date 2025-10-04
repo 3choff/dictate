@@ -30,7 +30,7 @@ const SEGMENT_MIN_DURATION_MS = 200;   // Min 200ms (ignore noise)
 
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
-const status = document.getElementById('status');
+const grammarBtn = document.getElementById('grammarBtn');
 
 // API key will be loaded from settings
 let GROQ_API_KEY = '';
@@ -162,9 +162,6 @@ async function loadSettings() {
     try {
         const settings = await invoke('get_settings');
         GROQ_API_KEY = settings.groq_api_key || '';
-        if (!GROQ_API_KEY) {
-            status.textContent = 'Please set API key in settings';
-        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -180,7 +177,7 @@ settingsBtn.addEventListener('click', async () => {
 });
 
 // Handle mic button click
-micButton.addEventListener('mousedown', (e) => {
+micButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     toggleRecording();
@@ -193,6 +190,42 @@ listen('toggle-recording', () => {
     if (now - lastShortcutTime < 500) return;
     lastShortcutTime = now;
     toggleRecording();
+});
+
+// Grammar correction button handler
+grammarBtn.addEventListener('click', async () => {
+    try {
+        if (!GROQ_API_KEY) {
+            console.error('API key not set');
+            return;
+        }
+        
+        // Show loading state
+        grammarBtn.classList.add('loading');
+        
+        // Copy selected text using backend (simulates Ctrl+C)
+        const selectedText = await invoke('copy_selected_text');
+        
+        if (!selectedText || !selectedText.trim()) {
+            console.warn('No text selected');
+            grammarBtn.classList.remove('loading');
+            return;
+        }
+        
+        // Call backend to correct grammar
+        const correctedText = await invoke('correct_grammar', {
+            text: selectedText,
+            apiKey: GROQ_API_KEY
+        });
+        
+        // Insert corrected text (this will replace the selected text via Ctrl+V)
+        await invoke('insert_text', { text: correctedText });
+        
+    } catch (error) {
+        console.error('Grammar correction error:', error);
+    } finally {
+        grammarBtn.classList.remove('loading');
+    }
 });
 
 async function toggleRecording() {

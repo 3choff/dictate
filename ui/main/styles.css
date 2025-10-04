@@ -1,112 +1,185 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root {
+    --primary-bg: #202124;
+    --secondary-bg: #35363a;
+    --handle-color: #5f6368;
+    --text-color: white;
+    --icon-stroke-color: #e8eaed;
+    --accent-color: #00a9ff;
+    --accent-glow: #00a9f880;
+    --accent-glow-strong: #00a9f84d;
+    --pulse-color: #00a9ffb3;
+    --pulse-end-color: #00a9ff00;
+    --active-mic-bg: #00a9ff;
+    --active-mic-icon: #202124;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #202124;
-    color: #e8eaed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+    background-color: var(--primary-bg);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
     overflow: hidden;
-}
-
-.drag-region {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    -webkit-app-region: drag;
-    pointer-events: none;
-}
-
-.settings-btn {
-    position: fixed;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
-    background: rgba(48, 49, 52, 0.8);
-    border: 1px solid #5f6368;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    z-index: 100;
-    transition: all 0.2s;
-    opacity: 0.6;
-}
-
-.settings-btn:hover {
+    height: 100vh;
+    -webkit-app-region: no-drag;
+    transform: scale(1);
     opacity: 1;
-    background: rgba(48, 49, 52, 1);
-    transform: rotate(45deg);
+}
+
+body.transitioning {
+    transform-origin: top center;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+body.transitioning.compact-enter {
+    transform: scale(0.98);
+    opacity: 0.95;
+}
+
+body.transitioning.compact-exit {
+    transform: scale(1.02);
+    opacity: 0.95;
 }
 
 .container {
-    text-align: center;
-    position: relative;
-    z-index: 10;
-    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.mic-button {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #8ab4f8;
-    border: none;
+.top-bar {
+    position: relative;
+    padding: 6px 10px;
+    min-height: 10px;
+    -webkit-app-region: drag;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.drag-indicator-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.drag-indicator {
+    width: 40px;
+    height: 4px;
+    background-color: var(--handle-color);
+    border-radius: 2px;
+}
+
+.close-button {
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    z-index: 10;
+}
+
+.close-button svg {
+    width: 10px;
+    height: 10px;
+}
+
+.main-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+    padding: 0 10px 12px 10px;
+}
+
+.icon-button, .mic-button {
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-    user-select: none;
-    -webkit-user-select: none;
+    -webkit-app-region: no-drag;
 }
 
-.mic-button:hover {
-    background: #aac7fa;
-    transform: scale(1.05);
+/* Sparkle button base: circular but transparent when idle */
+.sparkle-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: transparent;
 }
 
-.mic-button:active {
-    transform: scale(0.95);
+.mic-button {
+    background-color: var(--secondary-bg);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
+}
+
+.mic-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mic-button svg path {
+    fill: var(--accent-color);
+}
+
+.icon-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.settings-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Sparkle loading state -> pulsing effect + active mic styling */
+.sparkle-icon.loading {
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
+    background-color: var(--active-mic-bg);
+}
+.sparkle-icon.loading svg path {
+    fill: var(--active-mic-icon);
+}
+
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 var(--pulse-color);
+    }
+    70% {
+        box-shadow: 0 0 0 10px var(--pulse-end-color);
+    }
+    100% {
+        box-shadow: 0 0 0 0 var(--pulse-end-color);
+    }
 }
 
 .mic-button.recording {
-    background: #f28b82;
-    animation: pulse 1.5s infinite;
+    background-color: var(--active-mic-bg);
+    animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+.mic-button.recording svg path {
+    fill: var(--active-mic-icon);
 }
 
-.mic-icon {
-    width: 30px;
-    height: 30px;
-    fill: white;
+body.compact-mode .main-content {
+    justify-content: center;
+    padding: 0 0 16px 0;
 }
 
-.status {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #9aa0a6;
-    max-width: 140px;
-    word-wrap: break-word;
-    line-height: 1.3;
+body.compact-mode .settings-icon,
+body.compact-mode .sparkle-icon {
+    display: none;
 }
 
-.status.error {
-    color: #f28b82;
-    font-weight: 500;
+body.compact-mode .close-button {
+    display: none;
+}
+
+body.compact-mode .mic-button {
+    margin: 0 auto;
 }

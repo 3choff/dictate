@@ -24,3 +24,20 @@ pub fn insert_text_via_clipboard(text: &str) -> Result<(), Box<dyn std::error::E
     
     Ok(())
 }
+
+pub fn copy_selected_text() -> Result<String, Box<dyn std::error::Error>> {
+    // Simulate Ctrl+C to copy selected text
+    let mut enigo = Enigo::new(&Settings::default())?;
+    enigo.key(Key::Control, enigo::Direction::Press)?;
+    enigo.key(Key::Unicode('c'), enigo::Direction::Click)?;
+    enigo.key(Key::Control, enigo::Direction::Release)?;
+    
+    // Wait for clipboard to be populated
+    thread::sleep(Duration::from_millis(100));
+    
+    // Get clipboard content
+    let text = clipboard_win::get_clipboard_string()
+        .map_err(|e| format!("Failed to read clipboard: {}", e))?;
+    
+    Ok(text)
+}

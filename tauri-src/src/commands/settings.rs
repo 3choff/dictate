@@ -1,17 +1,30 @@
 use tauri::{AppHandle, Manager};
 use std::fs;
 use std::path::PathBuf;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub groq_api_key: String,
+    #[serde(default = "default_prompts")]
+    pub prompts: HashMap<String, String>,
+}
+
+fn default_prompts() -> HashMap<String, String> {
+    let mut prompts = HashMap::new();
+    prompts.insert(
+        "grammar_correction".to_string(),
+        "Correct the grammar and spelling of the following text. Return only the corrected text without any explanations or additional commentary.".to_string()
+    );
+    prompts
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             groq_api_key: String::new(),
+            prompts: default_prompts(),
         }
     }
 }

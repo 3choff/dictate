@@ -51,6 +51,8 @@ pub fn run() {
             commands::transcribe_audio,
             commands::transcribe_audio_segment,
             commands::insert_text,
+            commands::copy_selected_text,
+            commands::correct_grammar,
             commands::get_settings,
             commands::save_settings,
             commands::open_settings_window,
