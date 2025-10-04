@@ -88,7 +88,3 @@ tauri-src/target/
 tauri-src/Cargo.lock
 tauri-src/gen/
 *.pdb
-
-# Old UI files (replaced by ui/main/)
-ui/index.html
-ui/main.js
