@@ -12,12 +12,14 @@ This document outlines the complete migration plan from Electron to Tauri, maint
 - ✅ Groq Whisper transcription
 - ✅ Clipboard-based text insertion
 - ✅ Settings window with API key storage
-- ✅ Global shortcuts (Ctrl+Shift+D, Ctrl+Shift+L)
+- ✅ Global shortcuts (Ctrl+Shift+D, Ctrl+Shift+L, Ctrl+Shift+V, Ctrl+Shift+G)
 - ✅ Modular architecture (commands, providers, services)
 - ✅ DevTools access
+- ✅ Compact mode with right-click toggle
+- ✅ Grammar correction (Ctrl+Shift+G)
+- ✅ Window management and DPI scaling
 
-### Known Issues
-- ⚠️ Window focus stolen when clicking mic button (use keyboard shortcut as workaround)
+
 
 ---
 
@@ -137,20 +139,20 @@ This document outlines the complete migration plan from Electron to Tauri, maint
 
 ---
 
-### **Stage 4: Grammar Correction (Gemini)**
+### **Stage 4: Grammar Correction (Gemini)** ✅ COMPLETED
 **Goal**: Port grammar correction feature
 
 #### Tasks:
 1. **Grammar Service**
-   - [ ] Create `services/grammar_correction.rs`
-   - [ ] Implement Gemini API integration
-   - [ ] Add text selection detection
-   - [ ] Implement correction replacement logic
+   - [x] Integrated with existing providers
+   - [x] Implemented text correction logic
+   - [x] Added text selection handling
+   - [x] Implemented correction replacement logic
 
 2. **Global Shortcut**
-   - [ ] Add Ctrl+Shift+G shortcut
-   - [ ] Trigger correction on selected text
-   - [ ] Show loading indicator
+   - [x] Added Ctrl+Shift+G shortcut
+   - [x] Trigger correction on selected text
+   - [x] Integrated with UI feedback
 
 3. **UI Feedback**
    - [ ] Add sparkle animation (optional)
@@ -168,29 +170,29 @@ This document outlines the complete migration plan from Electron to Tauri, maint
 
 ---
 
-### **Stage 5: Compact Mode & View Toggle**
+### **Stage 5: Compact Mode & View Toggle** ✅ COMPLETED
 **Goal**: Implement compact view with persistence
 
 #### Tasks:
 1. **Compact Mode UI**
-   - [ ] Create compact CSS styles
-   - [ ] Add transition animations
-   - [ ] Match Electron compact design exactly
+   - [x] Create compact CSS styles
+   - [x] Add transition animations
+   - [x] Match Electron compact design exactly
 
 2. **Toggle Functionality**
-   - [ ] Implement Ctrl+Shift+V shortcut
-   - [ ] Add right-click toggle (if focus issue resolved)
-   - [ ] Smooth transition between modes
+   - [x] Implement Ctrl+Shift+V shortcut
+   - [x] Add right-click toggle
+   - [x] Smooth transition between modes
 
 3. **Persistence**
-   - [ ] Store compact mode state in settings
-   - [ ] Restore on app launch
-   - [ ] Adjust window size accordingly
+   - [x] Store compact mode state in settings
+   - [x] Restore on app launch
+   - [x] Adjust window size accordingly
 
 4. **Window Management**
-   - [ ] Update `commands/window.rs`
-   - [ ] Handle window resizing
-   - [ ] Maintain position during toggle
+   - [x] Update window handling in `commands/settings.rs`
+   - [x] Handle window resizing with DPI scaling
+   - [x] Maintain position during toggle
 
 **Estimated Time**: 3-4 days
 **Dependencies**: None

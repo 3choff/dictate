@@ -19,7 +19,7 @@ pub async fn transcribe_audio(audio_data: Vec<u8>, api_key: String) -> Result<St
 
 /// Transcribe audio segment and insert text immediately (for Groq segmentation)
 #[tauri::command]
-pub async fn transcribe_audio_segment(audio_data: Vec<u8>, api_key: String) -> Result<String, String> {
+pub async fn transcribe_audio_segment(audio_data: Vec<u8>, api_key: String, insertion_mode: String) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
         return Err("No audio data provided".to_string());
@@ -57,8 +57,16 @@ pub async fn transcribe_audio_segment(audio_data: Vec<u8>, api_key: String) -> R
     
     // Insert text immediately if not empty
     if !formatted.is_empty() {
-        services::keyboard::insert_text_via_clipboard(&formatted)
-            .map_err(|e| format!("Failed to insert text: {}", e))?;
+        match insertion_mode.as_str() {
+            "typing" => {
+                services::keyboard_inject::inject_text_native(&formatted)
+                    .map_err(|e| format!("Failed to insert text: {}", e))?;
+            }
+            "clipboard" | _ => {
+                services::keyboard::insert_text_via_clipboard(&formatted)
+                    .map_err(|e| format!("Failed to insert text: {}", e))?;
+            }
+        }
     }
     
     Ok(formatted)

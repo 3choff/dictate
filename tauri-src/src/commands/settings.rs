@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 use std::fs;
 use std::path::PathBuf;
 use std::collections::HashMap;
@@ -11,6 +11,12 @@ pub struct Settings {
     pub prompts: HashMap<String, String>,
     #[serde(default)]
     pub compact_mode: bool,
+    #[serde(default = "default_insertion_mode")]
+    pub insertion_mode: String,
+}
+
+fn default_insertion_mode() -> String {
+    "typing".to_string()
 }
 
 fn default_prompts() -> HashMap<String, String> {
@@ -28,6 +34,7 @@ impl Default for Settings {
             groq_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
+            insertion_mode: default_insertion_mode(),
         }
     }
 }
@@ -65,7 +72,14 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
         .map_err(|e| e.to_string())?;
     
     fs::write(&settings_path, content)
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    
+    // Emit event to notify main window that settings changed
+    if let Some(main_window) = app.get_webview_window("main") {
+        let _ = main_window.emit("settings-changed", ());
+    }
+    
+    Ok(())
 }
 
 #[tauri::command]

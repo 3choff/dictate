@@ -4,12 +4,14 @@ const { getCurrentWindow } = window.__TAURI__?.window || {};
 const groqApiKeyInput = document.getElementById('groqApiKey');
 const toggleVisibilityBtn = document.getElementById('toggleVisibility');
 const closeBtn = document.getElementById('close-settings-btn');
+const insertionModeSelect = document.getElementById('insertion-mode');
 
 // Load settings on startup
 async function loadSettings() {
     try {
         const settings = await invoke('get_settings');
         groqApiKeyInput.value = settings.groq_api_key || '';
+        insertionModeSelect.value = settings.insertion_mode || 'typing';
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -19,7 +21,8 @@ async function loadSettings() {
 async function saveSettings() {
     try {
         const settings = {
-            groq_api_key: groqApiKeyInput.value.trim()
+            groq_api_key: groqApiKeyInput.value.trim(),
+            insertion_mode: insertionModeSelect.value
         };
 
         await invoke('save_settings', { settings });
@@ -76,6 +79,11 @@ if (groqApiKeyInput) {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(saveSettings, 500);
     });
+}
+
+// Auto-save when insertion mode changes
+if (insertionModeSelect) {
+    insertionModeSelect.addEventListener('change', saveSettings);
 }
 
 // Save before window closes
