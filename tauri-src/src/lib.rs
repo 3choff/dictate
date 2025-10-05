@@ -1,5 +1,7 @@
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+use tokio::sync::mpsc;
+use tokio::time::{sleep, Duration};
 
 mod commands;
 mod providers;
@@ -61,17 +63,63 @@ pub fn run() {
                 }
             }
 
-            // Restore window size based on compact mode preference
+            // Restore window size and position based on preferences
             if let Some(window) = app.get_webview_window("main") {
                 let app_handle = app.app_handle().clone();
+                let window_clone = window.clone();
+                
                 tauri::async_runtime::spawn(async move {
                     if let Ok(settings) = commands::settings::get_settings(app_handle).await {
+                        // Restore compact mode
                         if settings.compact_mode {
-                            let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                            let _ = window_clone.set_size(tauri::Size::Logical(tauri::LogicalSize {
                                 width: 65.0,
                                 height: 75.0,
                             }));
                         }
+                        
+                        // Restore window position
+                        if let Some(pos) = settings.main_window_position {
+                            let _ = window_clone.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                                x: pos.x,
+                                y: pos.y,
+                            }));
+                        } else {
+                            // No stored position
+                        }
+                    }
+                    
+                    // Show window after positioning (prevents flash)
+                    let _ = window_clone.show();
+                });
+                
+                // Debounced position saving (like Electron: 75ms after last move)
+                let app_handle_move = app.app_handle().clone();
+                let (tx, mut rx) = mpsc::channel::<(i32, i32)>(100);
+                
+                // Spawn a task to handle debounced saves
+                tauri::async_runtime::spawn(async move {
+                    while let Some((x, y)) = rx.recv().await {
+                        // Wait for 75ms - if another position comes in, this will be cancelled
+                        sleep(Duration::from_millis(75)).await;
+                        
+                        // Drain any pending positions (only save the latest)
+                        let mut latest_x = x;
+                        let mut latest_y = y;
+                        while let Ok((new_x, new_y)) = rx.try_recv() {
+                            latest_x = new_x;
+                            latest_y = new_y;
+                        }
+                        
+                        let _ = commands::settings::save_window_position(app_handle_move.clone(), latest_x, latest_y).await;
+                    }
+                });
+                
+                // Listen for move events
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Moved(position) = event {
+                        // Send position to debouncer
+                        let _ = tx.try_send((position.x, position.y));
                     }
                 });
             }
@@ -89,6 +137,8 @@ pub fn run() {
             commands::open_settings_window,
             commands::exit_app,
             commands::toggle_compact_mode,
+            commands::save_window_position,
+            commands::update_settings_size,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

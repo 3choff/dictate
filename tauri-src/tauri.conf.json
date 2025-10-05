@@ -30,7 +30,10 @@
         "alwaysOnTop": true,
         "skipTaskbar": false,
         "url": "main/index.html",
-        "focus": false
+        "focus": false,
+        "visible": false,
+        "transparent": true,
+        "focusable": false
       }
     ],
     "withGlobalTauri": true,
