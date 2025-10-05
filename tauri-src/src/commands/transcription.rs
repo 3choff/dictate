@@ -19,7 +19,12 @@ pub async fn transcribe_audio(audio_data: Vec<u8>, api_key: String) -> Result<St
 
 /// Transcribe audio segment and insert text immediately (for Groq segmentation)
 #[tauri::command]
-pub async fn transcribe_audio_segment(audio_data: Vec<u8>, api_key: String, insertion_mode: String) -> Result<String, String> {
+pub async fn transcribe_audio_segment(
+    audio_data: Vec<u8>,
+    api_key: String,
+    insertion_mode: String,
+    language: Option<String>,
+) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
         return Err("No audio data provided".to_string());
@@ -29,8 +34,16 @@ pub async fn transcribe_audio_segment(audio_data: Vec<u8>, api_key: String, inse
         return Err("API key is not set".to_string());
     }
     
+    // Normalize language: 'multilingual' or empty -> None (auto-detect)
+    let groq_lang = match language.as_deref() {
+        None => None,
+        Some("") => None,
+        Some("multilingual") => None,
+        Some(code) => Some(code.to_string()),
+    };
+
     // Transcribe using verbose format
-    let text = providers::groq::transcribe_verbose(audio_data, api_key, None)
+    let text = providers::groq::transcribe_verbose(audio_data, api_key, groq_lang)
         .await
         .map_err(|e| {
             let error_msg = e.to_string();

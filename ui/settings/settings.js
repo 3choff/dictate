@@ -6,6 +6,7 @@ const groqApiKeyInput = document.getElementById('groqApiKey');
 const toggleVisibilityBtn = document.getElementById('toggleVisibility');
 const closeBtn = document.getElementById('close-settings-btn');
 const insertionModeSelect = document.getElementById('insertion-mode');
+const languageSelect = document.getElementById('language-select');
 const helpButton = document.getElementById('settings-help');
 
 // Load settings on startup
@@ -14,6 +15,9 @@ async function loadSettings() {
         const settings = await invoke('get_settings');
         groqApiKeyInput.value = settings.groq_api_key || '';
         insertionModeSelect.value = settings.insertion_mode || 'typing';
+        if (languageSelect) {
+            languageSelect.value = settings.language || 'multilingual';
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -24,7 +28,8 @@ async function saveSettings() {
     try {
         const settings = {
             groq_api_key: groqApiKeyInput.value.trim(),
-            insertion_mode: insertionModeSelect.value
+            insertion_mode: insertionModeSelect.value,
+            language: languageSelect ? languageSelect.value : 'multilingual'
         };
 
         await invoke('save_settings', { settings });
@@ -86,6 +91,11 @@ if (groqApiKeyInput) {
 // Auto-save when insertion mode changes
 if (insertionModeSelect) {
     insertionModeSelect.addEventListener('change', saveSettings);
+}
+
+// Auto-save when language changes
+if (languageSelect) {
+    languageSelect.addEventListener('change', saveSettings);
 }
 
 // Save before window closes

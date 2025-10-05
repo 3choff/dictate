@@ -13,6 +13,8 @@ pub struct Settings {
     pub compact_mode: bool,
     #[serde(default = "default_insertion_mode")]
     pub insertion_mode: String,
+    #[serde(default = "default_language")]
+    pub language: String,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
 }
@@ -25,6 +27,11 @@ pub struct WindowPosition {
 
 fn default_insertion_mode() -> String {
     "typing".to_string()
+}
+
+fn default_language() -> String {
+    // 'multilingual' means provider should auto-detect (omit language param)
+    "multilingual".to_string()
 }
 
 fn default_prompts() -> HashMap<String, String> {
@@ -43,6 +50,7 @@ impl Default for Settings {
             prompts: default_prompts(),
             compact_mode: false,
             insertion_mode: default_insertion_mode(),
+            language: default_language(),
             main_window_position: None,
         }
     }
