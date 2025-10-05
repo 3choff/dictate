@@ -12,6 +12,9 @@
     "icon": [
       "../assets/icon/icon.ico"
     ],
+    "resources": [
+      "assets/audio/*"
+    ],
     "windows": {
       "webviewInstallMode": {
         "type": "downloadBootstrapper"

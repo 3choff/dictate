@@ -69,9 +69,9 @@ pub async fn transcribe_audio_segment(
     // Format text based on text_formatted setting
     let preserve_formatting = text_formatted.unwrap_or(true);  // Default true
     let formatted = if preserve_formatting {
-        format_groq_transcript(&text)
+        format_whisper_transcript(&text)
     } else {
-        normalize_groq_transcript(&text)
+        normalize_whisper_transcript(&text)
     };
     
     // Insert text immediately if not empty
@@ -91,8 +91,8 @@ pub async fn transcribe_audio_segment(
     Ok(formatted)
 }
 
-/// Format Groq transcript (preserve formatting, trim, add space)
-fn format_groq_transcript(text: &str) -> String {
+/// Format Whisper transcript (preserve formatting, trim, add space)
+fn format_whisper_transcript(text: &str) -> String {
     let trimmed = text.trim();
     if trimmed.is_empty() {
         return String::new();
@@ -102,8 +102,8 @@ fn format_groq_transcript(text: &str) -> String {
     format!("{} ", trimmed)
 }
 
-/// Normalize Groq transcript (lowercase + remove punctuation)
-fn normalize_groq_transcript(text: &str) -> String {
+/// Normalize Whisper transcript (lowercase + remove punctuation)
+fn normalize_whisper_transcript(text: &str) -> String {
     let trimmed = text.trim();
     if trimmed.is_empty() {
         return String::new();

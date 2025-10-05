@@ -48,6 +48,49 @@ let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
 
+// Audio cues (loaded at startup)
+let beepSound = null;
+let clackSound = null;
+
+function loadAudioCues() {
+    try {
+        // main/index.html -> assets are at ../assets/
+        beepSound = new Audio('../assets/audio/beep.mp3');
+        clackSound = new Audio('../assets/audio/clack.mp3');
+
+        // Preload and basic error logging
+        if (beepSound) {
+            beepSound.addEventListener('error', (e) => console.error('[AUDIO] beep load/play error', e));
+            try { beepSound.load(); } catch (_) {}
+        }
+        if (clackSound) {
+            clackSound.addEventListener('error', (e) => console.error('[AUDIO] clack load/play error', e));
+            try { clackSound.load(); } catch (_) {}
+        }
+    } catch (e) {
+        console.error('[AUDIO] Failed to initialize audio cues:', e);
+    }
+}
+
+function playBeep() {
+    try {
+        if (beepSound) {
+            // reset to start for rapid replays
+            try { beepSound.currentTime = 0; } catch (_) {}
+            beepSound.play().catch(() => {});
+        }
+    } catch (_) {}
+}
+
+function playClack() {
+    try {
+        if (clackSound) {
+            try { clackSound.currentTime = 0; } catch (_) {}
+            clackSound.play().catch(() => {});
+        }
+    } catch (_) {}
+}
+
 // Audio processing helper functions
 function dbfsFromRms(rms) {
     if (rms <= 1e-9) return -120;
@@ -245,6 +288,8 @@ micButton.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
     ignoreNextMicClick = true; // prevent the synthesized click from toggling again
     if (!isRecording) {
+        // Play start cue
+        playBeep();
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
@@ -257,6 +302,8 @@ micButton.addEventListener('pointerdown', (e) => {
             status.textContent = 'Microphone access denied';
         });
     } else {
+        // Play stop cue
+        playClack();
         // Immediate visual response for stopping
         stopRecording();
     }
@@ -276,6 +323,8 @@ micButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isRecording) {
+        // Play start cue
+        playBeep();
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
@@ -288,6 +337,8 @@ micButton.addEventListener('click', (e) => {
             status.textContent = 'Microphone access denied';
         });
     } else {
+        // Play stop cue
+        playClack();
         // Immediate visual response for stopping
         stopRecording();
     }
@@ -357,6 +408,8 @@ grammarBtn.addEventListener('click', async (e) => {
 async function toggleRecording() {
     // Kept for shortcut handlers; click path handles immediate UI
     if (!isRecording) {
+        // Play start cue (may be blocked if not a user gesture)
+        playBeep();
         // Mirror click behavior
         isRecording = true;
         micButton.classList.add('recording');
@@ -370,6 +423,8 @@ async function toggleRecording() {
             status.textContent = 'Microphone access denied';
         }
     } else {
+        // Play stop cue (may be blocked if not a user gesture)
+        playClack();
         await stopRecording();
     }
 }
@@ -594,3 +649,4 @@ listen('settings-changed', async () => {
 
 // Load settings on startup
 loadSettings();
+loadAudioCues();
