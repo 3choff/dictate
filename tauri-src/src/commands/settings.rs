@@ -98,9 +98,33 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     const SETTINGS_HEIGHT: f64 = 300.0;
     const GAP: f64 = 10.0;
     
-    // Check if settings window already exists - if so, close it (like Electron)
+    // If settings window already exists, toggle visibility without destroying it
     if let Some(window) = app.get_webview_window("settings") {
-        window.close().map_err(|e| e.to_string())?;
+        // If currently visible, hide it (toggle off)
+        if window.is_visible().map_err(|e| e.to_string())? {
+            window.hide().map_err(|e| e.to_string())?;
+            return Ok(());
+        }
+
+        // Window exists but is hidden: run measurement script and let update_settings_size position and show it
+        let _ = window.eval(r#"
+            (function(){
+              const send = () => {
+                const r = document.body.getBoundingClientRect();
+                const payload = { width: Math.ceil(r.width), height: Math.ceil(r.height) };
+                try {
+                  if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+                    window.__TAURI__.core.invoke('update_settings_size', payload);
+                  }
+                } catch (e) {}
+              };
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(send), { once: true });
+              } else {
+                requestAnimationFrame(send);
+              }
+            })();
+        "#);
         return Ok(());
     }
     
@@ -325,8 +349,8 @@ pub async fn update_settings_size(app: AppHandle, width: f64, height: f64) -> Re
 
 const DEFAULT_MAIN_WINDOW_WIDTH: f64 = 145.0;
 const DEFAULT_MAIN_WINDOW_HEIGHT: f64 = 90.0;
-const COMPACT_MAIN_WINDOW_WIDTH: f64 = 65.0;
-const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 75.0;
+const COMPACT_MAIN_WINDOW_WIDTH: f64 = 60.0;
+const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 70.0;
 
 #[tauri::command]
 pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), String> {

@@ -11,6 +11,14 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 
+// Keep a warm microphone stream for faster start/stop
+let micStream = null;
+let micReleaseTimer = null;
+const MIC_RELEASE_DELAY_MS = 8000; // release mic a bit after stopping to speed up re-starts
+let ignoreNextMicClick = false; // suppress click after pointerdown-start
+let ignoreNextSettingsClick = false;
+let ignoreNextGrammarClick = false;
+
 // Segmentation state (for non-streaming providers)
 let segmentationActive = false;
 let segmentAudioCtx = null;
@@ -23,7 +31,7 @@ let segmentHadSpeech = false;
 let segmentIsProcessing = false; // Prevent duplicate requests
 
 // Segmentation constants
-const SEGMENT_SILENCE_MS = 1000;      // 1 second of silence triggers segment
+const SEGMENT_SILENCE_MS = 700;      // 700ms of silence triggers segment
 const SEGMENT_SILENCE_DB = -30;       // dB threshold for silence detection
 const SEGMENT_MAX_DURATION_MS = 15000; // Max 15s per segment (safety)
 const SEGMENT_MIN_DURATION_MS = 200;   // Min 200ms (ignore noise)
@@ -177,8 +185,25 @@ async function loadSettings() {
     }
 }
 
-// Toggle settings window
+// Toggle settings window on pointerdown for faster response
+settingsBtn.addEventListener('pointerdown', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ignoreNextSettingsClick = true;
+    try {
+        await invoke('open_settings_window');
+    } catch (error) {
+        console.error('Failed to open settings:', error);
+    }
+});
+settingsBtn.addEventListener('pointercancel', () => { ignoreNextSettingsClick = false; });
 settingsBtn.addEventListener('click', async (e) => {
+    if (ignoreNextSettingsClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        ignoreNextSettingsClick = false;
+        return;
+    }
     e.preventDefault();
     e.stopPropagation();
     try {
@@ -188,7 +213,7 @@ settingsBtn.addEventListener('click', async (e) => {
     }
 });
 
-// Close button handler - exits the app
+// Close button - exit on click (not pointerdown)
 closeBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -199,11 +224,67 @@ closeBtn.addEventListener('click', async (e) => {
     }
 });
 
-// Handle mic button click
-micButton.addEventListener('click', (e) => {
+// Instant pressed-state feedback for all buttons
+for (const el of [micButton, settingsBtn, grammarBtn]) {
+    if (!el) continue;
+    el.addEventListener('pointerdown', () => el.classList.add('pressed'));
+    el.addEventListener('pointerup', () => el.classList.remove('pressed'));
+    el.addEventListener('pointercancel', () => el.classList.remove('pressed'));
+    el.addEventListener('mouseleave', () => el.classList.remove('pressed'));
+}
+
+// Start/stop on pointerdown for faster response
+micButton.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleRecording();
+    ignoreNextMicClick = true; // prevent the synthesized click from toggling again
+    if (!isRecording) {
+        // Immediate visual response
+        isRecording = true;
+        micButton.classList.add('recording');
+        status.textContent = 'Starting...';
+        // Start asynchronously and revert if it fails
+        startRecording().catch((err) => {
+            console.error('Error starting recording:', err);
+            isRecording = false;
+            micButton.classList.remove('recording');
+            status.textContent = 'Microphone access denied';
+        });
+    } else {
+        // Immediate visual response for stopping
+        stopRecording();
+    }
+});
+
+// In case of pointer cancellation, allow next click
+micButton.addEventListener('pointercancel', () => { ignoreNextMicClick = false; });
+
+// Fallback click handler (suppressed after pointerdown)
+micButton.addEventListener('click', (e) => {
+    if (ignoreNextMicClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        ignoreNextMicClick = false;
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isRecording) {
+        // Immediate visual response
+        isRecording = true;
+        micButton.classList.add('recording');
+        status.textContent = 'Starting...';
+        // Start asynchronously and revert if it fails
+        startRecording().catch((err) => {
+            console.error('Error starting recording:', err);
+            isRecording = false;
+            micButton.classList.remove('recording');
+            status.textContent = 'Microphone access denied';
+        });
+    } else {
+        // Immediate visual response for stopping
+        stopRecording();
+    }
 });
 
 // Listen for global shortcut with debounce to prevent double-firing
@@ -215,48 +296,73 @@ listen('toggle-recording', () => {
     toggleRecording();
 });
 
-// Grammar correction button handler
-grammarBtn.addEventListener('click', async () => {
+async function performGrammarCorrection() {
     try {
         if (!GROQ_API_KEY) {
             console.error('API key not set');
             return;
         }
-        
         // Show loading state
         grammarBtn.classList.add('loading');
-        
         // Copy selected text using backend (simulates Ctrl+C)
         const selectedText = await invoke('copy_selected_text');
-        
         if (!selectedText || !selectedText.trim()) {
             console.warn('No text selected');
             grammarBtn.classList.remove('loading');
             return;
         }
-        
         // Call backend to correct grammar
         const correctedText = await invoke('correct_grammar', {
             text: selectedText,
             apiKey: GROQ_API_KEY
         });
-        
-        // Insert corrected text (this will replace the selected text via Ctrl+V)
+        // Insert corrected text via clipboard regardless of settings
         await invoke('insert_text', { 
             text: correctedText,
-            insertionMode: INSERTION_MODE
+            insertionMode: 'clipboard'
         });
-        
     } catch (error) {
         console.error('Grammar correction error:', error);
     } finally {
         grammarBtn.classList.remove('loading');
     }
+}
+
+// Grammar correction on pointerdown for faster response
+grammarBtn.addEventListener('pointerdown', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ignoreNextGrammarClick = true;
+    await performGrammarCorrection();
+});
+grammarBtn.addEventListener('pointercancel', () => { ignoreNextGrammarClick = false; });
+grammarBtn.addEventListener('click', async (e) => {
+    if (ignoreNextGrammarClick) {
+        e.preventDefault();
+        e.stopPropagation();
+        ignoreNextGrammarClick = false;
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    await performGrammarCorrection();
 });
 
 async function toggleRecording() {
+    // Kept for shortcut handlers; click path handles immediate UI
     if (!isRecording) {
-        await startRecording();
+        // Mirror click behavior
+        isRecording = true;
+        micButton.classList.add('recording');
+        status.textContent = 'Starting...';
+        try {
+            await startRecording();
+        } catch (err) {
+            console.error('Error starting recording:', err);
+            isRecording = false;
+            micButton.classList.remove('recording');
+            status.textContent = 'Microphone access denied';
+        }
     } else {
         await stopRecording();
     }
@@ -264,17 +370,26 @@ async function toggleRecording() {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Reuse warm stream if available, otherwise request
+        if (!micStream) {
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        // Cancel any scheduled release
+        if (micReleaseTimer) {
+            clearTimeout(micReleaseTimer);
+            micReleaseTimer = null;
+        }
         
         // Use segmentation mode for non-streaming providers
         segmentationActive = true;
-        segmentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
+        if (!segmentAudioCtx) {
+            segmentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
         try {
             await segmentAudioCtx.resume();
         } catch (_) {}
         
-        segmentSource = segmentAudioCtx.createMediaStreamSource(stream);
+        segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
         const bufferSize = 4096; // ~85ms at 48kHz
         segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
         
@@ -323,16 +438,20 @@ async function startRecording() {
             segmentProcessor.connect(segmentAudioCtx.destination);
         } catch (_) {}
         
-        isRecording = true;
-        micButton.classList.add('recording');
+        // UI was already set by the caller for immediate feedback
         status.textContent = 'Recording...';
     } catch (error) {
         console.error('Error starting recording:', error);
-        status.textContent = 'Microphone access denied';
+        throw error;
     }
 }
 
 async function stopRecording() {
+    // Immediate UI feedback
+    isRecording = false;
+    micButton.classList.remove('recording');
+    status.textContent = 'Press to record';
+
     if (segmentationActive) {
         // Emit final segment if any
         try {
@@ -351,12 +470,11 @@ async function stopRecording() {
             if (segmentSource) segmentSource.disconnect();
         } catch (_) {}
         try {
-            if (segmentAudioCtx) segmentAudioCtx.close();
+            if (segmentAudioCtx && segmentAudioCtx.state !== 'closed') await segmentAudioCtx.suspend();
         } catch (_) {}
         
         segmentProcessor = null;
         segmentSource = null;
-        segmentAudioCtx = null;
         segmentationActive = false;
         segmentSamples16k = [];
         segmentLastBoundary = 0;
@@ -368,10 +486,16 @@ async function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
     }
-    
-    isRecording = false;
-    micButton.classList.remove('recording');
-    status.textContent = 'Press to record';
+
+    // Schedule mic release to keep device warm for quick restart
+    if (micStream) {
+        micReleaseTimer = setTimeout(() => {
+            try {
+                for (const track of micStream.getTracks()) track.stop();
+            } catch (_) {}
+            micStream = null;
+        }, MIC_RELEASE_DELAY_MS);
+    }
 }
 
 // Compact mode toggle functionality
@@ -389,30 +513,41 @@ async function toggleCompactMode(targetState) {
     }
     
     const enteringCompact = shouldCompact;
-    
-    // Call backend FIRST to update window size and save preference
-    try {
-        await invoke('toggle_compact_mode', { enabled: shouldCompact });
-    } catch (error) {
-        console.error('[COMPACT] Failed to toggle compact mode:', error);
-        return; // Don't update UI if backend fails
-    }
-    
-    // Then add transition classes
+    // Start UI transition immediately to feel snappier
     document.body.classList.add(TRANSITIONING_CLASS);
     document.body.classList.remove(ENTER_CLASS, EXIT_CLASS);
     document.body.classList.add(enteringCompact ? ENTER_CLASS : EXIT_CLASS);
-    
+
     requestAnimationFrame(() => {
         if (enteringCompact) {
             document.body.classList.add(COMPACT_CLASS);
         } else {
             document.body.classList.remove(COMPACT_CLASS);
         }
-        
+
         setTimeout(() => {
             document.body.classList.remove(TRANSITIONING_CLASS, ENTER_CLASS, EXIT_CLASS);
         }, 200);
+    });
+
+    // Fire backend resize in parallel; revert UI on failure
+    invoke('toggle_compact_mode', { enabled: shouldCompact }).catch((error) => {
+        console.error('[COMPACT] Failed to toggle compact mode:', error);
+        // Revert UI state if backend failed
+        const revertToCompact = !enteringCompact; // reverse of target
+        document.body.classList.add(TRANSITIONING_CLASS);
+        document.body.classList.remove(ENTER_CLASS, EXIT_CLASS);
+        document.body.classList.add(revertToCompact ? ENTER_CLASS : EXIT_CLASS);
+        requestAnimationFrame(() => {
+            if (revertToCompact) {
+                document.body.classList.add(COMPACT_CLASS);
+            } else {
+                document.body.classList.remove(COMPACT_CLASS);
+            }
+            setTimeout(() => {
+                document.body.classList.remove(TRANSITIONING_CLASS, ENTER_CLASS, EXIT_CLASS);
+            }, 200);
+        });
     });
 }
 
