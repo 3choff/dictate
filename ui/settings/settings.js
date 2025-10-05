@@ -1,10 +1,12 @@
 const { invoke } = window.__TAURI__?.core || {};
 const { getCurrentWindow } = window.__TAURI__?.window || {};
+// Using raw invoke for opener plugin commands to avoid requiring JS guest bindings
 
 const groqApiKeyInput = document.getElementById('groqApiKey');
 const toggleVisibilityBtn = document.getElementById('toggleVisibility');
 const closeBtn = document.getElementById('close-settings-btn');
 const insertionModeSelect = document.getElementById('insertion-mode');
+const helpButton = document.getElementById('settings-help');
 
 // Load settings on startup
 async function loadSettings() {
@@ -90,6 +92,16 @@ if (insertionModeSelect) {
 window.addEventListener('beforeunload', async (e) => {
     await saveSettings();
 });
+
+if (helpButton) {
+    helpButton.addEventListener('click', () => {
+        const url = 'https://github.com/3choff/dictate/issues';
+        if (window.__TAURI__?.core?.invoke) {
+            window.__TAURI__.core.invoke('plugin:opener|open_url', { url })
+                .catch((error) => console.error('Failed to open help link:', error));
+        }
+    });
+}
 
 // Load settings when page loads
 loadSettings();
