@@ -24,6 +24,7 @@ pub async fn transcribe_audio_segment(
     api_key: String,
     insertion_mode: String,
     language: Option<String>,
+    text_formatted: Option<bool>,
 ) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
@@ -65,8 +66,13 @@ pub async fn transcribe_audio_segment(
         return Ok(String::new());
     }
     
-    // Format and normalize text
-    let formatted = format_groq_transcript(&text);
+    // Format text based on text_formatted setting
+    let preserve_formatting = text_formatted.unwrap_or(true);  // Default true
+    let formatted = if preserve_formatting {
+        format_groq_transcript(&text)
+    } else {
+        normalize_groq_transcript(&text)
+    };
     
     // Insert text immediately if not empty
     if !formatted.is_empty() {
@@ -85,7 +91,7 @@ pub async fn transcribe_audio_segment(
     Ok(formatted)
 }
 
-/// Format Groq transcript (normalize, trim, add space)
+/// Format Groq transcript (preserve formatting, trim, add space)
 fn format_groq_transcript(text: &str) -> String {
     let trimmed = text.trim();
     if trimmed.is_empty() {
@@ -94,4 +100,22 @@ fn format_groq_transcript(text: &str) -> String {
     
     // Add trailing space for natural flow
     format!("{} ", trimmed)
+}
+
+/// Normalize Groq transcript (lowercase + remove punctuation)
+fn normalize_groq_transcript(text: &str) -> String {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    
+    // Lowercase and remove punctuation
+    let lowercase = trimmed.to_lowercase();
+    let cleaned: String = lowercase
+        .chars()
+        .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+        .collect();
+    
+    // Add trailing space for natural flow
+    format!("{} ", cleaned.trim())
 }

@@ -15,6 +15,8 @@ pub struct Settings {
     pub insertion_mode: String,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default = "default_text_formatted")]
+    pub text_formatted: bool,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
 }
@@ -34,6 +36,10 @@ fn default_language() -> String {
     "multilingual".to_string()
 }
 
+fn default_text_formatted() -> bool {
+    true  // Default to preserving formatting (matches Electron)
+}
+
 fn default_prompts() -> HashMap<String, String> {
     let mut prompts = HashMap::new();
     prompts.insert(
@@ -51,6 +57,7 @@ impl Default for Settings {
             compact_mode: false,
             insertion_mode: default_insertion_mode(),
             language: default_language(),
+            text_formatted: default_text_formatted(),
             main_window_position: None,
         }
     }

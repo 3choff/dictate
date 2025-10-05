@@ -7,6 +7,7 @@ const toggleVisibilityBtn = document.getElementById('toggleVisibility');
 const closeBtn = document.getElementById('close-settings-btn');
 const insertionModeSelect = document.getElementById('insertion-mode');
 const languageSelect = document.getElementById('language-select');
+const textFormattedCheckbox = document.getElementById('text-formatted');
 const helpButton = document.getElementById('settings-help');
 
 // Load settings on startup
@@ -17,6 +18,9 @@ async function loadSettings() {
         insertionModeSelect.value = settings.insertion_mode || 'typing';
         if (languageSelect) {
             languageSelect.value = settings.language || 'multilingual';
+        }
+        if (textFormattedCheckbox) {
+            textFormattedCheckbox.checked = settings.text_formatted !== false;  // Default true
         }
     } catch (error) {
         console.error('Failed to load settings:', error);
@@ -29,7 +33,8 @@ async function saveSettings() {
         const settings = {
             groq_api_key: groqApiKeyInput.value.trim(),
             insertion_mode: insertionModeSelect.value,
-            language: languageSelect ? languageSelect.value : 'multilingual'
+            language: languageSelect ? languageSelect.value : 'multilingual',
+            text_formatted: textFormattedCheckbox ? textFormattedCheckbox.checked : true
         };
 
         await invoke('save_settings', { settings });
@@ -96,6 +101,11 @@ if (insertionModeSelect) {
 // Auto-save when language changes
 if (languageSelect) {
     languageSelect.addEventListener('change', saveSettings);
+}
+
+// Auto-save when text formatted toggle changes
+if (textFormattedCheckbox) {
+    textFormattedCheckbox.addEventListener('change', saveSettings);
 }
 
 // Save before window closes

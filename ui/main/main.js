@@ -46,6 +46,7 @@ const status = { textContent: '' }; // Dummy status object since we don't have a
 let GROQ_API_KEY = '';
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
+let TEXT_FORMATTED = true;
 
 // Audio processing helper functions
 function dbfsFromRms(rms) {
@@ -149,7 +150,8 @@ async function emitSegmentIfReady(boundaryIndex) {
             audioData: Array.from(wavBytes),
             apiKey: GROQ_API_KEY,
             insertionMode: INSERTION_MODE,
-            language: LANGUAGE
+            language: LANGUAGE,
+            textFormatted: TEXT_FORMATTED
         });
     } catch (error) {
         const errorMsg = error.toString();
@@ -178,6 +180,7 @@ async function loadSettings() {
         GROQ_API_KEY = settings.groq_api_key || '';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
+        TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
         
         // Restore compact mode state
         if (settings.compact_mode) {
