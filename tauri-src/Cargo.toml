@@ -32,6 +32,8 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "mul
 enigo = "0.2"
 clipboard-win = "5.4"
 raw-window-handle = "0.6"
+base64 = "0.22"
+urlencoding = "2.1"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }

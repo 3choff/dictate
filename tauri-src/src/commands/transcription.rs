@@ -38,6 +38,12 @@ pub async fn transcribe_audio_segment(
         "fireworks" => providers::fireworks::transcribe_verbose(audio_data, api_key, normalized_lang)
             .await
             .map_err(|e| e.to_string()),
+        "gemini" => providers::gemini::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
+        "mistral" => providers::mistral::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
         _ => providers::groq::transcribe_verbose(audio_data, api_key, normalized_lang)
             .await
             .map_err(|e| e.to_string()),

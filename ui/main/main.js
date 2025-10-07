@@ -46,6 +46,8 @@ const status = { textContent: '' }; // Dummy status object since we don't have a
 let GROQ_API_KEY = '';
 let SAMBANOVA_API_KEY = '';
 let FIREWORKS_API_KEY = '';
+let GEMINI_API_KEY = '';
+let MISTRAL_API_KEY = '';
 let API_SERVICE = 'groq';
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
@@ -197,6 +199,10 @@ async function emitSegmentIfReady(boundaryIndex) {
             apiKeyToUse = SAMBANOVA_API_KEY;
         } else if (API_SERVICE === 'fireworks') {
             apiKeyToUse = FIREWORKS_API_KEY;
+        } else if (API_SERVICE === 'gemini') {
+            apiKeyToUse = GEMINI_API_KEY;
+        } else if (API_SERVICE === 'mistral') {
+            apiKeyToUse = MISTRAL_API_KEY;
         }
         console.log(`[Transcribe] provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} bytes=${wavBytes.length} keySet=${Boolean(apiKeyToUse)}`);
         const returned = await invoke('transcribe_audio_segment', {
@@ -240,11 +246,13 @@ async function loadSettings() {
         GROQ_API_KEY = settings.groq_api_key || '';
         SAMBANOVA_API_KEY = settings.sambanova_api_key || '';
         FIREWORKS_API_KEY = settings.fireworks_api_key || '';
+        GEMINI_API_KEY = settings.gemini_api_key || '';
+        MISTRAL_API_KEY = settings.mistral_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)}`);
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {

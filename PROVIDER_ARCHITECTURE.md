@@ -16,6 +16,24 @@ Dictate supports multiple AI providers for Whisper-based audio transcription and
 - **Rewrite Model**: `Meta-Llama-3.3-70B-Instruct`
 - **API Base**: `https://api.sambanova.ai/v1/`
 
+### Fireworks (`src/providers/fireworks.rs`)
+- **Transcription Model**: `Whisper (audio endpoint)`
+- **Rewrite Model**: `accounts/fireworks/models/gpt-oss-20b`
+- **API Base**: `https://audio-prod.us-virginia-1.direct.fireworks.ai/v1/`
+
+### Gemini (`src/providers/gemini.rs`)
+- **Transcription Model**: `gemini-flash-lite-latest`
+- **Rewrite Model**: `gemini-flash-lite-latest`
+- **API Base**: `https://generativelanguage.googleapis.com/v1beta/`
+- **Auth**: API key in URL query parameter
+- **Format**: Base64-encoded audio in JSON body
+
+### Mistral (`src/providers/mistral.rs`)
+- **Transcription Model**: `voxtral-mini-2507`
+- **Rewrite Model**: `mistral-small-latest`
+- **API Base**: `https://api.mistral.ai/v1/`
+- **Auth**: `x-api-key` header (not Bearer)
+
 ## Provider Interface
 
 Each provider module implements two core functions:

@@ -71,6 +71,21 @@ pub fn run() {
                 eprintln!("[HOTKEY] Failed to register Ctrl+Shift+S: {}", e);
             }
 
+            // Ctrl+Shift+X -> close app gracefully
+            let close_shortcut: Shortcut = "Ctrl+Shift+X".parse().unwrap();
+            if let Err(e) = gs.on_shortcut(close_shortcut, |app, _event, _shortcut| {
+                // Close main window gracefully, which will trigger app exit
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.close();
+                }
+                // Close settings window if open
+                if let Some(settings) = app.get_webview_window("settings") {
+                    let _ = settings.close();
+                }
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+X: {}", e);
+            }
+
             // Apply Windows-specific no-activate style to prevent focus stealing
             #[cfg(target_os = "windows")]
             if let Some(window) = app.get_webview_window("main") {

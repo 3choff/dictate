@@ -17,6 +17,12 @@ const sambaKeyGroup = document.getElementById('sambanova-key-group');
 const fireworksApiKeyInput = document.getElementById('fireworksApiKey');
 const toggleFireworksVisibilityBtn = document.getElementById('toggleFireworksVisibility');
 const fireworksKeyGroup = document.getElementById('fireworks-key-group');
+const geminiApiKeyInput = document.getElementById('geminiApiKey');
+const toggleGeminiVisibilityBtn = document.getElementById('toggleGeminiVisibility');
+const geminiKeyGroup = document.getElementById('gemini-key-group');
+const mistralApiKeyInput = document.getElementById('mistralApiKey');
+const toggleMistralVisibilityBtn = document.getElementById('toggleMistralVisibility');
+const mistralKeyGroup = document.getElementById('mistral-key-group');
 const groqKeyGroup = document.getElementById('groq-key-group');
 
 // Load settings on startup
@@ -26,6 +32,8 @@ async function loadSettings() {
         groqApiKeyInput.value = settings.groq_api_key || '';
         if (sambaApiKeyInput) sambaApiKeyInput.value = settings.sambanova_api_key || '';
         if (fireworksApiKeyInput) fireworksApiKeyInput.value = settings.fireworks_api_key || '';
+        if (geminiApiKeyInput) geminiApiKeyInput.value = settings.gemini_api_key || '';
+        if (mistralApiKeyInput) mistralApiKeyInput.value = settings.mistral_api_key || '';
         if (apiServiceSelect) apiServiceSelect.value = settings.api_service || 'groq';
         insertionModeSelect.value = settings.insertion_mode || 'typing';
         if (languageSelect) {
@@ -52,6 +60,8 @@ async function saveSettings() {
             groq_api_key: groqApiKeyInput.value.trim(),
             sambanova_api_key: sambaApiKeyInput ? sambaApiKeyInput.value.trim() : '',
             fireworks_api_key: fireworksApiKeyInput ? fireworksApiKeyInput.value.trim() : '',
+            gemini_api_key: geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '',
+            mistral_api_key: mistralApiKeyInput ? mistralApiKeyInput.value.trim() : '',
             api_service: apiServiceSelect ? apiServiceSelect.value : 'groq',
             grammar_provider: grammarProviderSelect ? grammarProviderSelect.value : 'groq',
             insertion_mode: insertionModeSelect.value,
@@ -84,6 +94,18 @@ function toggleFireworksPasswordVisibility() {
     fireworksApiKeyInput.type = type;
 }
 
+function toggleGeminiPasswordVisibility() {
+    if (!geminiApiKeyInput) return;
+    const type = geminiApiKeyInput.type === 'password' ? 'text' : 'password';
+    geminiApiKeyInput.type = type;
+}
+
+function toggleMistralPasswordVisibility() {
+    if (!mistralApiKeyInput) return;
+    const type = mistralApiKeyInput.type === 'password' ? 'text' : 'password';
+    mistralApiKeyInput.type = type;
+}
+
 function updateProviderVisibility() {
     if (!apiServiceSelect) return;
     const svc = apiServiceSelect.value;
@@ -91,11 +113,17 @@ function updateProviderVisibility() {
     if (groqKeyGroup) groqKeyGroup.style.display = 'none';
     if (sambaKeyGroup) sambaKeyGroup.style.display = 'none';
     if (fireworksKeyGroup) fireworksKeyGroup.style.display = 'none';
+    if (geminiKeyGroup) geminiKeyGroup.style.display = 'none';
+    if (mistralKeyGroup) mistralKeyGroup.style.display = 'none';
     // Show the relevant one
     if (svc === 'sambanova' && sambaKeyGroup) {
         sambaKeyGroup.style.display = '';
     } else if (svc === 'fireworks' && fireworksKeyGroup) {
         fireworksKeyGroup.style.display = '';
+    } else if (svc === 'gemini' && geminiKeyGroup) {
+        geminiKeyGroup.style.display = '';
+    } else if (svc === 'mistral' && mistralKeyGroup) {
+        mistralKeyGroup.style.display = '';
     } else if (groqKeyGroup) {
         groqKeyGroup.style.display = '';
     }
@@ -132,6 +160,12 @@ if (toggleSambaVisibilityBtn) {
 }
 if (toggleFireworksVisibilityBtn) {
     toggleFireworksVisibilityBtn.addEventListener('click', toggleFireworksPasswordVisibility);
+}
+if (toggleGeminiVisibilityBtn) {
+    toggleGeminiVisibilityBtn.addEventListener('click', toggleGeminiPasswordVisibility);
+}
+if (toggleMistralVisibilityBtn) {
+    toggleMistralVisibilityBtn.addEventListener('click', toggleMistralPasswordVisibility);
 }
 
 // Save on Enter key
@@ -190,6 +224,24 @@ if (fireworksApiKeyInput) {
     fireworksApiKeyInput.addEventListener('input', () => {
         clearTimeout(saveTimeout3);
         saveTimeout3 = setTimeout(saveSettings, 500);
+    });
+}
+
+// Auto-save when Gemini key changes (debounced)
+if (geminiApiKeyInput) {
+    let saveTimeout4;
+    geminiApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout4);
+        saveTimeout4 = setTimeout(saveSettings, 500);
+    });
+}
+
+// Auto-save when Mistral key changes (debounced)
+if (mistralApiKeyInput) {
+    let saveTimeout5;
+    mistralApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout5);
+        saveTimeout5 = setTimeout(saveSettings, 500);
     });
 }
 

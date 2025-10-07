@@ -2,10 +2,9 @@
 pub mod groq;
 pub mod sambanova;
 pub mod fireworks;
+pub mod gemini;
+pub mod mistral;
 
-// Future providers (placeholders)
+// Future streaming providers (placeholders)
 // pub mod deepgram;
 // pub mod cartesia;
-// pub mod gemini;
-// pub mod mistral;
-// pub mod fireworks;

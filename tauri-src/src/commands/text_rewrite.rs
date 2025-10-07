@@ -29,6 +29,8 @@ pub async fn correct_grammar(app: AppHandle, text: String, api_key: String) -> R
     let provider_api_key = match provider.as_str() {
         "sambanova" => &settings.sambanova_api_key,
         "fireworks" => &settings.fireworks_api_key,
+        "gemini" => &settings.gemini_api_key,
+        "mistral" => &settings.mistral_api_key,
         _ => &settings.groq_api_key,  // Default to groq
     };
     
@@ -47,6 +49,8 @@ pub async fn correct_grammar(app: AppHandle, text: String, api_key: String) -> R
     let result = match provider.as_str() {
         "sambanova" => providers::sambanova::rewrite_text(text, prompt, active_key.to_string()).await,
         "fireworks" => providers::fireworks::rewrite_text(text, prompt, active_key.to_string()).await,
+        "gemini" => providers::gemini::rewrite_text(text, prompt, active_key.to_string()).await,
+        "mistral" => providers::mistral::rewrite_text(text, prompt, active_key.to_string()).await,
         _ => providers::groq::rewrite_text(text, prompt, active_key.to_string()).await,
     };
     
