@@ -1,23 +1,8 @@
 use crate::providers;
 use crate::services;
 
-#[tauri::command]
-pub async fn transcribe_audio(audio_data: Vec<u8>, api_key: String) -> Result<String, String> {
-    // Validate inputs
-    if audio_data.is_empty() {
-        return Err("No audio data provided".to_string());
-    }
-    
-    if api_key.trim().is_empty() {
-        return Err("API key is not set. Please configure it in settings.".to_string());
-    }
-    
-    providers::groq::transcribe(audio_data, api_key)
-        .await
-        .map_err(|e| e.to_string())
-}
-
-/// Transcribe audio segment and insert text immediately (for Groq segmentation)
+/// Transcribe audio segment and insert text immediately
+/// Supports multiple providers (Groq, SambaNova) with batch audio processing
 #[tauri::command]
 pub async fn transcribe_audio_segment(
     audio_data: Vec<u8>,
@@ -25,6 +10,7 @@ pub async fn transcribe_audio_segment(
     insertion_mode: String,
     language: Option<String>,
     text_formatted: Option<bool>,
+    api_service: Option<String>,
 ) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
@@ -36,18 +22,29 @@ pub async fn transcribe_audio_segment(
     }
     
     // Normalize language: 'multilingual' or empty -> None (auto-detect)
-    let groq_lang = match language.as_deref() {
+    let normalized_lang = match language.as_deref() {
         None => None,
         Some("") => None,
         Some("multilingual") => None,
         Some(code) => Some(code.to_string()),
     };
 
-    // Transcribe using verbose format
-    let text = providers::groq::transcribe_verbose(audio_data, api_key, groq_lang)
-        .await
-        .map_err(|e| {
-            let error_msg = e.to_string();
+    // Route to selected provider (default: Groq)
+    let service = api_service.unwrap_or_else(|| "groq".to_string());
+    let result: Result<String, String> = match service.as_str() {
+        "sambanova" => providers::sambanova::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
+        "fireworks" => providers::fireworks::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
+        _ => providers::groq::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
+    };
+
+    let text = result
+        .map_err(|error_msg| {
             
             // Check for specific error types
             if error_msg.contains("rate limit") || error_msg.contains("429") {

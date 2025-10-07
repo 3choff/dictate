@@ -10,7 +10,7 @@
     "active": false,
     "targets": "all",
     "icon": [
-      "../assets/icon/icon.ico"
+      "../assets/icons/icon.ico"
     ],
     "resources": [
       "assets/audio/*"

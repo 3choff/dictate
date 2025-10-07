@@ -14,17 +14,22 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Register Ctrl+Shift+D for recording toggle
+            // Register global shortcuts; on dev reload, ignore "already registered" errors
+            let gs = app.global_shortcut();
+
+            // Ctrl+Shift+D -> toggle recording
             let shortcut: Shortcut = "Ctrl+Shift+D".parse().unwrap();
-            app.global_shortcut().on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.emit("toggle-recording", ());
                 }
-            })?;
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+D: {}", e);
+            }
 
-            // Register Ctrl+Shift+L for DevTools toggle
+            // Ctrl+Shift+L -> toggle DevTools
             let debug_shortcut: Shortcut = "Ctrl+Shift+L".parse().unwrap();
-            app.global_shortcut().on_shortcut(debug_shortcut, |app, _event, _shortcut| {
+            if let Err(e) = gs.on_shortcut(debug_shortcut, |app, _event, _shortcut| {
                 if let Some(window) = app.get_webview_window("main") {
                     if window.is_devtools_open() {
                         let _ = window.close_devtools();
@@ -32,23 +37,39 @@ pub fn run() {
                         let _ = window.open_devtools();
                     }
                 }
-            })?;
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+L: {}", e);
+            }
 
-            // Register Ctrl+Shift+V for compact view toggle
+            // Ctrl+Shift+V -> toggle compact view
             let view_shortcut: Shortcut = "Ctrl+Shift+V".parse().unwrap();
-            app.global_shortcut().on_shortcut(view_shortcut, |app, _event, _shortcut| {
+            if let Err(e) = gs.on_shortcut(view_shortcut, |app, _event, _shortcut| {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.emit("toggle-view", ());
                 }
-            })?;
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+V: {}", e);
+            }
 
-            // Register Ctrl+Shift+G for grammar correction
+            // Ctrl+Shift+G -> grammar correction
             let grammar_shortcut: Shortcut = "Ctrl+Shift+G".parse().unwrap();
-            app.global_shortcut().on_shortcut(grammar_shortcut, |app, _event, _shortcut| {
+            if let Err(e) = gs.on_shortcut(grammar_shortcut, |app, _event, _shortcut| {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.emit("sparkle-trigger", ());
                 }
-            })?;
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+G: {}", e);
+            }
+
+            // Ctrl+Shift+S -> toggle settings window
+            let settings_shortcut: Shortcut = "Ctrl+Shift+S".parse().unwrap();
+            if let Err(e) = gs.on_shortcut(settings_shortcut, |app, _event, _shortcut| {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.emit("toggle-settings", ());
+                }
+            }) {
+                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+S: {}", e);
+            }
 
             // Apply Windows-specific no-activate style to prevent focus stealing
             #[cfg(target_os = "windows")]
@@ -128,7 +149,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::transcribe_audio,
             commands::transcribe_audio_segment,
             commands::insert_text,
             commands::copy_selected_text,

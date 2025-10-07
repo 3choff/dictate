@@ -44,6 +44,9 @@ const status = { textContent: '' }; // Dummy status object since we don't have a
 
 // API key and insertion mode will be loaded from settings
 let GROQ_API_KEY = '';
+let SAMBANOVA_API_KEY = '';
+let FIREWORKS_API_KEY = '';
+let API_SERVICE = 'groq';
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
@@ -189,14 +192,28 @@ async function emitSegmentIfReady(boundaryIndex) {
     
     // Send to backend for transcription
     try {
-        await invoke('transcribe_audio_segment', {
+        let apiKeyToUse = GROQ_API_KEY;
+        if (API_SERVICE === 'sambanova') {
+            apiKeyToUse = SAMBANOVA_API_KEY;
+        } else if (API_SERVICE === 'fireworks') {
+            apiKeyToUse = FIREWORKS_API_KEY;
+        }
+        console.log(`[Transcribe] provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} bytes=${wavBytes.length} keySet=${Boolean(apiKeyToUse)}`);
+        const returned = await invoke('transcribe_audio_segment', {
             audioData: Array.from(wavBytes),
-            apiKey: GROQ_API_KEY,
+            apiKey: apiKeyToUse,
             insertionMode: INSERTION_MODE,
             language: LANGUAGE,
-            textFormatted: TEXT_FORMATTED
+            textFormatted: TEXT_FORMATTED,
+            apiService: API_SERVICE
         });
+        if (typeof returned === 'string') {
+            console.log(`[Transcribe] backend returned length=${returned.length}`);
+        } else {
+            console.log('[Transcribe] backend returned non-string payload');
+        }
     } catch (error) {
+        console.error('[Transcribe] error invoking transcribe_audio_segment', error);
         const errorMsg = error.toString();
         
         // Show user-friendly error in status (briefly)
@@ -221,9 +238,13 @@ async function loadSettings() {
     try {
         const settings = await invoke('get_settings');
         GROQ_API_KEY = settings.groq_api_key || '';
+        SAMBANOVA_API_KEY = settings.sambanova_api_key || '';
+        FIREWORKS_API_KEY = settings.fireworks_api_key || '';
+        API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -344,7 +365,7 @@ micButton.addEventListener('click', (e) => {
     }
 });
 
-// Listen for global shortcut with debounce to prevent double-firing
+// Listen for global shortcuts with debounce to prevent double-firing
 let lastShortcutTime = 0;
 listen('toggle-recording', () => {
     const now = Date.now();
@@ -353,8 +374,21 @@ listen('toggle-recording', () => {
     toggleRecording();
 });
 
+listen('toggle-settings', async () => {
+    const now = Date.now();
+    if (now - lastShortcutTime < 500) return;
+    lastShortcutTime = now;
+    try {
+        await invoke('open_settings_window');
+    } catch (error) {
+        console.error('Failed to open settings:', error);
+    }
+});
+
 async function performGrammarCorrection() {
     try {
+        // Backend will use the selected grammar provider from settings
+        // Pass Groq key for backward compatibility (backend reads provider's key from settings)
         if (!GROQ_API_KEY) {
             console.error('API key not set');
             return;

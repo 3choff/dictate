@@ -18,6 +18,14 @@
     </div>
     <div class="settings-popup">
         <div class="form-group">
+            <label for="api-service">Transcription Model</label>
+            <select id="api-service">
+                <option value="groq">Groq Whisper</option>
+                <option value="sambanova">SambaNova Whisper</option>
+                <option value="fireworks">Fireworks Whisper</option>
+            </select>
+        </div>
+        <div class="form-group" id="groq-key-group">
             <label for="groqApiKey">Groq API Key</label>
             <div class="input-with-eye">
                 <input 
@@ -27,6 +35,46 @@
                     autocomplete="off"
                 />
                 <button id="toggleVisibility" class="eye-toggle" type="button">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path>
+                        </g>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group" id="sambanova-key-group" style="display:none;">
+            <label for="sambanovaApiKey">SambaNova API Key</label>
+            <div class="input-with-eye">
+                <input 
+                    type="password" 
+                    id="sambanovaApiKey" 
+                    placeholder="Enter your SambaNova API key"
+                    autocomplete="off"
+                />
+                <button id="toggleSambaVisibility" class="eye-toggle" type="button">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M1 10c0-3.9 3.1-7 7-7s7 3.1 7 7h-1c0-3.3-2.7-6-6-6s-6 2.7-6 6H1zm4 0c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm1 0c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"></path>
+                        </g>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group" id="fireworks-key-group" style="display:none;">
+            <label for="fireworksApiKey">Fireworks API Key</label>
+            <div class="input-with-eye">
+                <input 
+                    type="password" 
+                    id="fireworksApiKey" 
+                    placeholder="Enter your Fireworks API key"
+                    autocomplete="off"
+                />
+                <button id="toggleFireworksVisibility" class="eye-toggle" type="button">
                     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#b0b0b0">
                         <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                         <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -49,6 +97,14 @@
                 <option value="pt">Portuguese</option>
                 <option value="ja">Japanese</option>
                 <option value="nl">Dutch</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="grammar-provider">Grammar Correction Model</label>
+            <select id="grammar-provider">
+                <option value="groq">Groq GPT-OSS-120B</option>
+                <option value="fireworks">Fireworks GPT-OSS-20B</option>
+                <option value="sambanova">SambaNova Llama-3.3-70B</option>
             </select>
         </div>
         <div class="form-group">

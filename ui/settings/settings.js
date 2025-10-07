@@ -9,12 +9,24 @@ const insertionModeSelect = document.getElementById('insertion-mode');
 const languageSelect = document.getElementById('language-select');
 const textFormattedCheckbox = document.getElementById('text-formatted');
 const helpButton = document.getElementById('settings-help');
+const apiServiceSelect = document.getElementById('api-service');
+const grammarProviderSelect = document.getElementById('grammar-provider');
+const sambaApiKeyInput = document.getElementById('sambanovaApiKey');
+const toggleSambaVisibilityBtn = document.getElementById('toggleSambaVisibility');
+const sambaKeyGroup = document.getElementById('sambanova-key-group');
+const fireworksApiKeyInput = document.getElementById('fireworksApiKey');
+const toggleFireworksVisibilityBtn = document.getElementById('toggleFireworksVisibility');
+const fireworksKeyGroup = document.getElementById('fireworks-key-group');
+const groqKeyGroup = document.getElementById('groq-key-group');
 
 // Load settings on startup
 async function loadSettings() {
     try {
         const settings = await invoke('get_settings');
         groqApiKeyInput.value = settings.groq_api_key || '';
+        if (sambaApiKeyInput) sambaApiKeyInput.value = settings.sambanova_api_key || '';
+        if (fireworksApiKeyInput) fireworksApiKeyInput.value = settings.fireworks_api_key || '';
+        if (apiServiceSelect) apiServiceSelect.value = settings.api_service || 'groq';
         insertionModeSelect.value = settings.insertion_mode || 'typing';
         if (languageSelect) {
             languageSelect.value = settings.language || 'multilingual';
@@ -22,6 +34,12 @@ async function loadSettings() {
         if (textFormattedCheckbox) {
             textFormattedCheckbox.checked = settings.text_formatted !== false;  // Default true
         }
+        if (grammarProviderSelect) {
+            grammarProviderSelect.value = settings.grammar_provider || 'groq';
+        }
+
+        // Update provider key visibility
+        updateProviderVisibility();
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -32,6 +50,10 @@ async function saveSettings() {
     try {
         const settings = {
             groq_api_key: groqApiKeyInput.value.trim(),
+            sambanova_api_key: sambaApiKeyInput ? sambaApiKeyInput.value.trim() : '',
+            fireworks_api_key: fireworksApiKeyInput ? fireworksApiKeyInput.value.trim() : '',
+            api_service: apiServiceSelect ? apiServiceSelect.value : 'groq',
+            grammar_provider: grammarProviderSelect ? grammarProviderSelect.value : 'groq',
             insertion_mode: insertionModeSelect.value,
             language: languageSelect ? languageSelect.value : 'multilingual',
             text_formatted: textFormattedCheckbox ? textFormattedCheckbox.checked : true
@@ -48,6 +70,35 @@ async function saveSettings() {
 function togglePasswordVisibility() {
     const type = groqApiKeyInput.type === 'password' ? 'text' : 'password';
     groqApiKeyInput.type = type;
+}
+
+function toggleSambaPasswordVisibility() {
+    if (!sambaApiKeyInput) return;
+    const type = sambaApiKeyInput.type === 'password' ? 'text' : 'password';
+    sambaApiKeyInput.type = type;
+}
+
+function toggleFireworksPasswordVisibility() {
+    if (!fireworksApiKeyInput) return;
+    const type = fireworksApiKeyInput.type === 'password' ? 'text' : 'password';
+    fireworksApiKeyInput.type = type;
+}
+
+function updateProviderVisibility() {
+    if (!apiServiceSelect) return;
+    const svc = apiServiceSelect.value;
+    // Hide all key groups first
+    if (groqKeyGroup) groqKeyGroup.style.display = 'none';
+    if (sambaKeyGroup) sambaKeyGroup.style.display = 'none';
+    if (fireworksKeyGroup) fireworksKeyGroup.style.display = 'none';
+    // Show the relevant one
+    if (svc === 'sambanova' && sambaKeyGroup) {
+        sambaKeyGroup.style.display = '';
+    } else if (svc === 'fireworks' && fireworksKeyGroup) {
+        fireworksKeyGroup.style.display = '';
+    } else if (groqKeyGroup) {
+        groqKeyGroup.style.display = '';
+    }
 }
 
 // Close window and save
@@ -76,6 +127,12 @@ if (closeBtn) {
 if (toggleVisibilityBtn) {
     toggleVisibilityBtn.addEventListener('click', togglePasswordVisibility);
 }
+if (toggleSambaVisibilityBtn) {
+    toggleSambaVisibilityBtn.addEventListener('click', toggleSambaPasswordVisibility);
+}
+if (toggleFireworksVisibilityBtn) {
+    toggleFireworksVisibilityBtn.addEventListener('click', toggleFireworksPasswordVisibility);
+}
 
 // Save on Enter key
 if (groqApiKeyInput) {
@@ -92,7 +149,6 @@ if (groqApiKeyInput) {
         saveTimeout = setTimeout(saveSettings, 500);
     });
 }
-
 // Auto-save when insertion mode changes
 if (insertionModeSelect) {
     insertionModeSelect.addEventListener('change', saveSettings);
@@ -103,9 +159,38 @@ if (languageSelect) {
     languageSelect.addEventListener('change', saveSettings);
 }
 
+// Auto-save when grammar provider changes
+if (grammarProviderSelect) {
+    grammarProviderSelect.addEventListener('change', saveSettings);
+}
+
 // Auto-save when text formatted toggle changes
 if (textFormattedCheckbox) {
     textFormattedCheckbox.addEventListener('change', saveSettings);
+}
+if (apiServiceSelect) {
+    apiServiceSelect.addEventListener('change', () => {
+        updateProviderVisibility();
+        saveSettings();
+    });
+}
+
+// Auto-save when SambaNova key changes (debounced)
+if (sambaApiKeyInput) {
+    let saveTimeout2;
+    sambaApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout2);
+        saveTimeout2 = setTimeout(saveSettings, 500);
+    });
+}
+
+// Auto-save when Fireworks key changes (debounced)
+if (fireworksApiKeyInput) {
+    let saveTimeout3;
+    fireworksApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout3);
+        saveTimeout3 = setTimeout(saveSettings, 500);
+    });
 }
 
 // Save before window closes

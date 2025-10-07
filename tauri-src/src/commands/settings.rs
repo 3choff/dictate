@@ -7,10 +7,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub groq_api_key: String,
+    #[serde(default)]
+    pub sambanova_api_key: String,
+    #[serde(default)]
+    pub fireworks_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
     #[serde(default)]
     pub compact_mode: bool,
+    #[serde(default = "default_api_service")]
+    pub api_service: String,
+    #[serde(default = "default_grammar_provider")]
+    pub grammar_provider: String,
     #[serde(default = "default_insertion_mode")]
     pub insertion_mode: String,
     #[serde(default = "default_language")]
@@ -40,6 +48,14 @@ fn default_text_formatted() -> bool {
     true  // Default to preserving formatting (matches Electron)
 }
 
+fn default_api_service() -> String {
+    "groq".to_string()
+}
+
+fn default_grammar_provider() -> String {
+    "groq".to_string()
+}
+
 fn default_prompts() -> HashMap<String, String> {
     let mut prompts = HashMap::new();
     prompts.insert(
@@ -53,8 +69,12 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             groq_api_key: String::new(),
+            sambanova_api_key: String::new(),
+            fireworks_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
+            api_service: default_api_service(),
+            grammar_provider: default_grammar_provider(),
             insertion_mode: default_insertion_mode(),
             language: default_language(),
             text_formatted: default_text_formatted(),
