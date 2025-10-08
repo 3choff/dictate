@@ -23,6 +23,9 @@ const geminiKeyGroup = document.getElementById('gemini-key-group');
 const mistralApiKeyInput = document.getElementById('mistralApiKey');
 const toggleMistralVisibilityBtn = document.getElementById('toggleMistralVisibility');
 const mistralKeyGroup = document.getElementById('mistral-key-group');
+const deepgramApiKeyInput = document.getElementById('deepgramApiKey');
+const toggleDeepgramVisibilityBtn = document.getElementById('toggleDeepgramVisibility');
+const deepgramKeyGroup = document.getElementById('deepgram-key-group');
 const groqKeyGroup = document.getElementById('groq-key-group');
 
 // Load settings on startup
@@ -34,6 +37,7 @@ async function loadSettings() {
         if (fireworksApiKeyInput) fireworksApiKeyInput.value = settings.fireworks_api_key || '';
         if (geminiApiKeyInput) geminiApiKeyInput.value = settings.gemini_api_key || '';
         if (mistralApiKeyInput) mistralApiKeyInput.value = settings.mistral_api_key || '';
+        if (deepgramApiKeyInput) deepgramApiKeyInput.value = settings.deepgram_api_key || '';
         if (apiServiceSelect) apiServiceSelect.value = settings.api_service || 'groq';
         insertionModeSelect.value = settings.insertion_mode || 'typing';
         if (languageSelect) {
@@ -62,6 +66,7 @@ async function saveSettings() {
             fireworks_api_key: fireworksApiKeyInput ? fireworksApiKeyInput.value.trim() : '',
             gemini_api_key: geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '',
             mistral_api_key: mistralApiKeyInput ? mistralApiKeyInput.value.trim() : '',
+            deepgram_api_key: deepgramApiKeyInput ? deepgramApiKeyInput.value.trim() : '',
             api_service: apiServiceSelect ? apiServiceSelect.value : 'groq',
             grammar_provider: grammarProviderSelect ? grammarProviderSelect.value : 'groq',
             insertion_mode: insertionModeSelect.value,
@@ -106,6 +111,12 @@ function toggleMistralPasswordVisibility() {
     mistralApiKeyInput.type = type;
 }
 
+function toggleDeepgramPasswordVisibility() {
+    if (!deepgramApiKeyInput) return;
+    const type = deepgramApiKeyInput.type === 'password' ? 'text' : 'password';
+    deepgramApiKeyInput.type = type;
+}
+
 function updateProviderVisibility() {
     if (!apiServiceSelect) return;
     const svc = apiServiceSelect.value;
@@ -115,6 +126,7 @@ function updateProviderVisibility() {
     if (fireworksKeyGroup) fireworksKeyGroup.style.display = 'none';
     if (geminiKeyGroup) geminiKeyGroup.style.display = 'none';
     if (mistralKeyGroup) mistralKeyGroup.style.display = 'none';
+    if (deepgramKeyGroup) deepgramKeyGroup.style.display = 'none';
     // Show the relevant one
     if (svc === 'sambanova' && sambaKeyGroup) {
         sambaKeyGroup.style.display = '';
@@ -124,6 +136,8 @@ function updateProviderVisibility() {
         geminiKeyGroup.style.display = '';
     } else if (svc === 'mistral' && mistralKeyGroup) {
         mistralKeyGroup.style.display = '';
+    } else if (svc === 'deepgram' && deepgramKeyGroup) {
+        deepgramKeyGroup.style.display = '';
     } else if (groqKeyGroup) {
         groqKeyGroup.style.display = '';
     }
@@ -166,6 +180,9 @@ if (toggleGeminiVisibilityBtn) {
 }
 if (toggleMistralVisibilityBtn) {
     toggleMistralVisibilityBtn.addEventListener('click', toggleMistralPasswordVisibility);
+}
+if (toggleDeepgramVisibilityBtn) {
+    toggleDeepgramVisibilityBtn.addEventListener('click', toggleDeepgramPasswordVisibility);
 }
 
 // Save on Enter key
@@ -242,6 +259,15 @@ if (mistralApiKeyInput) {
     mistralApiKeyInput.addEventListener('input', () => {
         clearTimeout(saveTimeout5);
         saveTimeout5 = setTimeout(saveSettings, 500);
+    });
+}
+
+// Auto-save when Deepgram key changes (debounced)
+if (deepgramApiKeyInput) {
+    let saveTimeout6;
+    deepgramApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout6);
+        saveTimeout6 = setTimeout(saveSettings, 500);
     });
 }
 

@@ -48,7 +48,12 @@ let SAMBANOVA_API_KEY = '';
 let FIREWORKS_API_KEY = '';
 let GEMINI_API_KEY = '';
 let MISTRAL_API_KEY = '';
+let DEEPGRAM_API_KEY = '';
 let API_SERVICE = 'groq';
+
+// Streaming provider detection
+const STREAMING_PROVIDERS = ['deepgram'];
+let streamingSessionId = null;
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
@@ -248,11 +253,12 @@ async function loadSettings() {
         FIREWORKS_API_KEY = settings.fireworks_api_key || '';
         GEMINI_API_KEY = settings.gemini_api_key || '';
         MISTRAL_API_KEY = settings.mistral_api_key || '';
+        DEEPGRAM_API_KEY = settings.deepgram_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)}`);
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -483,68 +489,163 @@ async function startRecording() {
             micReleaseTimer = null;
         }
         
-        // Use segmentation mode for non-streaming providers
-        segmentationActive = true;
-        if (!segmentAudioCtx) {
-            segmentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Check if using streaming provider
+        const isStreaming = STREAMING_PROVIDERS.includes(API_SERVICE);
+        
+        if (isStreaming) {
+            // STREAMING MODE: Use MediaRecorder and WebSocket
+            await startStreamingRecording();
+        } else {
+            // BATCH MODE: Use segmentation (existing logic)
+            await startBatchRecording();
         }
-        try {
-            await segmentAudioCtx.resume();
-        } catch (_) {}
-        
-        segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
-        const bufferSize = 4096; // ~85ms at 48kHz
-        segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
-        
-        segmentProcessor.onaudioprocess = (ev) => {
-            const inBuf = ev.inputBuffer;
-            const mono = mixToMonoFloat32(inBuf);
-            
-            // Calculate RMS and dB
-            let sumSq = 0;
-            for (let i = 0; i < mono.length; i++) {
-                const s = mono[i];
-                sumSq += s * s;
-            }
-            const rms = Math.sqrt(sumSq / Math.max(1, mono.length));
-            const db = dbfsFromRms(rms);
-            const frameMs = (mono.length / inBuf.sampleRate) * 1000;
-            
-            // Silence detection
-            if (db < SEGMENT_SILENCE_DB) {
-                segmentInSilenceMs += frameMs;
-            } else {
-                segmentInSilenceMs = 0;
-                segmentHadSpeech = true;
-            }
-            
-            // Downsample and accumulate
-            const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
-            for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
-            
-            const currentIndex = segmentSamples16k.length;
-            const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
-            
-            // Emit segment on silence or max duration (don't await to prevent blocking)
-            if (segmentInSilenceMs >= SEGMENT_SILENCE_MS && segmentHadSpeech && !segmentIsProcessing) {
-                emitSegmentIfReady(currentIndex);
-            } else if (segmentHadSpeech && currentMsSinceBoundary >= SEGMENT_MAX_DURATION_MS && !segmentIsProcessing) {
-                emitSegmentIfReady(currentIndex);
-            }
-        };
-        
-        // Connect audio nodes
-        try {
-            segmentSource.connect(segmentProcessor);
-        } catch (_) {}
-        try {
-            segmentProcessor.connect(segmentAudioCtx.destination);
-        } catch (_) {}
         
         // UI was already set by the caller for immediate feedback
         status.textContent = 'Recording...';
     } catch (error) {
         console.error('Error starting recording:', error);
+        throw error;
+    }
+}
+
+async function startBatchRecording() {
+    // Use segmentation mode for batch providers
+    segmentationActive = true;
+    if (!segmentAudioCtx) {
+        segmentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    try {
+        await segmentAudioCtx.resume();
+    } catch (_) {}
+    
+    segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
+    const bufferSize = 4096; // ~85ms at 48kHz
+    segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
+    
+    segmentProcessor.onaudioprocess = (ev) => {
+        const inBuf = ev.inputBuffer;
+        const mono = mixToMonoFloat32(inBuf);
+        
+        // Calculate RMS and dB
+        let sumSq = 0;
+        for (let i = 0; i < mono.length; i++) {
+            const s = mono[i];
+            sumSq += s * s;
+        }
+        const rms = Math.sqrt(sumSq / Math.max(1, mono.length));
+        const db = dbfsFromRms(rms);
+        const frameMs = (mono.length / inBuf.sampleRate) * 1000;
+        
+        // Silence detection
+        if (db < SEGMENT_SILENCE_DB) {
+            segmentInSilenceMs += frameMs;
+        } else {
+            segmentInSilenceMs = 0;
+            segmentHadSpeech = true;
+        }
+        
+        // Downsample and accumulate
+        const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
+        for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
+        
+        const currentIndex = segmentSamples16k.length;
+        const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
+        
+        // Emit segment on silence or max duration (don't await to prevent blocking)
+        if (segmentInSilenceMs >= SEGMENT_SILENCE_MS && segmentHadSpeech && !segmentIsProcessing) {
+            emitSegmentIfReady(currentIndex);
+        } else if (segmentHadSpeech && currentMsSinceBoundary >= SEGMENT_MAX_DURATION_MS && !segmentIsProcessing) {
+            emitSegmentIfReady(currentIndex);
+        }
+    };
+    
+    // Connect audio nodes
+    try {
+        segmentSource.connect(segmentProcessor);
+    } catch (_) {}
+    try {
+        segmentProcessor.connect(segmentAudioCtx.destination);
+    } catch (_) {}
+}
+
+async function startStreamingRecording() {
+    try {
+        // Get API key for streaming provider
+        let apiKey = '';
+        if (API_SERVICE === 'deepgram') {
+            apiKey = DEEPGRAM_API_KEY;
+        }
+        
+        if (!apiKey) {
+            throw new Error('API key not configured for ' + API_SERVICE);
+        }
+        
+        // Detect preferred audio format (opus is best for Deepgram)
+        let mimeType = 'audio/webm;codecs=opus';
+        let encoding = 'opus';
+        
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                mimeType = 'audio/webm;codecs=opus';
+                encoding = 'opus';
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                mimeType = 'audio/webm';
+                encoding = 'webm';
+            }
+        }
+        
+        // Determine language for Deepgram (use 'multi' for multilingual)
+        let streamLanguage = LANGUAGE;
+        if (API_SERVICE === 'deepgram') {
+            streamLanguage = (LANGUAGE === 'multilingual' || !LANGUAGE) ? 'multi' : LANGUAGE;
+        }
+        
+        // Start backend streaming session with encoding info
+        streamingSessionId = await invoke('start_streaming_transcription', {
+            provider: API_SERVICE,
+            apiKey: apiKey,
+            language: streamLanguage,
+            smartFormat: TEXT_FORMATTED,
+            insertionMode: INSERTION_MODE,
+            encoding: encoding
+        });
+        
+        // Create MediaRecorder with preferred format
+        mediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
+        
+        mediaRecorder.ondataavailable = async (event) => {
+            if (event.data && event.data.size > 0 && streamingSessionId) {
+                try {
+                    // Convert Blob to ArrayBuffer to Uint8Array
+                    const arrayBuffer = await event.data.arrayBuffer();
+                    const audioData = Array.from(new Uint8Array(arrayBuffer));
+                    
+                    // Send to backend
+                    await invoke('send_streaming_audio', {
+                        sessionId: streamingSessionId,
+                        audioData: audioData
+                    });
+                } catch (error) {
+                    console.error('[Streaming] Failed to send audio:', error);
+                }
+            }
+        };
+        
+        mediaRecorder.onerror = (error) => {
+            console.error('[Streaming] MediaRecorder error:', error);
+        };
+        
+        // Start recording with chunks every 250ms
+        try {
+            mediaRecorder.start(250);
+        } catch (e) {
+            // Fallback if timeslice not supported
+            mediaRecorder.start();
+        }
+        
+    } catch (error) {
+        console.error('[Streaming] Failed to start:', error);
+        status.textContent = `Error: ${error.message}`;
         throw error;
     }
 }
@@ -555,6 +656,29 @@ async function stopRecording() {
     micButton.classList.remove('recording');
     status.textContent = 'Press to record';
 
+    // Check if using streaming provider
+    const isStreaming = STREAMING_PROVIDERS.includes(API_SERVICE);
+
+    if (isStreaming) {
+        // STREAMING MODE: Stop MediaRecorder and close WebSocket
+        await stopStreamingRecording();
+    } else {
+        // BATCH MODE: Process final segment
+        await stopBatchRecording();
+    }
+
+    // Schedule mic release to keep device warm for quick restart
+    if (micStream) {
+        micReleaseTimer = setTimeout(() => {
+            try {
+                for (const track of micStream.getTracks()) track.stop();
+            } catch (_) {}
+            micStream = null;
+        }, MIC_RELEASE_DELAY_MS);
+    }
+}
+
+async function stopBatchRecording() {
     if (segmentationActive) {
         // Emit final segment if any
         try {
@@ -589,15 +713,24 @@ async function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
     }
+}
 
-    // Schedule mic release to keep device warm for quick restart
-    if (micStream) {
-        micReleaseTimer = setTimeout(() => {
-            try {
-                for (const track of micStream.getTracks()) track.stop();
-            } catch (_) {}
-            micStream = null;
-        }, MIC_RELEASE_DELAY_MS);
+async function stopStreamingRecording() {
+    // Stop MediaRecorder
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+    
+    // Close backend streaming session
+    if (streamingSessionId) {
+        try {
+            await invoke('stop_streaming_transcription', {
+                sessionId: streamingSessionId
+            });
+        } catch (error) {
+            console.error('[Streaming] Failed to stop session:', error);
+        }
+        streamingSessionId = null;
     }
 }
 

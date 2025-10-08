@@ -15,6 +15,8 @@ pub struct Settings {
     pub gemini_api_key: String,
     #[serde(default)]
     pub mistral_api_key: String,
+    #[serde(default)]
+    pub deepgram_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
     #[serde(default)]
@@ -77,6 +79,7 @@ impl Default for Settings {
             fireworks_api_key: String::new(),
             gemini_api_key: String::new(),
             mistral_api_key: String::new(),
+            deepgram_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
             api_service: default_api_service(),

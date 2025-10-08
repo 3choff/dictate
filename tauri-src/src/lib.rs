@@ -7,12 +7,15 @@ mod commands;
 mod providers;
 mod services;
 
+use commands::streaming::StreamingState;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        .manage(StreamingState::default())
         .setup(|app| {
             // Register global shortcuts; on dev reload, ignore "already registered" errors
             let gs = app.global_shortcut();
@@ -175,6 +178,9 @@ pub fn run() {
             commands::toggle_compact_mode,
             commands::save_window_position,
             commands::update_settings_size,
+            commands::start_streaming_transcription,
+            commands::send_streaming_audio,
+            commands::stop_streaming_transcription,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

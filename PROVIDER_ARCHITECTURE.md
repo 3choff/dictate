@@ -34,6 +34,18 @@ Dictate supports multiple AI providers for Whisper-based audio transcription and
 - **API Base**: `https://api.mistral.ai/v1/`
 - **Auth**: `x-api-key` header (not Bearer)
 
+---
+
+## Streaming Providers (WebSocket-based)
+
+### Deepgram (`src/providers/deepgram.rs`)
+- **Transcription Model**: `nova-3`
+- **API Base**: `wss://api.deepgram.com/v1/listen`
+- **Auth**: `Authorization: Token {api_key}` header
+- **Protocol**: WebSocket with binary audio streaming
+- **Latency**: ~100-300ms (real-time)
+- **Features**: smart_format, punctuate, endpointing
+
 ## Provider Interface
 
 Each provider module implements two core functions:
