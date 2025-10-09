@@ -7,6 +7,4 @@ pub mod mistral;
 
 // Streaming providers (WebSocket-based)
 pub mod deepgram;
-
-// Future streaming providers (placeholders)
-// pub mod cartesia;
+pub mod cartesia;

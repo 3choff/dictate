@@ -84,6 +84,62 @@ pub async fn start_streaming_transcription(
             
             Ok(session_id)
         }
+        "cartesia" => {
+            // Start Cartesia streaming
+            // Cartesia uses raw language code (omit for multilingual)
+            let cart_language = if language == "multi" || language.is_empty() {
+                None
+            } else {
+                Some(language)
+            };
+            
+            let (audio_tx, mut transcript_rx) = providers::cartesia::start_streaming(
+                api_key,
+                cart_language,
+            )
+            .await
+            .map_err(|e| format!("Failed to start Cartesia: {}", e))?;
+            
+            // Store audio sender for this session
+            {
+                let mut sessions = state.sessions.lock().await;
+                sessions.insert(session_id.clone(), audio_tx);
+            }
+            
+            // Spawn task to handle incoming transcripts
+            let app_clone = app.clone();
+            let session_id_clone = session_id.clone();
+            let sessions_clone = state.sessions.clone();
+            
+            tokio::spawn(async move {
+                while let Some(transcript) = transcript_rx.recv().await {
+                    // Apply formatting based on smart_format setting
+                    let formatted_transcript = if smart_format {
+                        transcript
+                    } else {
+                        // Normalize like Electron app: lowercase + remove punctuation
+                        normalize_whisper_transcript(&transcript)
+                    };
+                    
+                    // Add space after each transcript segment to separate words
+                    let transcript_with_space = format!("{} ", formatted_transcript);
+                    
+                    // Insert text using configured mode
+                    let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                    
+                    // Emit event to frontend for status update
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-transcript", formatted_transcript);
+                    }
+                }
+                
+                // Clean up session when done
+                let mut sessions = sessions_clone.lock().await;
+                sessions.remove(&session_id_clone);
+            });
+            
+            Ok(session_id)
+        }
         _ => Err(format!("Unsupported streaming provider: {}", provider)),
     }
 }
@@ -136,4 +192,22 @@ async fn insert_transcript_text(text: &str, insertion_mode: &str) -> Result<(), 
         services::keyboard::insert_text_via_clipboard(text)
             .map_err(|e| e.to_string())
     }
+}
+
+// Helper function to normalize Whisper-based transcript (matches Electron app behavior)
+fn normalize_whisper_transcript(text: &str) -> String {
+    // Lowercase the text
+    let lower = text.to_lowercase();
+    
+    // Remove all punctuation characters
+    let cleaned: String = lower
+        .chars()
+        .filter(|c| !matches!(c, '.' | ',' | '/' | '#' | '!' | '$' | '%' | '^' | '&' | '*' 
+                              | ';' | ':' | '{' | '}' | '=' | '_' | '\'' | '`' | '~' | '(' 
+                              | ')' | '[' | ']' | '"' | '<' | '>' | '?' | '@' | '+' | '|' 
+                              | '\\' | '-'))
+        .collect();
+    
+    // Replace multiple spaces with single space and trim
+    cleaned.split_whitespace().collect::<Vec<&str>>().join(" ")
 }

@@ -26,6 +26,9 @@ const mistralKeyGroup = document.getElementById('mistral-key-group');
 const deepgramApiKeyInput = document.getElementById('deepgramApiKey');
 const toggleDeepgramVisibilityBtn = document.getElementById('toggleDeepgramVisibility');
 const deepgramKeyGroup = document.getElementById('deepgram-key-group');
+const cartesiaApiKeyInput = document.getElementById('cartesiaApiKey');
+const toggleCartesiaVisibilityBtn = document.getElementById('toggleCartesiaVisibility');
+const cartesiaKeyGroup = document.getElementById('cartesia-key-group');
 const groqKeyGroup = document.getElementById('groq-key-group');
 
 // Load settings on startup
@@ -38,6 +41,7 @@ async function loadSettings() {
         if (geminiApiKeyInput) geminiApiKeyInput.value = settings.gemini_api_key || '';
         if (mistralApiKeyInput) mistralApiKeyInput.value = settings.mistral_api_key || '';
         if (deepgramApiKeyInput) deepgramApiKeyInput.value = settings.deepgram_api_key || '';
+        if (cartesiaApiKeyInput) cartesiaApiKeyInput.value = settings.cartesia_api_key || '';
         if (apiServiceSelect) apiServiceSelect.value = settings.api_service || 'groq';
         insertionModeSelect.value = settings.insertion_mode || 'typing';
         if (languageSelect) {
@@ -67,6 +71,7 @@ async function saveSettings() {
             gemini_api_key: geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '',
             mistral_api_key: mistralApiKeyInput ? mistralApiKeyInput.value.trim() : '',
             deepgram_api_key: deepgramApiKeyInput ? deepgramApiKeyInput.value.trim() : '',
+            cartesia_api_key: cartesiaApiKeyInput ? cartesiaApiKeyInput.value.trim() : '',
             api_service: apiServiceSelect ? apiServiceSelect.value : 'groq',
             grammar_provider: grammarProviderSelect ? grammarProviderSelect.value : 'groq',
             insertion_mode: insertionModeSelect.value,
@@ -117,6 +122,12 @@ function toggleDeepgramPasswordVisibility() {
     deepgramApiKeyInput.type = type;
 }
 
+function toggleCartesiaPasswordVisibility() {
+    if (!cartesiaApiKeyInput) return;
+    const type = cartesiaApiKeyInput.type === 'password' ? 'text' : 'password';
+    cartesiaApiKeyInput.type = type;
+}
+
 function updateProviderVisibility() {
     if (!apiServiceSelect) return;
     const svc = apiServiceSelect.value;
@@ -127,6 +138,7 @@ function updateProviderVisibility() {
     if (geminiKeyGroup) geminiKeyGroup.style.display = 'none';
     if (mistralKeyGroup) mistralKeyGroup.style.display = 'none';
     if (deepgramKeyGroup) deepgramKeyGroup.style.display = 'none';
+    if (cartesiaKeyGroup) cartesiaKeyGroup.style.display = 'none';
     // Show the relevant one
     if (svc === 'sambanova' && sambaKeyGroup) {
         sambaKeyGroup.style.display = '';
@@ -138,6 +150,8 @@ function updateProviderVisibility() {
         mistralKeyGroup.style.display = '';
     } else if (svc === 'deepgram' && deepgramKeyGroup) {
         deepgramKeyGroup.style.display = '';
+    } else if (svc === 'cartesia' && cartesiaKeyGroup) {
+        cartesiaKeyGroup.style.display = '';
     } else if (groqKeyGroup) {
         groqKeyGroup.style.display = '';
     }
@@ -183,6 +197,9 @@ if (toggleMistralVisibilityBtn) {
 }
 if (toggleDeepgramVisibilityBtn) {
     toggleDeepgramVisibilityBtn.addEventListener('click', toggleDeepgramPasswordVisibility);
+}
+if (toggleCartesiaVisibilityBtn) {
+    toggleCartesiaVisibilityBtn.addEventListener('click', toggleCartesiaPasswordVisibility);
 }
 
 // Save on Enter key
@@ -268,6 +285,15 @@ if (deepgramApiKeyInput) {
     deepgramApiKeyInput.addEventListener('input', () => {
         clearTimeout(saveTimeout6);
         saveTimeout6 = setTimeout(saveSettings, 500);
+    });
+}
+
+// Auto-save when Cartesia key changes (debounced)
+if (cartesiaApiKeyInput) {
+    let saveTimeout7;
+    cartesiaApiKeyInput.addEventListener('input', () => {
+        clearTimeout(saveTimeout7);
+        saveTimeout7 = setTimeout(saveSettings, 500);
     });
 }
 

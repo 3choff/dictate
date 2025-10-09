@@ -49,11 +49,17 @@ let FIREWORKS_API_KEY = '';
 let GEMINI_API_KEY = '';
 let MISTRAL_API_KEY = '';
 let DEEPGRAM_API_KEY = '';
+let CARTESIA_API_KEY = '';
 let API_SERVICE = 'groq';
 
 // Streaming provider detection
-const STREAMING_PROVIDERS = ['deepgram'];
+const STREAMING_PROVIDERS = ['deepgram', 'cartesia'];
 let streamingSessionId = null;
+
+// Cartesia audio processing
+let cartesiaAudioCtx = null;
+let cartesiaSource = null;
+let cartesiaProcessor = null;
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
@@ -254,11 +260,12 @@ async function loadSettings() {
         GEMINI_API_KEY = settings.gemini_api_key || '';
         MISTRAL_API_KEY = settings.mistral_api_key || '';
         DEEPGRAM_API_KEY = settings.deepgram_api_key || '';
+        CARTESIA_API_KEY = settings.cartesia_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)}`);
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -574,11 +581,30 @@ async function startStreamingRecording() {
         let apiKey = '';
         if (API_SERVICE === 'deepgram') {
             apiKey = DEEPGRAM_API_KEY;
+        } else if (API_SERVICE === 'cartesia') {
+            apiKey = CARTESIA_API_KEY;
         }
         
         if (!apiKey) {
             throw new Error('API key not configured for ' + API_SERVICE);
         }
+        
+        // Route to appropriate streaming implementation
+        if (API_SERVICE === 'deepgram') {
+            await startDeepgramStreaming(apiKey);
+        } else if (API_SERVICE === 'cartesia') {
+            await startCartesiaStreaming(apiKey);
+        }
+        
+    } catch (error) {
+        console.error('[Streaming] Failed to start:', error);
+        status.textContent = `Error: ${error.message}`;
+        throw error;
+    }
+}
+
+async function startDeepgramStreaming(apiKey) {
+    try {
         
         // Detect preferred audio format (opus is best for Deepgram)
         let mimeType = 'audio/webm;codecs=opus';
@@ -595,14 +621,11 @@ async function startStreamingRecording() {
         }
         
         // Determine language for Deepgram (use 'multi' for multilingual)
-        let streamLanguage = LANGUAGE;
-        if (API_SERVICE === 'deepgram') {
-            streamLanguage = (LANGUAGE === 'multilingual' || !LANGUAGE) ? 'multi' : LANGUAGE;
-        }
+        let streamLanguage = (LANGUAGE === 'multilingual' || !LANGUAGE) ? 'multi' : LANGUAGE;
         
         // Start backend streaming session with encoding info
         streamingSessionId = await invoke('start_streaming_transcription', {
-            provider: API_SERVICE,
+            provider: 'deepgram',
             apiKey: apiKey,
             language: streamLanguage,
             smartFormat: TEXT_FORMATTED,
@@ -642,6 +665,59 @@ async function startStreamingRecording() {
             // Fallback if timeslice not supported
             mediaRecorder.start();
         }
+        
+    } catch (error) {
+        console.error('[Streaming] Failed to start:', error);
+        status.textContent = `Error: ${error.message}`;
+        throw error;
+    }
+}
+
+async function startCartesiaStreaming(apiKey) {
+    try {
+        // Cartesia uses raw language code (omit for multilingual)
+        let streamLanguage = (LANGUAGE === 'multilingual' || !LANGUAGE) ? 'multi' : LANGUAGE;
+        
+        // Start backend streaming session (no encoding needed - uses PCM16)
+        streamingSessionId = await invoke('start_streaming_transcription', {
+            provider: 'cartesia',
+            apiKey: apiKey,
+            language: streamLanguage,
+            smartFormat: TEXT_FORMATTED,
+            insertionMode: INSERTION_MODE,
+            encoding: null
+        });
+        
+        // Create AudioContext for PCM16 processing
+        cartesiaAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        await cartesiaAudioCtx.resume();
+        
+        cartesiaSource = cartesiaAudioCtx.createMediaStreamSource(micStream);
+        const bufferSize = 4096;
+        cartesiaProcessor = cartesiaAudioCtx.createScriptProcessor(bufferSize, 1, 1);
+        
+        cartesiaProcessor.onaudioprocess = async (ev) => {
+            if (!streamingSessionId) return;
+            
+            const inBuf = ev.inputBuffer;
+            const mono = mixToMonoFloat32(inBuf);
+            const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
+            
+            try {
+                // Send raw PCM16 data to backend
+                const audioData = Array.from(new Uint8Array(int16.buffer));
+                await invoke('send_streaming_audio', {
+                    sessionId: streamingSessionId,
+                    audioData: audioData
+                });
+            } catch (error) {
+                console.error('[Streaming] Failed to send audio:', error);
+            }
+        };
+        
+        // Connect audio nodes
+        cartesiaSource.connect(cartesiaProcessor);
+        cartesiaProcessor.connect(cartesiaAudioCtx.destination);
         
     } catch (error) {
         console.error('[Streaming] Failed to start:', error);
@@ -716,9 +792,29 @@ async function stopBatchRecording() {
 }
 
 async function stopStreamingRecording() {
-    // Stop MediaRecorder
+    // Stop MediaRecorder (for Deepgram)
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+    }
+    
+    // Stop Cartesia audio processing
+    if (cartesiaProcessor) {
+        try {
+            cartesiaProcessor.disconnect();
+        } catch (_) {}
+        cartesiaProcessor = null;
+    }
+    if (cartesiaSource) {
+        try {
+            cartesiaSource.disconnect();
+        } catch (_) {}
+        cartesiaSource = null;
+    }
+    if (cartesiaAudioCtx && cartesiaAudioCtx.state !== 'closed') {
+        try {
+            await cartesiaAudioCtx.suspend();
+        } catch (_) {}
+        cartesiaAudioCtx = null;
     }
     
     // Close backend streaming session
