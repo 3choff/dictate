@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::providers;
 use crate::services;
+use crate::voice_commands::{VoiceCommands, process_voice_commands, CommandAction};
 
 // Global state for active streaming sessions
 type AudioSender = tokio::sync::mpsc::Sender<Vec<u8>>;
@@ -33,6 +34,7 @@ pub async fn start_streaming_transcription(
     smart_format: bool,
     insertion_mode: String,
     encoding: Option<String>,
+    voice_commands_enabled: Option<bool>,
 ) -> Result<String, String> {
     // Get or create streaming state
     let state = app.state::<StreamingState>();
@@ -63,13 +65,42 @@ pub async fn start_streaming_transcription(
             let session_id_clone = session_id.clone();
             let sessions_clone = state.sessions.clone();
             
+            let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
-                    // Add space after each transcript segment to separate words
-                    let transcript_with_space = format!("{} ", transcript);
-                    
-                    // Insert text using configured mode
-                    let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                    // Process voice commands if enabled
+                    if voice_cmds_enabled {
+                        let voice_commands = VoiceCommands::new();
+                        let processed = process_voice_commands(&transcript, &voice_commands);
+                        
+                        // Execute command actions
+                        for action in &processed.actions {
+                            if let Err(e) = execute_streaming_command_action(action, &app_clone).await {
+                                eprintln!("[Voice Commands] Failed to execute action: {}", e);
+                            }
+                        }
+                        
+                        // Insert remaining text
+                        let text_to_insert = if processed.remaining_text.is_empty() {
+                            processed.processed_text.clone()
+                        } else if processed.processed_text.is_empty() {
+                            if processed.had_key_action {
+                                processed.remaining_text.clone()
+                            } else {
+                                format!("{} ", processed.remaining_text)
+                            }
+                        } else {
+                            format!("{}{}", processed.remaining_text, processed.processed_text)
+                        };
+                        
+                        if !text_to_insert.is_empty() {
+                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode).await;
+                        }
+                    } else {
+                        // No voice commands - insert directly with space
+                        let transcript_with_space = format!("{} ", transcript);
+                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                    }
                     
                     // Emit event to frontend for status update
                     if let Some(window) = app_clone.get_webview_window("main") {
@@ -111,6 +142,7 @@ pub async fn start_streaming_transcription(
             let session_id_clone = session_id.clone();
             let sessions_clone = state.sessions.clone();
             
+            let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
                     // Apply formatting based on smart_format setting
@@ -121,11 +153,39 @@ pub async fn start_streaming_transcription(
                         normalize_whisper_transcript(&transcript)
                     };
                     
-                    // Add space after each transcript segment to separate words
-                    let transcript_with_space = format!("{} ", formatted_transcript);
-                    
-                    // Insert text using configured mode
-                    let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                    // Process voice commands if enabled
+                    if voice_cmds_enabled {
+                        let voice_commands = VoiceCommands::new();
+                        let processed = process_voice_commands(&formatted_transcript, &voice_commands);
+                        
+                        // Execute command actions
+                        for action in &processed.actions {
+                            if let Err(e) = execute_streaming_command_action(action, &app_clone).await {
+                                eprintln!("[Voice Commands] Failed to execute action: {}", e);
+                            }
+                        }
+                        
+                        // Insert remaining text
+                        let text_to_insert = if processed.remaining_text.is_empty() {
+                            processed.processed_text.clone()
+                        } else if processed.processed_text.is_empty() {
+                            if processed.had_key_action {
+                                processed.remaining_text.clone()
+                            } else {
+                                format!("{} ", processed.remaining_text)
+                            }
+                        } else {
+                            format!("{}{}", processed.remaining_text, processed.processed_text)
+                        };
+                        
+                        if !text_to_insert.is_empty() {
+                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode).await;
+                        }
+                    } else {
+                        // No voice commands - insert directly with space
+                        let transcript_with_space = format!("{} ", formatted_transcript);
+                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                    }
                     
                     // Emit event to frontend for status update
                     if let Some(window) = app_clone.get_webview_window("main") {
@@ -210,4 +270,46 @@ fn normalize_whisper_transcript(text: &str) -> String {
     
     // Replace multiple spaces with single space and trim
     cleaned.split_whitespace().collect::<Vec<&str>>().join(" ")
+}
+
+/// Execute a voice command action (for streaming)
+async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandle) -> Result<(), String> {
+    match action {
+        CommandAction::KeyPress(key) => {
+            services::keyboard_inject::send_key_native(key)
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::KeyCombo(modifier, key) => {
+            services::keyboard_inject::send_key_combo_native(modifier, key)
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::DeleteLastWord => {
+            // Send Ctrl+Backspace to delete last word
+            services::keyboard_inject::send_key_combo_native("control", "backspace")
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::GrammarCorrect => {
+            // Emit event to trigger grammar correction
+            if let Some(window) = app.get_webview_window("main") {
+                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                // First select all
+                let _ = services::keyboard_inject::send_key_combo_native("control", "a");
+                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+                // Then trigger grammar correction shortcut
+                let _ = window.emit("sparkle-trigger", ());
+            }
+            Ok(())
+        }
+        CommandAction::PauseDictation => {
+            // Emit event to pause/stop dictation
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("toggle-recording", ());
+            }
+            Ok(())
+        }
+        CommandAction::InsertText(_) => {
+            // Text insertion is handled separately in the main flow
+            Ok(())
+        }
+    }
 }

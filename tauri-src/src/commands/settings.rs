@@ -33,6 +33,8 @@ pub struct Settings {
     pub language: String,
     #[serde(default = "default_text_formatted")]
     pub text_formatted: bool,
+    #[serde(default = "default_voice_commands_enabled")]
+    pub voice_commands_enabled: bool,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
 }
@@ -54,6 +56,10 @@ fn default_language() -> String {
 
 fn default_text_formatted() -> bool {
     true  // Default to preserving formatting (matches Electron)
+}
+
+fn default_voice_commands_enabled() -> bool {
+    true  // Default to enabling voice commands (matches Electron)
 }
 
 fn default_api_service() -> String {
@@ -90,6 +96,7 @@ impl Default for Settings {
             insertion_mode: default_insertion_mode(),
             language: default_language(),
             text_formatted: default_text_formatted(),
+            voice_commands_enabled: default_voice_commands_enabled(),
             main_window_position: None,
         }
     }

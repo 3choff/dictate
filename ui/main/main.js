@@ -63,6 +63,7 @@ let cartesiaProcessor = null;
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
+let VOICE_COMMANDS_ENABLED = true;
 
 // Audio cues (loaded at startup)
 let beepSound = null;
@@ -215,14 +216,15 @@ async function emitSegmentIfReady(boundaryIndex) {
         } else if (API_SERVICE === 'mistral') {
             apiKeyToUse = MISTRAL_API_KEY;
         }
-        console.log(`[Transcribe] provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} bytes=${wavBytes.length} keySet=${Boolean(apiKeyToUse)}`);
+        console.log(`[Transcribe] provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} bytes=${wavBytes.length} keySet=${Boolean(apiKeyToUse)}`);
         const returned = await invoke('transcribe_audio_segment', {
             audioData: Array.from(wavBytes),
             apiKey: apiKeyToUse,
             insertionMode: INSERTION_MODE,
             language: LANGUAGE,
             textFormatted: TEXT_FORMATTED,
-            apiService: API_SERVICE
+            apiService: API_SERVICE,
+            voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         if (typeof returned === 'string') {
             console.log(`[Transcribe] backend returned length=${returned.length}`);
@@ -265,7 +267,8 @@ async function loadSettings() {
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
+        VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -630,7 +633,8 @@ async function startDeepgramStreaming(apiKey) {
             language: streamLanguage,
             smartFormat: TEXT_FORMATTED,
             insertionMode: INSERTION_MODE,
-            encoding: encoding
+            encoding: encoding,
+            voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
         // Create MediaRecorder with preferred format
@@ -685,7 +689,8 @@ async function startCartesiaStreaming(apiKey) {
             language: streamLanguage,
             smartFormat: TEXT_FORMATTED,
             insertionMode: INSERTION_MODE,
-            encoding: null
+            encoding: null,
+            voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
         // Create AudioContext for PCM16 processing

@@ -8,6 +8,7 @@ const closeBtn = document.getElementById('close-settings-btn');
 const insertionModeSelect = document.getElementById('insertion-mode');
 const languageSelect = document.getElementById('language-select');
 const textFormattedCheckbox = document.getElementById('text-formatted');
+const voiceCommandsCheckbox = document.getElementById('voice-commands-enabled');
 const helpButton = document.getElementById('settings-help');
 const apiServiceSelect = document.getElementById('api-service');
 const grammarProviderSelect = document.getElementById('grammar-provider');
@@ -50,6 +51,9 @@ async function loadSettings() {
         if (textFormattedCheckbox) {
             textFormattedCheckbox.checked = settings.text_formatted !== false;  // Default true
         }
+        if (voiceCommandsCheckbox) {
+            voiceCommandsCheckbox.checked = settings.voice_commands_enabled !== false;  // Default true
+        }
         if (grammarProviderSelect) {
             grammarProviderSelect.value = settings.grammar_provider || 'groq';
         }
@@ -76,7 +80,8 @@ async function saveSettings() {
             grammar_provider: grammarProviderSelect ? grammarProviderSelect.value : 'groq',
             insertion_mode: insertionModeSelect.value,
             language: languageSelect ? languageSelect.value : 'multilingual',
-            text_formatted: textFormattedCheckbox ? textFormattedCheckbox.checked : true
+            text_formatted: textFormattedCheckbox ? textFormattedCheckbox.checked : true,
+            voice_commands_enabled: voiceCommandsCheckbox ? voiceCommandsCheckbox.checked : true
         };
 
         await invoke('save_settings', { settings });
@@ -235,6 +240,11 @@ if (grammarProviderSelect) {
 // Auto-save when text formatted toggle changes
 if (textFormattedCheckbox) {
     textFormattedCheckbox.addEventListener('change', saveSettings);
+}
+
+// Auto-save when voice commands toggle changes
+if (voiceCommandsCheckbox) {
+    voiceCommandsCheckbox.addEventListener('change', saveSettings);
 }
 if (apiServiceSelect) {
     apiServiceSelect.addEventListener('change', () => {

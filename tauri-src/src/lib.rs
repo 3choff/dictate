@@ -6,6 +6,7 @@ use tokio::time::{sleep, Duration};
 mod commands;
 mod providers;
 mod services;
+mod voice_commands;
 
 use commands::streaming::StreamingState;
 

@@ -1,16 +1,20 @@
 use crate::providers;
 use crate::services;
+use crate::voice_commands::{VoiceCommands, process_voice_commands, CommandAction};
+use tauri::{AppHandle, Manager, Emitter};
 
 /// Transcribe audio segment and insert text immediately
 /// Supports multiple providers (Groq, SambaNova) with batch audio processing
 #[tauri::command]
 pub async fn transcribe_audio_segment(
+    app: AppHandle,
     audio_data: Vec<u8>,
     api_key: String,
     insertion_mode: String,
     language: Option<String>,
     text_formatted: Option<bool>,
     api_service: Option<String>,
+    voice_commands_enabled: Option<bool>,
 ) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
@@ -77,16 +81,56 @@ pub async fn transcribe_audio_segment(
         normalize_whisper_transcript(&text)
     };
     
-    // Insert text immediately if not empty
-    if !formatted.is_empty() {
-        match insertion_mode.as_str() {
-            "typing" => {
-                services::keyboard_inject::inject_text_native(&formatted)
-                    .map_err(|e| format!("Failed to insert text: {}", e))?;
+    // Process voice commands if enabled
+    let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
+    if voice_cmds_enabled {
+        let voice_commands = VoiceCommands::new();
+        let processed = process_voice_commands(&formatted, &voice_commands);
+        
+        // Execute command actions first
+        for action in &processed.actions {
+            if let Err(e) = execute_command_action(action, &app).await {
+                eprintln!("[Voice Commands] Failed to execute action: {}", e);
             }
-            "clipboard" | _ => {
-                services::keyboard::insert_text_via_clipboard(&formatted)
-                    .map_err(|e| format!("Failed to insert text: {}", e))?;
+        }
+        
+        // Insert remaining text
+        let text_to_insert = if processed.remaining_text.is_empty() {
+            processed.processed_text.clone()
+        } else if processed.processed_text.is_empty() {
+            if processed.had_key_action {
+                processed.remaining_text.clone()
+            } else {
+                format!("{} ", processed.remaining_text)
+            }
+        } else {
+            format!("{}{}", processed.remaining_text, processed.processed_text)
+        };
+        
+        if !text_to_insert.is_empty() {
+            match insertion_mode.as_str() {
+                "typing" => {
+                    services::keyboard_inject::inject_text_native(&text_to_insert)
+                        .map_err(|e| format!("Failed to insert text: {}", e))?;
+                }
+                "clipboard" | _ => {
+                    services::keyboard::insert_text_via_clipboard(&text_to_insert)
+                        .map_err(|e| format!("Failed to insert text: {}", e))?;
+                }
+            }
+        }
+    } else {
+        // No voice commands - insert text directly
+        if !formatted.is_empty() {
+            match insertion_mode.as_str() {
+                "typing" => {
+                    services::keyboard_inject::inject_text_native(&formatted)
+                        .map_err(|e| format!("Failed to insert text: {}", e))?;
+                }
+                "clipboard" | _ => {
+                    services::keyboard::insert_text_via_clipboard(&formatted)
+                        .map_err(|e| format!("Failed to insert text: {}", e))?;
+                }
             }
         }
     }
@@ -121,4 +165,46 @@ fn normalize_whisper_transcript(text: &str) -> String {
     
     // Add trailing space for natural flow
     format!("{} ", cleaned.trim())
+}
+
+/// Execute a voice command action
+async fn execute_command_action(action: &CommandAction, app: &AppHandle) -> Result<(), String> {
+    match action {
+        CommandAction::KeyPress(key) => {
+            services::keyboard_inject::send_key_native(key)
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::KeyCombo(modifier, key) => {
+            services::keyboard_inject::send_key_combo_native(modifier, key)
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::DeleteLastWord => {
+            // Send Ctrl+Backspace to delete last word
+            services::keyboard_inject::send_key_combo_native("control", "backspace")
+                .map_err(|e| e.to_string())
+        }
+        CommandAction::GrammarCorrect => {
+            // Emit event to trigger grammar correction
+            if let Some(window) = app.get_webview_window("main") {
+                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                // First select all
+                let _ = services::keyboard_inject::send_key_combo_native("control", "a");
+                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+                // Then trigger grammar correction shortcut
+                let _ = window.emit("sparkle-trigger", ());
+            }
+            Ok(())
+        }
+        CommandAction::PauseDictation => {
+            // Emit event to pause/stop dictation
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("toggle-recording", ());
+            }
+            Ok(())
+        }
+        CommandAction::InsertText(_) => {
+            // Text insertion is handled separately in the main flow
+            Ok(())
+        }
+    }
 }
