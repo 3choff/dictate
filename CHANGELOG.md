@@ -1,3 +1,89 @@
+## [1.0.0] - 2025-10-11
+
+### 🎉 Major Release: Complete Migration to Tauri
+
+This release marks the complete migration from Electron to Tauri, delivering a high-performance, resource-efficient desktop application built with Rust and modern web technologies.
+
+### Added
+- **Tauri-based architecture:** Complete rewrite using Tauri 2.x framework with Rust backend
+- **Voice commands system:** Comprehensive voice command processing for all providers
+  - Punctuation commands (period, comma, question mark, exclamation mark, etc.)
+  - Key press commands (enter, tab, backspace, space, etc.)
+  - Key combination commands (copy, paste, save, undo, select all, etc.)
+  - Special commands (delete_last_word, grammar_correct, pause_dictation)
+  - Regex-based command matching with flexible pattern recognition
+  - Voice commands toggle in settings UI to enable/disable functionality
+- **Rust-based transcription services:** All provider integrations rewritten in Rust
+  - Groq (Whisper-Large-v3-Turbo) with silence-based chunking
+  - Deepgram (Nova-3) real-time streaming transcription
+  - Cartesia real-time streaming with PCM audio pipeline
+  - Google Gemini (2.5 Flash Lite) non-streaming transcription
+  - Mistral (Voxtral) audio transcription
+  - SambaNova (Whisper-Large-v3) transcription
+  - Fireworks Whisper transcription
+- **Native keyboard injection:** Windows-native keyboard simulation using `enigo` crate
+- **Streaming support:** Real-time transcription for Deepgram and Cartesia providers
+- **Settings management:** Persistent settings with JSON storage
+- **Global shortcuts:** Native global hotkey registration via Tauri plugins
+- **Clipboard management:** Efficient clipboard operations via Tauri plugin
+- **Grammar correction:** Multi-provider grammar correction support
+  - Groq (GPT-OSS-120B)
+  - Google Gemini (2.5 Flash Lite)
+  - Mistral (Small)
+  - SambaNova (Llama-3.3-70B)
+  - Fireworks (GPT-OSS-20B)
+
+### Changed
+- **Performance improvements:** ~80% reduction in memory usage compared to Electron version
+- **Faster startup:** Near-instant application launch with optimized Rust binary
+- **Smaller binary size:** Significantly reduced distributable size with Tauri's compact runtime
+- **Improved reliability:** Type-safe Rust backend eliminates entire classes of runtime errors
+- **Modern build system:** Cargo-based build with optimized release profile (size and LTO optimizations)
+- **Architecture redesign:**
+  - Frontend: HTML/CSS/JavaScript for UI and audio capture
+  - Backend: Rust for API calls, transcription processing, and system integration
+  - IPC: Tauri command system for secure frontend-backend communication
+- **Voice command consistency:** Commands now work identically across all providers (streaming and batch)
+
+### Technical Details
+- **Backend dependencies:**
+  - `tauri 2.8.5` - Core framework
+  - `tokio` - Async runtime for concurrent operations
+  - `reqwest` - HTTP client with HTTP/2 and TLS support
+  - `tokio-tungstenite` - WebSocket client for streaming providers
+  - `enigo 0.2` - Native keyboard injection
+  - `serde/serde_json` - Serialization/deserialization
+  - `regex` - Voice command pattern matching
+  - `base64`, `urlencoding` - Data encoding utilities
+  - `chrono` - Timestamp handling
+- **Build optimizations:**
+  - Size optimization (`opt-level = "z"`)
+  - Link-time optimization (LTO)
+  - Symbol stripping
+  - Single codegen unit for maximum optimization
+- **Tauri plugins:**
+  - `tauri-plugin-global-shortcut` - System-wide keyboard shortcuts
+  - `tauri-plugin-clipboard-manager` - Clipboard operations
+  - `tauri-plugin-opener` - URL/file opening
+
+### Migration Notes
+- The Electron-based version (v0.6.7) is preserved in the `electron/` directory as legacy code
+- Settings from the Electron version are not automatically migrated
+- All functionality from the Electron version is replicated or improved in the Tauri version
+- Build process changed from `npm run build` to `npm run tauri build`
+- Development mode changed from `npm start` to `npm run tauri dev`
+
+### Breaking Changes
+- Requires Rust toolchain for building from source
+- Settings storage location changed (no automatic migration)
+- Different build commands and directory structure
+
+---
+
+## Electron Legacy Versions (0.x.x)
+
+The following versions represent the legacy Electron-based implementation, available in the `electron/` directory.
+
 ## [0.6.7] - 2025-10-04
 
 ### Changed

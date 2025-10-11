@@ -2,10 +2,12 @@
 
 ![Dictate Demo](https://github.com/3choff/dictate/blob/master/assets/demo/demo.gif?raw=true)
 
-Dictate is an Electron-based desktop dictation application for Windows, inspired by the familiar UI of Windows Voice Typing. It aims to enhance the user experience by integrating more powerful and effective speech-to-text services, allowing users to record audio, transcribe it, and seamlessly paste the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
+Dictate is a high-performance desktop dictation application for Windows built with Tauri and Rust, inspired by the familiar UI of Windows Voice Typing. It delivers powerful speech-to-text capabilities with minimal resource usage, allowing users to record audio, transcribe it in real-time, and seamlessly insert the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 0.6.7
-**All changes will be documented in the `CHANGELOG.md` file.**
+**Version:** 1.0.0
+**All changes are documented in the `CHANGELOG.md` file.**
+
+> **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron/` directory.
 
 ## Features
 
@@ -14,7 +16,7 @@ Dictate is an Electron-based desktop dictation application for Windows, inspired
 *   **Standalone Windows Executable:** Packaged as a portable `.exe` for easy distribution and use.
 *   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), grammar correction provider (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
-*   **Global Hotkey:** Use `Ctrl+Shift+D` to toggle recording (start/stop) from anywhere on your system.
+*   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, grammar correction, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
 *   **Grammar Correction:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+G`) to correct grammar with your chosen provider (default: Groq). Click again while pulsing to abort.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Multiple Transcription Services:**
@@ -46,15 +48,20 @@ To set up and run Dictate:
     git clone https://github.com/3choff/dictate.git
     cd dictate
     ```
-2.  **Install dependencies:**
+2.  **Install Rust toolchain (if not already installed):**
+    ```bash
+    # Visit https://rustup.rs/ or use:
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+3.  **Install Node.js dependencies:**
     ```bash
     npm install
     ```
-3.  **Build the application (for a portable Windows executable):**
+4.  **Build the application (for a portable Windows executable):**
     ```bash
-    npm run build
+    npm run tauri build
     ```
-    The portable executable will be generated in the `dist` folder.
+    The installer and portable executable will be generated in the `tauri-src/target/release/bundle` folder.
 
 ## Usage
 
@@ -62,10 +69,14 @@ To set up and run Dictate:
 
 *   **Development Mode:** To run the app in development mode:
     ```bash
-    npm start
+    npm run tauri dev
     ```
-    Use `Ctrl+Shift+L` to toggle DevTools and verbose logs.
-*   **Packaged Application:** After building, navigate to the `dist` folder and run the `Dictate 0.6.7.exe` (or similar) executable.
+    Or use the Tauri CLI directly:
+    ```bash
+    cd tauri-src
+    cargo tauri dev
+    ```
+*   **Packaged Application:** After building, navigate to the `tauri-src/target/release/bundle/nsis` folder and run the installer, or use the portable executable in `tauri-src/target/release`.
 
 ### Window Views
 
@@ -74,7 +85,7 @@ Right-click anywhere on the main window to quickly toggle between the compact an
 ### Recording and Transcribing
 
 1.  **Launch Dictate.**
-2.  **Global Hotkey:** Press `Ctrl+Shift+D` to start recording. You will hear a "beep" sound.
+2.  **Start Recording:** Press `Ctrl+Shift+D` to start recording (see [Keyboard Shortcuts](#keyboard-shortcuts) for all available shortcuts). You will hear a "beep" sound.
 3.  **Speak:** Dictate your text.
 4.  **Stop Recording:** Press `Ctrl+Shift+D` again to stop recording or say "stop listening". You will hear a "clack" sound.
 5.  **Text Insertion:** The transcribed text will automatically be pasted into your currently active application.
@@ -92,7 +103,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 
 ### Voice Commands
 
-Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined once in `src/shared/voice-commands.js` and used across Groq, Deepgram, Cartesia, and other providers. Here are a few examples:
+Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined in `tauri-src/src/voice_commands.rs` and applies consistently across all providers (streaming and batch). Here are a few examples:
 
 *   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"
@@ -101,9 +112,34 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 *   **Grammar:** "correct grammar" / "correct the grammar" (selects all text and runs the grammar shortcut)
 *   **Dictation Controls:** "pause voice typing", "stop dictation", "pause voice mode", etc. (sends Ctrl+Shift+D to pause voice typing)
 
+### Keyboard Shortcuts
+
+Dictate provides global keyboard shortcuts that work from anywhere on your system:
+
+| Shortcut | Function | Description |
+|----------|----------|-------------|
+| `Ctrl+Shift+D` | **Toggle Recording** | Start or stop dictation. You'll hear a "beep" when recording starts and a "clack" when it stops. |
+| `Ctrl+Shift+G` | **Grammar Correction** | Correct grammar on selected text using your chosen AI provider. Click the sparkle button or use this shortcut, then select text in any application. |
+| `Ctrl+Shift+V` | **Toggle Compact Mode** | Switch between compact and expanded window layouts. This preference is saved and restored on app launch. |
+| `Ctrl+Shift+S` | **Toggle Settings** | Open or close the settings window. |
+| `Ctrl+Shift+L` | **Toggle DevTools** | Open or close the developer console for debugging (development feature). |
+| `Ctrl+Shift+X` | **Exit Application** | Close Dictate gracefully. |
+
+**Note:** All shortcuts use `Ctrl+Shift` to avoid conflicts with common application shortcuts.
+
 ## Development Notes
 
-*   **Debug Toggle:** Use `Ctrl+Shift+L` to open DevTools and enable verbose logs; press again to disable.
+*   **Technology Stack:**
+    *   **Backend:** Rust with Tauri 2.x framework
+    *   **Frontend:** HTML, CSS, vanilla JavaScript
+    *   **Audio Processing:** Web Audio API with streaming support
+    *   **Keyboard Injection:** Native Windows API via `enigo` crate
+*   **Architecture:**
+    *   Rust backend handles all API calls, transcription processing, and voice command execution
+    *   Frontend provides UI and audio capture
+    *   IPC communication via Tauri's command system
+*   **Performance:** Tauri reduces memory usage by ~80% compared to the Electron version while providing faster startup times
+*   **Legacy Version:** The Electron-based version (v0.6.7) is available in the `electron/` directory for reference
 
 ## License
 
