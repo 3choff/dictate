@@ -33,6 +33,7 @@ const toggleCartesiaVisibilityBtn = document.getElementById('toggleCartesiaVisib
 const cartesiaKeyGroup = document.getElementById('cartesia-key-group');
 const groqKeyGroup = document.getElementById('groq-key-group');
 
+
 // Load settings on startup
 async function loadSettings() {
     try {
@@ -72,6 +73,7 @@ document.addEventListener('click', (e) => {
         if (grammarProviderSelect) {
             grammarProviderSelect.value = settings.grammar_provider || 'groq';
         }
+
 
         // Update provider key visibility
         updateProviderVisibility();
@@ -321,6 +323,79 @@ if (cartesiaApiKeyInput) {
         saveTimeout7 = setTimeout(saveSettings, 500);
     });
 }
+
+function createCustomSelect(selectElement) {
+    const selectWrapper = document.createElement('div');
+    selectWrapper.className = 'custom-select-wrapper';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    trigger.innerHTML = `<span></span><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path d="M12.1338 5.94433C12.3919 5.77382 12.7434 5.80202 12.9707 6.02929C13.1979 6.25656 13.2261 6.60807 13.0556 6.8662L12.9707 6.9707L8.47067 11.4707C8.21097 11.7304 7.78896 11.7304 7.52926 11.4707L3.02926 6.9707L2.9443 6.8662C2.77379 6.60807 2.80199 6.25656 3.02926 6.02929C3.25653 5.80202 3.60804 5.77382 3.86617 5.94433L3.97067 6.02929L7.99996 10.0586L12.0293 6.02929L12.1338 5.94433Z"></path></svg>`;
+    selectWrapper.appendChild(trigger);
+
+    const options = document.createElement('div');
+    options.className = 'custom-options';
+
+    Array.from(selectElement.options).forEach(option => {
+        const optionEl = document.createElement('div');
+        optionEl.className = 'custom-option';
+        optionEl.textContent = option.textContent;
+        optionEl.dataset.value = option.value;
+        options.appendChild(optionEl);
+    });
+
+    selectWrapper.appendChild(options);
+    selectElement.parentNode.insertBefore(selectWrapper, selectElement);
+    selectWrapper.appendChild(selectElement); // Move the original select inside
+    selectElement.style.display = 'none'; // Hide it
+
+    // Set initial text
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    trigger.querySelector('span').textContent = selectedOption.textContent;
+
+    // Event Listeners
+    trigger.addEventListener('click', () => {
+        const isOpen = options.classList.toggle('open');
+
+        if (isOpen) {
+            const rect = trigger.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const optionsHeight = options.scrollHeight;
+
+            // Reset styles first
+            options.style.maxHeight = '';
+            options.style.overflowY = '';
+
+            if (optionsHeight > spaceBelow - 10) { // 10px buffer
+                options.style.maxHeight = (spaceBelow - 10) + 'px';
+                options.style.overflowY = 'auto';
+            }
+        }
+    });
+
+    options.addEventListener('click', (e) => {
+        if (e.target.classList.contains('custom-option')) {
+            const selectedValue = e.target.dataset.value;
+            selectElement.value = selectedValue;
+            trigger.querySelector('span').textContent = e.target.textContent;
+            options.classList.remove('open');
+            
+            // Manually trigger a change event for auto-saving
+            selectElement.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+// Close all custom dropdowns when clicking outside
+window.addEventListener('click', (e) => {
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+        if (!wrapper.contains(e.target)) {
+            wrapper.querySelector('.custom-options').classList.remove('open');
+        }
+    });
+});
+
+document.querySelectorAll('.custom-select').forEach(createCustomSelect);
 
 // Save before window closes
 window.addEventListener('beforeunload', async (e) => {

@@ -20,6 +20,7 @@ html, body {
     margin: 0;
     height: 100vh;
     -webkit-app-region: no-drag;
+    overflow: hidden;
 }
 
 body.transitioning {
@@ -43,6 +44,9 @@ body.transitioning.compact-exit {
     flex-direction: column;
     height: 100%;
     background-color: var(--primary-bg);
+    border: 1px solid rgba(252, 252, 252, 0.08);
+    border-radius: 16px;
+    box-sizing: border-box;
     overflow: hidden;
     transform: scale(1);
     opacity: 1;

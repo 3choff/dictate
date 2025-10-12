@@ -15,6 +15,7 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     -webkit-app-region: no-drag;
+    overflow: hidden;
 }
 
 .top-bar {
@@ -54,6 +55,9 @@ html, body {
 
 .window-frame {
     background-color: var(--primary-bg);
+    border: 1px solid rgba(252, 252, 252, 0.08);
+    border-radius: 16px;
+    box-sizing: border-box;
     overflow: hidden;
 }
 
@@ -235,4 +239,86 @@ html, body {
 }
 .update-notice:hover {
     text-decoration: underline;
+}
+/* Custom Select Dropdown */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+}
+
+.custom-select-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--accent-color);
+}
+
+.custom-select-trigger .icon-sm {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.custom-options.open + .custom-select-trigger .icon-sm {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    position: absolute;
+    display: none;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* This is where you get the rounded corners for the list */
+    margin-top: 4px;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.custom-options.open {
+    display: block;
+}
+
+.custom-option {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.custom-option:hover {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+
+/* Custom Scrollbar for Dropdown */
+.custom-options::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-options::-webkit-scrollbar-thumb {
+    background-color: var(--handle-color);
+    border-radius: 4px;
+    border: 2px solid var(--secondary-bg);
+}
+
+.custom-options::-webkit-scrollbar-thumb:hover {
+    background-color: #7a7e82; /* A slightly lighter version of handle-color */
 }

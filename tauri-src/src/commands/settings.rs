@@ -235,6 +235,7 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     .inner_size(SETTINGS_WIDTH, SETTINGS_HEIGHT)
     .resizable(false)
     .decorations(false)
+    .shadow(false)
     .transparent(true)
     .visible(false)  // Hide initially like Electron
     .skip_taskbar(true)
