@@ -1,3 +1,18 @@
+## [1.1.0] - 2025-10-12
+
+### Added
+- **Version in settings footer:** The app version is now displayed in the settings window (`ui/settings/index.html` via `#app-version`).
+- **Update notification:** On load, the app checks the latest GitHub release tag and shows a clickable "New version available" notice (`#update-notice`) when a newer version exists.
+
+### Changed
+- **UI refinements:** Rounded corners with a frosted glass effect for both main and settings windows (`backdrop-filter: blur(10px)`), ensuring transparent borders and consistent clipping.
+
+### Fixed
+- **Grammar correction shortcut:** `Ctrl+Shift+G` now triggers grammar correction reliably by calling `performGrammarCorrection()` directly (no simulated click), avoiding unintended paste behavior.
+- **Opener permissions:** Allowed opening the Releases URL via the Tauri opener capability.
+
+---
+
 ## [1.0.0] - 2025-10-11
 
 ### 🎉 Major Release: Complete Migration to Tauri

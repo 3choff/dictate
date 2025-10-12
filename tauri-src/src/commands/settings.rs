@@ -1,4 +1,6 @@
 use tauri::{AppHandle, Manager, Emitter};
+use tauri::State;
+use std::sync::Mutex;
 use std::fs;
 use std::path::PathBuf;
 use std::collections::HashMap;
@@ -454,4 +456,53 @@ pub async fn save_window_position(app: AppHandle, x: i32, y: i32) -> Result<(), 
     let mut settings = get_settings(app.clone()).await?;
     settings.main_window_position = Some(WindowPosition { x, y });
     save_settings(app, settings).await
+}
+
+#[tauri::command]
+pub async fn get_app_version(app: AppHandle) -> Result<String, String> {
+    Ok(app.package_info().version.to_string())
+}
+
+#[derive(Default)]
+pub struct ReleaseState {
+    pub latest: Mutex<Option<String>>, // cached latest stable tag (e.g., "v1.0.0")
+}
+
+#[tauri::command]
+pub async fn get_latest_release_tag(state: State<'_, ReleaseState>) -> Result<Option<String>, String> {
+    // Return cached value if present (per app run)
+    if let Some(tag) = state.latest.lock().map_err(|e| e.to_string())?.clone() {
+        return Ok(Some(tag));
+    }
+
+    // Fetch from GitHub Releases API (stable only)
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.github.com/repos/3choff/dictate/releases?per_page=5")
+        .header("User-Agent", "dictate-tauri")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Ok(None); // graceful: no UI disruption
+    }
+
+    let releases: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    let tag_opt = releases.as_array()
+        .and_then(|arr| arr.iter().find(|r| {
+            let draft = r.get("draft").and_then(|v| v.as_bool()).unwrap_or(false);
+            let pre = r.get("prerelease").and_then(|v| v.as_bool()).unwrap_or(false);
+            !draft && !pre
+        }))
+        .and_then(|r| r.get("tag_name").and_then(|t| t.as_str()).map(|s| s.to_string()));
+
+    if let Some(ref tag) = tag_opt {
+        if let Ok(mut lock) = state.latest.lock() {
+            *lock = Some(tag.clone());
+        }
+    }
+
+    Ok(tag_opt)
 }

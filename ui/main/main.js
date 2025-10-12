@@ -914,8 +914,8 @@ listen('sparkle-trigger', async () => {
     }
     lastGrammarTime = now;
     
-    // Trigger grammar correction (same as clicking the button)
-    grammarBtn.click();
+    // Directly call grammar correction function instead of simulating click
+    await performGrammarCorrection();
 });
 
 // Listen for settings changes

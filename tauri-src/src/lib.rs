@@ -17,6 +17,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .manage(StreamingState::default())
+        .manage(commands::settings::ReleaseState::default())
         .setup(|app| {
             // Register global shortcuts; on dev reload, ignore "already registered" errors
             let gs = app.global_shortcut();
@@ -178,6 +179,8 @@ pub fn run() {
             commands::exit_app,
             commands::toggle_compact_mode,
             commands::save_window_position,
+            commands::get_app_version,
+            commands::get_latest_release_tag,
             commands::update_settings_size,
             commands::start_streaming_transcription,
             commands::send_streaming_audio,

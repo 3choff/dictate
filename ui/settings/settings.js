@@ -10,6 +10,7 @@ const languageSelect = document.getElementById('language-select');
 const textFormattedCheckbox = document.getElementById('text-formatted');
 const voiceCommandsCheckbox = document.getElementById('voice-commands-enabled');
 const helpButton = document.getElementById('settings-help');
+const versionLabel = document.getElementById('app-version');
 const apiServiceSelect = document.getElementById('api-service');
 const grammarProviderSelect = document.getElementById('grammar-provider');
 const sambaApiKeyInput = document.getElementById('sambanovaApiKey');
@@ -48,6 +49,20 @@ async function loadSettings() {
         if (languageSelect) {
             languageSelect.value = settings.language || 'multilingual';
         }
+
+// Delegated click fallback to ensure reliability
+document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+    const el = target.closest('#update-notice');
+    if (!el) return;
+    const url = 'https://github.com/3choff/dictate/releases';
+    console.log('[delegated] Update notice clicked, opening:', url);
+    if (window.__TAURI__?.core?.invoke) {
+        window.__TAURI__.core.invoke('plugin:opener|open_url', { url })
+            .catch((error) => console.error('Failed to open releases link:', error));
+    }
+});
         if (textFormattedCheckbox) {
             textFormattedCheckbox.checked = settings.text_formatted !== false;  // Default true
         }
@@ -324,3 +339,96 @@ if (helpButton) {
 
 // Load settings when page loads
 loadSettings();
+
+// Fetch and render app version in footer
+(async () => {
+    try {
+        if (versionLabel && window.__TAURI__?.core?.invoke) {
+            const version = await invoke('get_app_version');
+            if (version) versionLabel.textContent = `v${version}`;
+            await hydrateUpdateNotice(version);
+        }
+    } catch (e) {
+        console.error('Failed to get app version:', e);
+    }
+})();
+
+// Bind update notice click using the same opener approach as Help
+const updateNoticeEl = document.getElementById('update-notice');
+function openReleasesPage() {
+    const url = 'https://github.com/3choff/dictate/releases';
+    console.log('[update-notice] Opening releases:', url);
+    if (window.__TAURI__?.core?.invoke) {
+        window.__TAURI__.core.invoke('plugin:opener|open_url', { url })
+            .catch((error) => console.error('Failed to open releases link:', error));
+    }
+}
+if (updateNoticeEl) {
+    updateNoticeEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openReleasesPage();
+    });
+    updateNoticeEl.addEventListener('pointerdown', (e) => {
+        // Capture early to avoid drag swallowing click
+        e.preventDefault();
+        e.stopPropagation();
+        openReleasesPage();
+    });
+    updateNoticeEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openReleasesPage();
+        }
+    });
+}
+
+// Global capture fallback (in case direct listener is bypassed by drag regions)
+document.addEventListener('pointerdown', (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+    const el = target.closest('#update-notice');
+    if (!el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openReleasesPage();
+}, true);
+
+function parseSemver(v) {
+    const s = String(v || '').trim().replace(/^v/gi, '');
+    const [maj, min, pat] = s.split('.');
+    return [parseInt(maj || '0', 10), parseInt(min || '0', 10), parseInt(pat || '0', 10)];
+}
+
+function cmpSemver(a, b) {
+    const aa = parseSemver(a), bb = parseSemver(b);
+    for (let i = 0; i < 3; i++) {
+        if ((aa[i] || 0) > (bb[i] || 0)) return 1;
+        if ((aa[i] || 0) < (bb[i] || 0)) return -1;
+    }
+    return 0;
+}
+
+function setUpdateVisible(visible) {
+    const el = document.getElementById('update-notice');
+    if (!el) return;
+    el.style.display = visible ? 'inline' : 'none';
+}
+
+async function hydrateUpdateNotice(currentVersion) {
+    try {
+        // Ask backend for per-run cached latest tag; it will fetch once per app session
+        const tag = await invoke('get_latest_release_tag'); // may be null
+        console.log('Version check - Current:', currentVersion, 'Latest:', tag);
+        if (tag && cmpSemver(tag, currentVersion) === 1) {
+            console.log('Update available, showing notice');
+            setUpdateVisible(true);
+        } else {
+            console.log('No update available');
+            setUpdateVisible(false);
+        }
+    } catch (e) {
+        console.error('Failed to check for updates:', e);
+        setUpdateVisible(false);
+    }
+}

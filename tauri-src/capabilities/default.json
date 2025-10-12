@@ -19,7 +19,8 @@
     {
       "identifier": "opener:allow-open-url",
       "allow": [
-        { "url": "https://github.com/3choff/dictate/issues" }
+        { "url": "https://github.com/3choff/dictate/issues" },
+        { "url": "https://github.com/3choff/dictate/releases" }
       ]
     }
   ]
