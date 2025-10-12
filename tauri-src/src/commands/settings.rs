@@ -303,7 +303,7 @@ fn calculate_settings_position(
     // Try right of main window
     let mut right_x = main_x + main_width + gap;
     // Compensate for OS/window visual shadow so the perceived gap matches LEFT
-    let shadow_comp = gap.max(1.0); // cap compensation to avoid overshooting
+    let shadow_comp = gap.min(10.0); // cap compensation to avoid overshooting
     right_x -= shadow_comp;
     // Check both left edge AND right edge fit on screen
     if right_x <= max_x {

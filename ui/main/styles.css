@@ -45,7 +45,7 @@ body.transitioning.compact-exit {
     height: 100%;
     background-color: var(--primary-bg);
     border: 1px solid rgba(252, 252, 252, 0.08);
-    border-radius: 16px;
+    border-radius: 14px;
     box-sizing: border-box;
     overflow: hidden;
     transform: scale(1);
@@ -56,6 +56,7 @@ body.transitioning.compact-exit {
     position: relative;
     padding: 6px 10px;
     min-height: 10px;
+    height: 14px;
     -webkit-app-region: drag;
     display: flex;
     justify-content: flex-end;
@@ -187,7 +188,11 @@ body.transitioning.compact-exit {
 
 body.compact-mode .main-content {
     justify-content: center;
-    padding: 0 10px 16px 10px;
+    padding: 0 4px 6px 4px;
+}
+
+body.compact-mode .container {
+        border-radius: 12px;
 }
 
 body.compact-mode .settings-icon,
