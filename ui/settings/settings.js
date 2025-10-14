@@ -34,8 +34,17 @@ const cartesiaKeyGroup = document.getElementById('cartesia-key-group');
 const groqKeyGroup = document.getElementById('groq-key-group');
 
 
+let isLoadingSettings = false;
+let isSavingSettings = false;
+
 // Load settings on startup
 async function loadSettings() {
+    if (isLoadingSettings) {
+        console.log('[Settings] Skipping duplicate load (already in progress)');
+        return;
+    }
+    
+    isLoadingSettings = true;
     try {
         const settings = await invoke('get_settings');
         groqApiKeyInput.value = settings.groq_api_key || '';
@@ -50,20 +59,7 @@ async function loadSettings() {
         if (languageSelect) {
             languageSelect.value = settings.language || 'multilingual';
         }
-
-// Delegated click fallback to ensure reliability
-document.addEventListener('click', (e) => {
-    const target = e.target;
-    if (!(target instanceof Element)) return;
-    const el = target.closest('#update-notice');
-    if (!el) return;
-    const url = 'https://github.com/3choff/dictate/releases';
-    console.log('[delegated] Update notice clicked, opening:', url);
-    if (window.__TAURI__?.core?.invoke) {
-        window.__TAURI__.core.invoke('plugin:opener|open_url', { url })
-            .catch((error) => console.error('Failed to open releases link:', error));
-    }
-});
+        
         if (textFormattedCheckbox) {
             textFormattedCheckbox.checked = settings.text_formatted !== false;  // Default true
         }
@@ -74,18 +70,52 @@ document.addEventListener('click', (e) => {
             grammarProviderSelect.value = settings.grammar_provider || 'groq';
         }
 
+        // Update custom select displays to match loaded values
+        updateCustomSelectDisplays();
 
         // Update provider key visibility
         updateProviderVisibility();
+        
+        console.log('[Settings UI] Loaded & displayed: provider=' + (settings.api_service || 'groq') + 
+                    ' lang=' + (settings.language || 'multilingual') + 
+                    ' formatted=' + (settings.text_formatted !== false) + 
+                    ' voiceCmds=' + (settings.voice_commands_enabled !== false));
     } catch (error) {
-        console.error('Failed to load settings:', error);
+        console.error('[Settings] Failed to load settings:', error);
+    } finally {
+        isLoadingSettings = false;
     }
+}
+
+// Update custom select trigger text to match the actual select value
+function updateCustomSelectDisplays() {
+    document.querySelectorAll('.custom-select').forEach(select => {
+        const wrapper = select.closest('.custom-select-wrapper');
+        if (wrapper) {
+            const trigger = wrapper.querySelector('.custom-select-trigger span');
+            const selectedOption = select.options[select.selectedIndex];
+            if (trigger && selectedOption) {
+                trigger.textContent = selectedOption.textContent;
+            }
+        }
+    });
 }
 
 // Save settings silently
 async function saveSettings() {
+    if (isSavingSettings) {
+        console.log('[Settings] Skipping duplicate save (already in progress)');
+        return;
+    }
+    
+    isSavingSettings = true;
     try {
+        // Load current settings first to preserve fields we don't manage in UI
+        const currentSettings = await invoke('get_settings');
+        
+        // Merge UI values with current settings to preserve compact_mode and window position
         const settings = {
+            ...currentSettings,  // Preserve all existing fields (compact_mode, main_window_position, etc.)
             groq_api_key: groqApiKeyInput.value.trim(),
             sambanova_api_key: sambaApiKeyInput ? sambaApiKeyInput.value.trim() : '',
             fireworks_api_key: fireworksApiKeyInput ? fireworksApiKeyInput.value.trim() : '',
@@ -102,9 +132,17 @@ async function saveSettings() {
         };
 
         await invoke('save_settings', { settings });
-        console.log('Settings saved');
+        console.log('[Settings UI] Saved: provider=' + settings.api_service + 
+                    ' mode=' + settings.insertion_mode + 
+                    ' lang=' + settings.language + 
+                    ' formatted=' + settings.text_formatted + 
+                    ' voiceCmds=' + settings.voice_commands_enabled +
+                    ' (preserved compact_mode=' + settings.compact_mode + 
+                    ' position=' + (settings.main_window_position ? 'yes' : 'no') + ')');
     } catch (error) {
-        console.error('Failed to save settings:', error);
+        console.error('[Settings] Failed to save settings:', error);
+    } finally {
+        isSavingSettings = false;
     }
 }
 
@@ -396,11 +434,6 @@ window.addEventListener('click', (e) => {
 });
 
 document.querySelectorAll('.custom-select').forEach(createCustomSelect);
-
-// Save before window closes
-window.addEventListener('beforeunload', async (e) => {
-    await saveSettings();
-});
 
 if (helpButton) {
     helpButton.addEventListener('click', () => {

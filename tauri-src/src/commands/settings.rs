@@ -119,14 +119,17 @@ pub async fn get_settings(app: AppHandle) -> Result<Settings, String> {
     let settings_path = get_settings_path(&app)?;
     
     if !settings_path.exists() {
+        println!("[SETTINGS] No settings file found, using defaults");
         return Ok(Settings::default());
     }
     
     let content = fs::read_to_string(&settings_path)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to read settings: {}", e))?;
+    
+    println!("[SETTINGS] Loaded from: {:?}", settings_path);
     
     serde_json::from_str(&content)
-        .map_err(|e| e.to_string())
+        .map_err(|e| format!("Failed to parse settings JSON: {}", e))
 }
 
 #[tauri::command]
@@ -136,8 +139,16 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
     let content = serde_json::to_string_pretty(&settings)
         .map_err(|e| e.to_string())?;
     
-    fs::write(&settings_path, content)
-        .map_err(|e| e.to_string())?;
+    // Write and explicitly sync to disk
+    use std::io::Write;
+    let mut file = std::fs::File::create(&settings_path)
+        .map_err(|e| format!("Failed to create settings file: {}", e))?;
+    file.write_all(content.as_bytes())
+        .map_err(|e| format!("Failed to write settings: {}", e))?;
+    file.sync_all()
+        .map_err(|e| format!("Failed to sync settings to disk: {}", e))?;
+    
+    println!("[SETTINGS] Saved to: {:?}", settings_path);
     
     // Emit event to notify main window that settings changed
     if let Some(main_window) = app.get_webview_window("main") {
@@ -338,8 +349,20 @@ fn calculate_settings_position(
 }
 
 #[tauri::command]
-pub async fn exit_app(_app: AppHandle) {
-    std::process::exit(0);
+pub async fn exit_app(app: AppHandle) {
+    // Give pending saves time to complete (75ms debounce + buffer)
+    tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+    
+    // Close all windows gracefully
+    if let Some(main_window) = app.get_webview_window("main") {
+        let _ = main_window.close();
+    }
+    if let Some(settings_window) = app.get_webview_window("settings") {
+        let _ = settings_window.close();
+    }
+    
+    // Exit the app (Tauri handles cleanup)
+    app.exit(0);
 }
 
 #[tauri::command]
