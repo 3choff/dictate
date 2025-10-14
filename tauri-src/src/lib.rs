@@ -12,12 +12,16 @@ use commands::streaming::StreamingState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Initialize VAD segmenter
+    let vad_segmenter = services::vad_segmenter::create_shared_segmenter();
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .manage(StreamingState::default())
         .manage(commands::settings::ReleaseState::default())
+        .manage(vad_segmenter)
         .setup(|app| {
             // Register global shortcuts; on dev reload, ignore "already registered" errors
             let gs = app.global_shortcut();
@@ -185,6 +189,10 @@ pub fn run() {
             commands::start_streaming_transcription,
             commands::send_streaming_audio,
             commands::stop_streaming_transcription,
+            commands::vad_process_frame,
+            commands::vad_mark_complete,
+            commands::vad_flush,
+            commands::vad_reset,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

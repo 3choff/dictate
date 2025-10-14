@@ -252,6 +252,70 @@ async function emitSegmentIfReady(boundaryIndex) {
     }
 }
 
+async function emitVadSegment(segmentData) {
+    // Prevent duplicate processing
+    if (segmentIsProcessing) return;
+    segmentIsProcessing = true;
+    
+    try {
+        // Encode segment as WAV
+        const wavBytes = encodeWav16kMono(Int16Array.from(segmentData));
+        
+        // Determine API key based on provider
+        let apiKeyToUse = GROQ_API_KEY;
+        if (API_SERVICE === 'sambanova') {
+            apiKeyToUse = SAMBANOVA_API_KEY;
+        } else if (API_SERVICE === 'fireworks') {
+            apiKeyToUse = FIREWORKS_API_KEY;
+        } else if (API_SERVICE === 'gemini') {
+            apiKeyToUse = GEMINI_API_KEY;
+        } else if (API_SERVICE === 'mistral') {
+            apiKeyToUse = MISTRAL_API_KEY;
+        }
+        
+        console.log(`[VAD Transcribe] provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} bytes=${wavBytes.length} keySet=${Boolean(apiKeyToUse)}`);
+        
+        // Send to backend for transcription
+        const returned = await invoke('transcribe_audio_segment', {
+            audioData: Array.from(wavBytes),
+            apiKey: apiKeyToUse,
+            insertionMode: INSERTION_MODE,
+            language: LANGUAGE,
+            textFormatted: TEXT_FORMATTED,
+            apiService: API_SERVICE,
+            voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
+        });
+        
+        if (typeof returned === 'string') {
+            console.log(`[VAD Transcribe] backend returned length=${returned.length}`);
+        } else {
+            console.log('[VAD Transcribe] backend returned non-string payload');
+        }
+        
+        // Mark VAD as complete so it can continue processing
+        await invoke('vad_mark_complete');
+        
+    } catch (error) {
+        console.error('[VAD Transcribe] error:', error);
+        const errorMsg = error.toString();
+        
+        // Show user-friendly error in status (briefly)
+        if (errorMsg.includes('Rate limit')) {
+            status.textContent = '⚠️ Rate limit';
+            setTimeout(() => {
+                if (isRecording) status.textContent = 'Recording...';
+            }, 2000);
+        } else if (errorMsg.includes('Network')) {
+            status.textContent = '⚠️ Network error';
+            setTimeout(() => {
+                if (isRecording) status.textContent = 'Recording...';
+            }, 2000);
+        }
+    } finally {
+        segmentIsProcessing = false;
+    }
+}
+
 // Load API key from settings and restore compact mode
 async function loadSettings() {
     try {
@@ -519,6 +583,13 @@ async function startRecording() {
 }
 
 async function startBatchRecording() {
+    // Reset VAD state for new recording session
+    try {
+        await invoke('vad_reset');
+    } catch (e) {
+        console.error('[VAD] Failed to reset:', e);
+    }
+    
     // Use segmentation mode for batch providers
     segmentationActive = true;
     if (!segmentAudioCtx) {
@@ -532,40 +603,31 @@ async function startBatchRecording() {
     const bufferSize = 4096; // ~85ms at 48kHz
     segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
     
-    segmentProcessor.onaudioprocess = (ev) => {
+    segmentProcessor.onaudioprocess = async (ev) => {
         const inBuf = ev.inputBuffer;
         const mono = mixToMonoFloat32(inBuf);
         
-        // Calculate RMS and dB
-        let sumSq = 0;
-        for (let i = 0; i < mono.length; i++) {
-            const s = mono[i];
-            sumSq += s * s;
-        }
-        const rms = Math.sqrt(sumSq / Math.max(1, mono.length));
-        const db = dbfsFromRms(rms);
-        const frameMs = (mono.length / inBuf.sampleRate) * 1000;
-        
-        // Silence detection
-        if (db < SEGMENT_SILENCE_DB) {
-            segmentInSilenceMs += frameMs;
-        } else {
-            segmentInSilenceMs = 0;
-            segmentHadSpeech = true;
-        }
-        
-        // Downsample and accumulate
+        // Downsample to 16kHz for VAD
         const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
-        for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
         
-        const currentIndex = segmentSamples16k.length;
-        const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
-        
-        // Emit segment on silence or max duration (don't await to prevent blocking)
-        if (segmentInSilenceMs >= SEGMENT_SILENCE_MS && segmentHadSpeech && !segmentIsProcessing) {
-            emitSegmentIfReady(currentIndex);
-        } else if (segmentHadSpeech && currentMsSinceBoundary >= SEGMENT_MAX_DURATION_MS && !segmentIsProcessing) {
-            emitSegmentIfReady(currentIndex);
+        // Process in 20ms frames (320 samples @ 16kHz) for VAD
+        const FRAME_SIZE = 320; // 20ms @ 16kHz
+        for (let i = 0; i + FRAME_SIZE <= int16.length; i += FRAME_SIZE) {
+            const frame = int16.slice(i, i + FRAME_SIZE);
+            
+            try {
+                // Send frame to VAD backend
+                const [shouldEmit, segmentData] = await invoke('vad_process_frame', {
+                    frameI16: Array.from(frame)
+                });
+                
+                if (shouldEmit && segmentData && !segmentIsProcessing) {
+                    // VAD detected end of segment (1 second of non-speech)
+                    await emitVadSegment(segmentData);
+                }
+            } catch (e) {
+                console.error('[VAD] Frame processing error:', e);
+            }
         }
     };
     
@@ -761,16 +823,17 @@ async function stopRecording() {
 
 async function stopBatchRecording() {
     if (segmentationActive) {
-        // Emit final segment if any
+        // Flush final segment from VAD
         try {
-            const currentIndex = segmentSamples16k.length;
-            const msSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
-            if (segmentHadSpeech && msSinceBoundary >= SEGMENT_MIN_DURATION_MS && !segmentIsProcessing) {
-                await emitSegmentIfReady(currentIndex);
+            const finalSegment = await invoke('vad_flush');
+            if (finalSegment && finalSegment.length > 0 && !segmentIsProcessing) {
+                await emitVadSegment(finalSegment);
             }
-        } catch (_) {}
+        } catch (e) {
+            console.error('[VAD] Failed to flush final segment:', e);
+        }
         
-        // Cleanup
+        // Cleanup audio nodes
         try {
             if (segmentProcessor) segmentProcessor.disconnect();
         } catch (_) {}
