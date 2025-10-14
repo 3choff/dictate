@@ -1,3 +1,11 @@
+## [1.2.2] - 2025-10-14
+
+### Improved
+- **Cross-platform clipboard typing:** Replaced Windows-specific `clipboard-win` with `tauri_plugin_clipboard_manager` for better macOS/Linux compatibility
+- **Virtual key code paste:** Updated paste commands to use platform-specific virtual key codes (VK_V on Windows, Key::Other(9) on macOS) for better keyboard layout compatibility
+- **Direct typing improvements:** Enhanced direct typing method to use single-call text injection instead of per-character loops, improving speed and reliability
+- **Better error handling:** Improved error messages throughout keyboard injection functions for easier debugging
+
 ## [1.2.0] - 2025-10-12
 
 ### Changed

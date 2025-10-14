@@ -1,21 +1,19 @@
-use crate::services::{keyboard, keyboard_inject};
+use crate::services::{clipboard_paste, direct_typing};
+use tauri::AppHandle;
 
 #[tauri::command]
-pub async fn insert_text(text: String, insertion_mode: String) -> Result<(), String> {
+pub async fn insert_text(
+    text: String,
+    insertion_mode: String,
+    app_handle: AppHandle,
+) -> Result<(), String> {
     match insertion_mode.as_str() {
-        "typing" => {
-            keyboard_inject::inject_text_native(&text)
-                .map_err(|e| e.to_string())
-        }
-        "clipboard" | _ => {
-            keyboard::insert_text_via_clipboard(&text)
-                .map_err(|e| e.to_string())
-        }
+        "typing" => direct_typing::inject_text_native(&text),
+        "clipboard" | _ => clipboard_paste::insert_text_via_clipboard(&text, &app_handle),
     }
 }
 
 #[tauri::command]
-pub async fn copy_selected_text() -> Result<String, String> {
-    keyboard::copy_selected_text()
-        .map_err(|e| e.to_string())
+pub async fn copy_selected_text(app_handle: AppHandle) -> Result<String, String> {
+    clipboard_paste::copy_selected_text(&app_handle)
 }

@@ -94,12 +94,12 @@ pub async fn start_streaming_transcription(
                         };
                         
                         if !text_to_insert.is_empty() {
-                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode).await;
+                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode, &app).await;
                         }
                     } else {
                         // No voice commands - insert directly with space
                         let transcript_with_space = format!("{} ", transcript);
-                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode, &app).await;
                     }
                     
                     // Emit event to frontend for status update
@@ -179,12 +179,12 @@ pub async fn start_streaming_transcription(
                         };
                         
                         if !text_to_insert.is_empty() {
-                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode).await;
+                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode, &app).await;
                         }
                     } else {
                         // No voice commands - insert directly with space
                         let transcript_with_space = format!("{} ", formatted_transcript);
-                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode).await;
+                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode, &app).await;
                     }
                     
                     // Emit event to frontend for status update
@@ -244,12 +244,12 @@ pub async fn stop_streaming_transcription(
 }
 
 // Helper function to insert transcript text
-async fn insert_transcript_text(text: &str, insertion_mode: &str) -> Result<(), String> {
+async fn insert_transcript_text(text: &str, insertion_mode: &str, app_handle: &AppHandle) -> Result<(), String> {
     if insertion_mode == "typing" {
-        services::keyboard_inject::inject_text_native(text)
+        services::direct_typing::inject_text_native(text)
             .map_err(|e| e.to_string())
     } else {
-        services::keyboard::insert_text_via_clipboard(text)
+        services::clipboard_paste::insert_text_via_clipboard(text, app_handle)
             .map_err(|e| e.to_string())
     }
 }
@@ -276,16 +276,16 @@ fn normalize_whisper_transcript(text: &str) -> String {
 async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandle) -> Result<(), String> {
     match action {
         CommandAction::KeyPress(key) => {
-            services::keyboard_inject::send_key_native(key)
+            services::direct_typing::send_key_native(key)
                 .map_err(|e| e.to_string())
         }
         CommandAction::KeyCombo(modifier, key) => {
-            services::keyboard_inject::send_key_combo_native(modifier, key)
+            services::direct_typing::send_key_combo_native(modifier, key)
                 .map_err(|e| e.to_string())
         }
         CommandAction::DeleteLastWord => {
             // Send Ctrl+Backspace to delete last word
-            services::keyboard_inject::send_key_combo_native("control", "backspace")
+            services::direct_typing::send_key_combo_native("control", "backspace")
                 .map_err(|e| e.to_string())
         }
         CommandAction::GrammarCorrect => {
@@ -293,7 +293,7 @@ async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandl
             if let Some(window) = app.get_webview_window("main") {
                 tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
                 // First select all
-                let _ = services::keyboard_inject::send_key_combo_native("control", "a");
+                let _ = services::direct_typing::send_key_combo_native("control", "a");
                 tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
                 // Then trigger grammar correction shortcut
                 let _ = window.emit("sparkle-trigger", ());

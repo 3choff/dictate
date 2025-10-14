@@ -1,6 +1,6 @@
 // Service modules
-pub mod keyboard;
-pub mod keyboard_inject;
+pub mod clipboard_paste;
+pub mod direct_typing;
 pub mod windows_focus;
 
 // Future services (placeholders)
