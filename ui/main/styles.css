@@ -1,10 +1,13 @@
 :root {
-    --primary-bg: #202020;
-    --secondary-bg: #35363a;
-    --handle-color: #5f6368;
+    --primary-bg: #161616cc;
+    --secondary-bg: #3c3c3c;
+    --handle-color: #5f6368a9;
     --text-color: white;
+    --label-color: #b0b0b0;
+    --border-color: #555;
     --icon-stroke-color: #e8eaed;
     --accent-color: #00a9ff;
+    --accent-hover: #0087cc;
     --accent-glow: #00a9f880;
     --accent-glow-strong: #00a9f84d;
     --pulse-color: #00a9ffb3;
@@ -44,12 +47,13 @@ body.transitioning.compact-exit {
     flex-direction: column;
     height: 100%;
     background-color: var(--primary-bg);
-    border: 1px solid rgba(252, 252, 252, 0.08);
+    /* border: 1px solid rgba(252, 252, 252, 0.08); */
     border-radius: 14px;
     box-sizing: border-box;
     overflow: hidden;
     transform: scale(1);
     opacity: 1;
+    -webkit-app-region: drag;  /* Make entire container draggable by default */
 }
 
 .top-bar {
@@ -80,13 +84,24 @@ body.transitioning.compact-exit {
 
 .close-button {
     cursor: pointer;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: no-drag;  /* Buttons are not draggable */
     z-index: 10;
+    transition: opacity 0.2s ease;
 }
 
 .close-button svg {
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Hide compact close button in normal mode */
+.close-button-compact {
+    display: none;
+}
+
+/* Audio visualizer - hidden in normal mode */
+.audio-visualizer {
+    display: none;
 }
 
 .main-content {
@@ -95,6 +110,7 @@ body.transitioning.compact-exit {
     align-items: center;
     flex-grow: 1;
     padding: 0 10px 12px 10px;
+    /* Keep main-content draggable - only exclude buttons */
 }
 
 .icon-button, .mic-button {
@@ -116,10 +132,15 @@ body.transitioning.compact-exit {
 }
 
 .mic-button {
-    background-color: var(--secondary-bg);
+    /* background-color: var(--secondary-bg); */
+    background-color: #20202080;
     border-radius: 50%;
     width: 50px;
     height: 50px;
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.mic-button:hover {
     box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
 }
 
@@ -186,31 +207,113 @@ body.transitioning.compact-exit {
     fill: var(--active-mic-icon);
 }
 
-body.compact-mode .main-content {
-    justify-content: center;
-    padding: 0 4px 6px 4px;
+/* Compact mode: horizontal pill layout */
+body.compact-mode .container {
+    border-radius: 30px;  /* Full pill shape */
+    flex-direction: row;  /* Horizontal layout */
+    align-items: center;
+    padding: 6px 10px;
+    -webkit-app-region: drag;  /* Entire pill is draggable */
 }
 
-body.compact-mode .container {
-        border-radius: 12px;
+body.compact-mode .top-bar {
+    display: none;  /* Hide top bar completely in compact mode */
+}
+
+/* Hide normal close button in compact mode */
+body.compact-mode .close-button-top {
+    display: none;
+}
+
+body.compact-mode .main-content {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    width: 100%;
+    gap: 2px;
+    /* Inherit drag from container - only buttons are excluded */
 }
 
 body.compact-mode .settings-icon,
 body.compact-mode .sparkle-icon {
-    display: none;
-}
-
-body.compact-mode .close-button {
-    display: none;
+    display: none;  /* Hide side buttons */
 }
 
 body.compact-mode .mic-button {
-    margin: 0 auto;
-    width: 40px;
-    height: 40px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    order: 1;  /* Mic button first */
+    /* box-shadow: 0 0 0 2px var(--accent-glow); */
+    box-shadow: 0 0 0 0px var(--accent-glow);
+    transition: box-shadow 0.2s ease;
+}
+
+body.compact-mode .mic-button:hover {
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
+}
+
+/* Disable pulse animation in compact mode */
+body.compact-mode .mic-button.recording {
+    animation: none;
 }
 
 body.compact-mode .mic-button svg {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Show compact close button in compact mode - positioned on the right */
+body.compact-mode .close-button-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    /* box-shadow: 0 0 0 2px #f0f0f080; */
+    /* box-shadow: 0 0 0 2px var(--accent-glow); */
+    transition: box-shadow 0.2s ease;
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;  /* Close button is clickable, not draggable */
+    order: 3;  /* Close button last (after dots) */
+}
+
+body.compact-mode .close-button-compact:hover {
+    /* box-shadow: 0 0 0 2px #f0f0f080, 0 0 10px 4px #f0f0f84d; */
+    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
+    
+}
+
+body.compact-mode .close-button-compact svg {
+    width: 16px;
+    height: 16px;
+}
+
+body.compact-mode .close-button-compact svg path {
+    stroke: var(--accent-color);
+}
+
+/* Audio visualizer in compact mode */
+body.compact-mode .audio-visualizer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 90px;
+    height: 20px;
+    order: 2;  /* Between mic and close button */
+    margin: 0 8px;
+}
+
+body.compact-mode .audio-visualizer .bar {
+    flex: 1;
+    max-width: 8px;
+    height: 4px;
+    background-color: rgb(68, 86, 109);  /* Start grey */
+    border-radius: 2px;
+    /* Transition is set in JavaScript for 60ms ease-out to match reference project */
+    opacity: 0.4; /* Minimum opacity for visibility */
 }

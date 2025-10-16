@@ -1,3 +1,21 @@
+## [1.3.0] - 2025-10-16
+
+### Added
+- **Audio Visualizer**: Complete implementation with real-time animated bars that respond to microphone input across all transcription providers (Deepgram, Cartesia, Groq, OpenAI, etc.)
+- **Unified Audio Architecture**: Centralized audio capture and visualization pipeline that eliminates stream contention and improves performance
+- **Visual Bar Amplification**: Enhanced responsiveness with taller bars and better visual feedback for lower audio levels
+
+### Improved
+- **Stream Contention Fix**: Eliminated dual audio processing issues for Deepgram provider by cloning streams appropriately
+- **Bar Reset Functionality**: Visualizer bars now properly reset to gray/4px state when recording stops
+- **Compact View UI**: Enhanced compact mode visual appearance and transitions
+- **Cross-Provider Visualizer**: Extended visualizer support to all batch providers (Groq, OpenAI, Sambanova, etc.) in addition to streaming providers
+
+### Technical
+- **Audio Processing Pipeline**: Restructured audio capture flow for better resource management and visualization accuracy
+- **Error Handling**: Improved visualizer error handling and cleanup procedures
+- **Performance**: Optimized audio processing to reduce latency and improve responsiveness
+
 ## [1.2.2] - 2025-10-14
 
 ### Improved

@@ -429,8 +429,8 @@ pub async fn update_settings_size(app: AppHandle, width: f64, height: f64) -> Re
 
 const DEFAULT_MAIN_WINDOW_WIDTH: f64 = 145.0;
 const DEFAULT_MAIN_WINDOW_HEIGHT: f64 = 90.0;
-const COMPACT_MAIN_WINDOW_WIDTH: f64 = 60.0;
-const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 70.0;
+const COMPACT_MAIN_WINDOW_WIDTH: f64 = 175.0;  // Horizontal pill shape
+const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 35.0;
 
 #[tauri::command]
 pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), String> {

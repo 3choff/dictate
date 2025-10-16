@@ -39,7 +39,9 @@ const SEGMENT_MIN_DURATION_MS = 200;   // Min 200ms (ignore noise)
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
 const grammarBtn = document.getElementById('grammarBtn');
-const closeBtn = document.getElementById('close-btn');
+const closeBtnTop = document.getElementById('close-btn-top');
+const closeBtnCompact = document.getElementById('close-btn-compact');
+const audioVisualizer = document.getElementById('audioVisualizer');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
 // API key and insertion mode will be loaded from settings
@@ -56,10 +58,16 @@ let API_SERVICE = 'groq';
 const STREAMING_PROVIDERS = ['deepgram', 'cartesia'];
 let streamingSessionId = null;
 
-// Cartesia audio processing
-let cartesiaAudioCtx = null;
-let cartesiaSource = null;
-let cartesiaProcessor = null;
+// ===== UNIFIED AUDIO CAPTURE ARCHITECTURE =====
+// Single AudioContext that serves all providers
+let unifiedAudioCtx = null;
+let unifiedSource = null;
+let unifiedProcessor = null;
+let unifiedClonedStream = null; // Store cloned stream for Deepgram cleanup
+
+// Provider-specific handlers (MediaRecorder for Deepgram)
+let deepgramMediaRecorder = null;
+
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
@@ -307,8 +315,8 @@ settingsBtn.addEventListener('click', async (e) => {
     }
 });
 
-// Close button - exit on click (not pointerdown)
-closeBtn.addEventListener('click', async (e) => {
+// Close button handlers - exit on click (not pointerdown)
+const handleCloseClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     try {
@@ -316,7 +324,15 @@ closeBtn.addEventListener('click', async (e) => {
     } catch (error) {
         console.error('Failed to exit app:', error);
     }
-});
+};
+
+// Attach to both close buttons
+if (closeBtnTop) {
+    closeBtnTop.addEventListener('click', handleCloseClick);
+}
+if (closeBtnCompact) {
+    closeBtnCompact.addEventListener('click', handleCloseClick);
+}
 
 // Instant pressed-state feedback for all buttons
 for (const el of [micButton, settingsBtn, grammarBtn]) {
@@ -338,12 +354,14 @@ micButton.addEventListener('pointerdown', (e) => {
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
+        audioVisualizer?.classList.add('active');
         status.textContent = 'Starting...';
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
+            audioVisualizer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         });
     } else {
@@ -373,12 +391,14 @@ micButton.addEventListener('click', (e) => {
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
+        audioVisualizer?.classList.add('active');
         status.textContent = 'Starting...';
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
+            audioVisualizer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         });
     } else {
@@ -471,6 +491,7 @@ async function toggleRecording() {
         // Mirror click behavior
         isRecording = true;
         micButton.classList.add('recording');
+        audioVisualizer?.classList.add('active');
         status.textContent = 'Starting...';
         try {
             await startRecording();
@@ -478,6 +499,7 @@ async function toggleRecording() {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
+            audioVisualizer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         }
     } else {
@@ -528,6 +550,13 @@ async function startBatchRecording() {
         await segmentAudioCtx.resume();
     } catch (_) {}
     
+    // Start visualizer for batch providers
+    try {
+        await invoke('start_visualizer', { sessionId: 'batch_' + Date.now() });
+    } catch (error) {
+        console.error('[Batch] Failed to start visualizer:', error);
+    }
+    
     segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
     const bufferSize = 4096; // ~85ms at 48kHz
     segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
@@ -557,6 +586,12 @@ async function startBatchRecording() {
         // Downsample and accumulate
         const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
         for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
+        
+        // Send to visualizer (non-blocking)
+        try {
+            const audioData = Array.from(new Uint8Array(int16.buffer));
+            invoke('send_visualization_audio', { audioData: audioData }).catch(() => {});
+        } catch (_) {}
         
         const currentIndex = segmentSamples16k.length;
         const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
@@ -606,9 +641,88 @@ async function startStreamingRecording() {
     }
 }
 
+// ===== UNIFIED AUDIO CAPTURE =====
+// Single AudioContext that serves both visualization and transcription
+async function startUnifiedAudioCapture(provider, sessionId) {
+    try {
+        // Create single AudioContext for all audio processing
+        unifiedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        await unifiedAudioCtx.resume();
+        
+        // For Deepgram: clone stream to avoid contention with MediaRecorder
+        // For other providers: use original stream directly
+        if (provider === 'deepgram') {
+            unifiedClonedStream = micStream.clone();
+            unifiedSource = unifiedAudioCtx.createMediaStreamSource(unifiedClonedStream);
+        } else {
+            unifiedSource = unifiedAudioCtx.createMediaStreamSource(micStream);
+        }
+        const bufferSize = 4096;
+        unifiedProcessor = unifiedAudioCtx.createScriptProcessor(bufferSize, 1, 1);
+        
+        unifiedProcessor.onaudioprocess = async (ev) => {
+            if (!streamingSessionId) return;
+            
+            const inBuf = ev.inputBuffer;
+            const mono = mixToMonoFloat32(inBuf);
+            
+            // Check for abnormal spikes (AGC artifacts)
+            let maxSample = 0;
+            for (let i = 0; i < mono.length; i++) {
+                const abs = Math.abs(mono[i]);
+                if (abs > maxSample) maxSample = abs;
+            }
+            
+            // Apply soft clipping to reduce AGC spike impact
+            if (maxSample > 0.9) {
+                for (let i = 0; i < mono.length; i++) {
+                    if (Math.abs(mono[i]) > 0.5) {
+                        mono[i] *= 0.3;
+                    }
+                }
+            }
+            
+            // Downsample to 16kHz
+            const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
+            
+            // BRANCH 1: Visualization (works for ALL providers)
+            try {
+                const audioData = Array.from(new Uint8Array(int16.buffer));
+                await invoke('send_visualization_audio', {
+                    audioData: audioData
+                });
+            } catch (error) {
+                // Silently ignore - visualization is optional
+            }
+            
+            // BRANCH 2: Transcription (provider-specific)
+            if (provider === 'cartesia') {
+                // Cartesia uses the same PCM16 data
+                try {
+                    const audioData = Array.from(new Uint8Array(int16.buffer));
+                    await invoke('send_streaming_audio', {
+                        sessionId: sessionId,
+                        audioData: audioData
+                    });
+                } catch (error) {
+                    console.error('[Cartesia] Failed to send audio:', error);
+                }
+            }
+            // Deepgram handled separately via MediaRecorder
+        };
+        
+        // Connect audio nodes
+        unifiedSource.connect(unifiedProcessor);
+        unifiedProcessor.connect(unifiedAudioCtx.destination);
+        
+    } catch (error) {
+        console.error('[UnifiedAudio] Failed to start:', error);
+        throw error;
+    }
+}
+
 async function startDeepgramStreaming(apiKey) {
     try {
-        
         // Detect preferred audio format (opus is best for Deepgram)
         let mimeType = 'audio/webm;codecs=opus';
         let encoding = 'opus';
@@ -637,41 +751,43 @@ async function startDeepgramStreaming(apiKey) {
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
-        // Create MediaRecorder with preferred format
-        mediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
+        // Start unified audio capture (handles visualization automatically)
+        await startUnifiedAudioCapture('deepgram', streamingSessionId);
         
-        mediaRecorder.ondataavailable = async (event) => {
+        // Create MediaRecorder for Deepgram's encoded audio (transcription only)
+        deepgramMediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
+        
+        deepgramMediaRecorder.ondataavailable = async (event) => {
             if (event.data && event.data.size > 0 && streamingSessionId) {
                 try {
                     // Convert Blob to ArrayBuffer to Uint8Array
                     const arrayBuffer = await event.data.arrayBuffer();
                     const audioData = Array.from(new Uint8Array(arrayBuffer));
                     
-                    // Send to backend
+                    // Send encoded audio to Deepgram for transcription
                     await invoke('send_streaming_audio', {
                         sessionId: streamingSessionId,
                         audioData: audioData
                     });
                 } catch (error) {
-                    console.error('[Streaming] Failed to send audio:', error);
+                    console.error('[Deepgram] Failed to send audio:', error);
                 }
             }
         };
         
-        mediaRecorder.onerror = (error) => {
-            console.error('[Streaming] MediaRecorder error:', error);
+        deepgramMediaRecorder.onerror = (error) => {
+            console.error('[Deepgram] MediaRecorder error:', error);
         };
         
         // Start recording with chunks every 250ms
         try {
-            mediaRecorder.start(250);
+            deepgramMediaRecorder.start(250);
         } catch (e) {
-            // Fallback if timeslice not supported
-            mediaRecorder.start();
+            deepgramMediaRecorder.start();
         }
         
     } catch (error) {
-        console.error('[Streaming] Failed to start:', error);
+        console.error('[Deepgram] Failed to start:', error);
         status.textContent = `Error: ${error.message}`;
         throw error;
     }
@@ -693,39 +809,11 @@ async function startCartesiaStreaming(apiKey) {
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
-        // Create AudioContext for PCM16 processing
-        cartesiaAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await cartesiaAudioCtx.resume();
-        
-        cartesiaSource = cartesiaAudioCtx.createMediaStreamSource(micStream);
-        const bufferSize = 4096;
-        cartesiaProcessor = cartesiaAudioCtx.createScriptProcessor(bufferSize, 1, 1);
-        
-        cartesiaProcessor.onaudioprocess = async (ev) => {
-            if (!streamingSessionId) return;
-            
-            const inBuf = ev.inputBuffer;
-            const mono = mixToMonoFloat32(inBuf);
-            const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
-            
-            try {
-                // Send raw PCM16 data to backend
-                const audioData = Array.from(new Uint8Array(int16.buffer));
-                await invoke('send_streaming_audio', {
-                    sessionId: streamingSessionId,
-                    audioData: audioData
-                });
-            } catch (error) {
-                console.error('[Streaming] Failed to send audio:', error);
-            }
-        };
-        
-        // Connect audio nodes
-        cartesiaSource.connect(cartesiaProcessor);
-        cartesiaProcessor.connect(cartesiaAudioCtx.destination);
+        // Start unified audio capture (handles both visualization AND transcription)
+        await startUnifiedAudioCapture('cartesia', streamingSessionId);
         
     } catch (error) {
-        console.error('[Streaming] Failed to start:', error);
+        console.error('[Cartesia] Failed to start:', error);
         status.textContent = `Error: ${error.message}`;
         throw error;
     }
@@ -735,6 +823,7 @@ async function stopRecording() {
     // Immediate UI feedback
     isRecording = false;
     micButton.classList.remove('recording');
+    audioVisualizer?.classList.remove('active');
     status.textContent = 'Press to record';
 
     // Check if using streaming provider
@@ -747,6 +836,9 @@ async function stopRecording() {
         // BATCH MODE: Process final segment
         await stopBatchRecording();
     }
+    
+    // Reset visualizer bars to default state AFTER stopping audio processing
+    resetBarHeights();
 
     // Schedule mic release to keep device warm for quick restart
     if (micStream) {
@@ -789,6 +881,11 @@ async function stopBatchRecording() {
         segmentInSilenceMs = 0;
         segmentHadSpeech = false;
         segmentIsProcessing = false;
+        
+        // Stop visualizer
+        try {
+            await invoke('stop_visualizer');
+        } catch (_) {}
     }
     
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -797,29 +894,36 @@ async function stopBatchRecording() {
 }
 
 async function stopStreamingRecording() {
-    // Stop MediaRecorder (for Deepgram)
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
+    // Stop Deepgram MediaRecorder (if used)
+    if (deepgramMediaRecorder && deepgramMediaRecorder.state !== 'inactive') {
+        deepgramMediaRecorder.stop();
+        deepgramMediaRecorder = null;
     }
     
-    // Stop Cartesia audio processing
-    if (cartesiaProcessor) {
+    // Stop unified audio capture (handles both visualization and transcription)
+    if (unifiedProcessor) {
         try {
-            cartesiaProcessor.disconnect();
+            unifiedProcessor.disconnect();
         } catch (_) {}
-        cartesiaProcessor = null;
+        unifiedProcessor = null;
     }
-    if (cartesiaSource) {
+    if (unifiedSource) {
         try {
-            cartesiaSource.disconnect();
+            unifiedSource.disconnect();
         } catch (_) {}
-        cartesiaSource = null;
+        unifiedSource = null;
     }
-    if (cartesiaAudioCtx && cartesiaAudioCtx.state !== 'closed') {
+    if (unifiedClonedStream) {
         try {
-            await cartesiaAudioCtx.suspend();
+            unifiedClonedStream.getTracks().forEach(track => track.stop());
         } catch (_) {}
-        cartesiaAudioCtx = null;
+        unifiedClonedStream = null;
+    }
+    if (unifiedAudioCtx && unifiedAudioCtx.state !== 'closed') {
+        try {
+            await unifiedAudioCtx.suspend();
+        } catch (_) {}
+        unifiedAudioCtx = null;
     }
     
     // Close backend streaming session
@@ -888,11 +992,11 @@ async function toggleCompactMode(targetState) {
     });
 }
 
-// Right-click to toggle compact mode
-document.body.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-    toggleCompactMode();
-});
+// // Right-click to toggle compact mode
+// document.body.addEventListener('contextmenu', (event) => {
+//     event.preventDefault();
+//     toggleCompactMode();
+// });
 
 // Listen for global shortcut (Ctrl+Shift+V) with debounce
 let lastToggleTime = 0;
@@ -926,3 +1030,81 @@ listen('settings-changed', async () => {
 // Load settings on startup
 loadSettings();
 loadAudioCues();
+
+// ===== AUDIO VISUALIZER =====
+// Implementation based on Handy project's approach
+
+// Smoothed levels for frontend interpolation (prevents jitter)
+let smoothedLevels = Array(9).fill(0);
+
+/**
+ * Reset visualizer bars to CSS default state (disabled/rest state)
+ */
+function resetBarHeights() {
+    if (!audioVisualizer) return;
+    
+    const barElements = audioVisualizer.querySelectorAll('.bar');
+    smoothedLevels = Array(9).fill(0);
+    
+    barElements.forEach(bar => {
+        if (bar) {
+            bar.style.height = '4px';
+            bar.style.backgroundColor = 'rgb(68, 86, 109)';
+            bar.style.opacity = '0.4';
+            bar.style.transition = 'height 200ms ease-out, background-color 200ms ease-out';
+        }
+    });
+}
+
+/**
+ * Update bar heights and opacity based on audio frequency data
+ * Visual amplification of Handy's formula for better responsiveness
+ * Original: height = min(20, 4 + pow(v, 0.7) * 16)
+ * Amplified: height = min(35, 4 + pow(v, 0.65) * 26)
+ * @param {number[]} barValues - Array of 9 values (0.0 - 1.0)
+ */
+function updateBarHeights(barValues) {
+    if (!audioVisualizer) return;
+    
+    const barElements = audioVisualizer.querySelectorAll('.bar');
+    
+    // Apply smoothing to reduce jitter (like the reference project)
+    smoothedLevels = smoothedLevels.map((prev, i) => {
+        const target = barValues[i] || 0;
+        return prev * 0.7 + target * 0.3; // Smooth transition: 70% old, 30% new
+    });
+    
+    smoothedLevels.forEach((value, index) => {
+        const bar = barElements[index];
+        if (bar) {
+            // Visually amplified formula: taller bars, more responsive to lower sounds
+            const height = Math.min(35, 4 + Math.pow(value, 0.65) * 26);
+            bar.style.height = `${height}px`;
+            
+            // Set transition for smooth animation
+            bar.style.transition = 'height 60ms ease-out';
+            
+            // Calculate opacity based on value (minimum 0.4 for visibility)
+            const opacity = Math.max(0.4, value * 1.7);
+            
+            // Calculate color from grey to blue based on intensity
+            const grey = { r: 160, g: 200, b: 248 };      //rgb(160, 200, 248)
+            const blue = { r: 0, g: 169, b: 255 };      // #00a9ff (accent color)
+            
+            const r = Math.round(grey.r + (blue.r - grey.r) * value);
+            const g = Math.round(grey.g + (blue.g - grey.g) * value);
+            const b = Math.round(grey.b + (blue.b - grey.b) * value);
+            
+            bar.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            bar.style.opacity = opacity;
+        }
+    });
+}
+
+// Listen for audio bar updates from backend
+listen('audio-bars-update', (event) => {
+    const data = event.payload;
+    if (data && data.bars) {
+        updateBarHeights(data.bars);
+    }
+});
