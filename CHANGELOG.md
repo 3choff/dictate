@@ -27,7 +27,7 @@
 ## [1.2.0] - 2025-10-12
 
 ### Changed
-- Modified settings window to remove shadow (`tauri-src/src/commands/settings.rs`).
+- Modified settings window to remove shadow (`src-tauri/src/commands/settings.rs`).
 - Updated SVG for settings button in `ui/main/index.html`.
 - Updated SVG for help button in `ui/settings/index.html`.
 - Added `overflow: hidden;` to `html, body` in `ui/main/styles.css` and `ui/settings/styles.css`.

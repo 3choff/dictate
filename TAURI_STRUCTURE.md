@@ -3,7 +3,7 @@
 ## Overview
 This document explains the modular architecture of the Tauri implementation, designed to scale as features are added.
 
-## Backend Structure (`tauri-src/src/`)
+## Backend Structure (`src-tauri/src/`)
 
 ### 1. Commands Module (`commands/`)
 Tauri command handlers organized by feature area.

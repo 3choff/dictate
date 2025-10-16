@@ -84,7 +84,7 @@ electron-builder.env
 changes.md
 
 # Rust/Tauri
-tauri-src/target/
-tauri-src/Cargo.lock
-tauri-src/gen/
+src-tauri/target/
+src-tauri/Cargo.lock
+src-tauri/gen/
 *.pdb

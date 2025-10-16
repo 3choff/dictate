@@ -4,7 +4,7 @@
 
 Dictate is a high-performance desktop dictation application for Windows built with Tauri and Rust, inspired by the familiar UI of Windows Voice Typing. It delivers powerful speech-to-text capabilities with minimal resource usage, allowing users to record audio, transcribe it in real-time, and seamlessly insert the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -61,7 +61,7 @@ To set up and run Dictate:
     ```bash
     npm run tauri build
     ```
-    The installer and portable executable will be generated in the `tauri-src/target/release/bundle` folder.
+    The installer and portable executable will be generated in the `src-tauri/target/release/bundle` folder.
 
 ## Usage
 
@@ -73,10 +73,10 @@ To set up and run Dictate:
     ```
     Or use the Tauri CLI directly:
     ```bash
-    cd tauri-src
+    cd src-tauri
     cargo tauri dev
     ```
-*   **Packaged Application:** After building, navigate to the `tauri-src/target/release/bundle/nsis` folder and run the installer, or use the portable executable in `tauri-src/target/release`.
+*   **Packaged Application:** After building, navigate to the `src-tauri/target/release/bundle/nsis` folder and run the installer, or use the portable executable in `src-tauri/target/release`.
 
 ### Window Views
 
@@ -103,7 +103,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 
 ### Voice Commands
 
-Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined in `tauri-src/src/voice_commands.rs` and applies consistently across all providers (streaming and batch). Here are a few examples:
+Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined in `src-tauri/src/voice_commands.rs` and applies consistently across all providers (streaming and batch). Here are a few examples:
 
 *   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"
