@@ -1,3 +1,15 @@
+## [1.3.2] - 2025-10-16
+
+### Added
+- **Audio Visualizer in Normal View**: Visualizer now appears in expanded mode when recording, positioned at bottom edge with upward-expanding bars
+
+### Improved
+- **Audio Visualizer Positioning**: Refined visualizer placement and bar expansion behavior across different view modes
+- **Normal View Enhancement**: Visualizer now appears at bottom edge and bars expand upward when recording, hidden when idle
+- **Compact View Behavior**: Maintained centered bar expansion for optimal inline layout
+- **UI Polish**: Removed distracting pulse animation from microphone button for cleaner interface
+- **Visual Consistency**: Improved alignment and spacing for better visual feedback
+
 ## [1.3.0] - 2025-10-16
 
 ### Added

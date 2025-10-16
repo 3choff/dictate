@@ -1084,16 +1084,16 @@ function updateBarHeights(barValues) {
             // Set transition for smooth animation
             bar.style.transition = 'height 60ms ease-out';
             
-            // Calculate opacity based on value (minimum 0.4 for visibility)
-            const opacity = Math.max(0.4, value * 1.7);
+            // Calculate opacity based on value (minimum 0.5 for visibility)
+            const opacity = Math.max(0.5, value * 2);
             
-            // Calculate color from grey to blue based on intensity
-            const grey = { r: 160, g: 200, b: 248 };      //rgb(160, 200, 248)
-            const blue = { r: 0, g: 169, b: 255 };      // #00a9ff (accent color)
+            // Calculate color from blue to light blue based on intensity
+            const blue = { r: 0, g: 169, b: 255 };      //rgb(160, 200, 248)
+            const lblue = { r: 160, g: 200, b: 248 };      //rgb(0, 169, 255) (accent color)
             
-            const r = Math.round(grey.r + (blue.r - grey.r) * value);
-            const g = Math.round(grey.g + (blue.g - grey.g) * value);
-            const b = Math.round(grey.b + (blue.b - grey.b) * value);
+            const r = Math.round(blue.r + (lblue.r - blue.r) * value);
+            const g = Math.round(blue.g + (lblue.g - blue.g) * value);
+            const b = Math.round(blue.b + (lblue.b - blue.b) * value);
             
             bar.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
             bar.style.opacity = opacity;

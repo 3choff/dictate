@@ -54,6 +54,7 @@ body.transitioning.compact-exit {
     transform: scale(1);
     opacity: 1;
     -webkit-app-region: drag;  /* Make entire container draggable by default */
+    position: relative;  /* For absolute positioning of visualizer */
 }
 
 .top-bar {
@@ -99,9 +100,33 @@ body.transitioning.compact-exit {
     display: none;
 }
 
-/* Audio visualizer - hidden in normal mode */
+/* Audio visualizer - hidden by default in normal mode */
 .audio-visualizer {
     display: none;
+    align-items: flex-end;  /* Bars expand upward from bottom */
+    justify-content: center;
+    gap: 6px;
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 24px;
+    width: 120px;  /* Ensure space for all 9 bars */
+    padding: 0 12px;
+}
+
+/* Show visualizer only when recording in normal mode */
+.mic-button.recording ~ .audio-visualizer {
+    display: flex;
+}
+
+.audio-visualizer .bar {
+    flex: 1;
+    max-width: 10px;
+    height: 4px;
+    background-color: rgb(68, 86, 109);
+    border-radius: 2px;
+    opacity: 0.4;
 }
 
 .main-content {
@@ -200,7 +225,7 @@ body.transitioning.compact-exit {
 
 .mic-button.recording {
     background-color: var(--active-mic-bg);
-    animation: pulse 2s infinite;
+    /* Pulse animation removed for cleaner UI */
 }
 
 .mic-button.recording svg path {
@@ -254,11 +279,6 @@ body.compact-mode .mic-button:hover {
     box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
 }
 
-/* Disable pulse animation in compact mode */
-body.compact-mode .mic-button.recording {
-    animation: none;
-}
-
 body.compact-mode .mic-button svg {
     width: 16px;
     height: 16px;
@@ -296,25 +316,21 @@ body.compact-mode .close-button-compact svg path {
     stroke: var(--accent-color);
 }
 
-/* Audio visualizer in compact mode */
+/* Audio visualizer in compact mode - inline with buttons, always visible */
 body.compact-mode .audio-visualizer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;  /* Always show in compact mode */
+    align-items: center;  /* Bars expand from center in compact mode */
+    position: static;
+    transform: none;
     gap: 4px;
     flex: 1;
     min-width: 90px;
     height: 20px;
     order: 2;  /* Between mic and close button */
     margin: 0 8px;
+    padding: 0;
 }
 
 body.compact-mode .audio-visualizer .bar {
-    flex: 1;
     max-width: 8px;
-    height: 4px;
-    background-color: rgb(68, 86, 109);  /* Start grey */
-    border-radius: 2px;
-    /* Transition is set in JavaScript for 60ms ease-out to match reference project */
-    opacity: 0.4; /* Minimum opacity for visibility */
 }
