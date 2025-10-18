@@ -8,7 +8,7 @@ import { BaseProvider } from './base-provider.js';
 export class DeepgramProvider extends BaseProvider {
     constructor(config) {
         super(config);
-        this.mediaRecorder = null;
+        this.audioHelpers = config.audioHelpers;
     }
 
     getType() {
@@ -22,88 +22,47 @@ export class DeepgramProvider extends BaseProvider {
     async start(audioCaptureManager, visualizer) {
         this.isActive = true;
 
-        // Detect preferred audio format (opus is best for Deepgram)
-        let mimeType = 'audio/webm;codecs=opus';
-        let encoding = 'opus';
-        
-        if (typeof MediaRecorder.isTypeSupported === 'function') {
-            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                mimeType = 'audio/webm;codecs=opus';
-                encoding = 'opus';
-            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                mimeType = 'audio/webm';
-                encoding = 'webm';
-            }
-        }
-        
-        // Determine language for Deepgram (use 'multi' for multilingual)
+        // Determine language (use 'multi' for multilingual)
         let streamLanguage = (this.language === 'multilingual' || !this.language) ? 'multi' : this.language;
         
-        // Start backend streaming session
+        // Start backend streaming session with PCM16 encoding
         this.sessionId = await this.invoke('start_streaming_transcription', {
             provider: 'deepgram',
             apiKey: this.apiKey,
             language: streamLanguage,
             smartFormat: this.smartFormat,
             insertionMode: this.insertionMode,
-            encoding: encoding,
+            encoding: 'linear16',  // PCM16 format
             voiceCommandsEnabled: this.voiceCommandsEnabled
         });
         
-        // Start audio capture (visualizer only, no audio callback needed)
-        const audioContext = await audioCaptureManager.start();
+        // Start audio capture with PCM16 callback
+        const audioContext = await audioCaptureManager.start(async (audioData, sampleRate) => {
+            if (!this.sessionId) return;
+            
+            const mono = audioData; // Already mono from worklet
+            
+            // Downsample to 16kHz PCM16
+            const int16 = this.audioHelpers.downsampleTo16kInt16(mono, sampleRate);
+            
+            // Send PCM16 data to Deepgram
+            try {
+                const audioData = Array.from(new Uint8Array(int16.buffer));
+                await this.invoke('send_streaming_audio', {
+                    sessionId: this.sessionId,
+                    audioData: audioData
+                });
+            } catch (error) {
+                console.error('[Deepgram] Failed to send audio:', error);
+            }
+        });
         
         // Setup visualizer
         visualizer.connect(audioContext, audioCaptureManager.getSourceNode());
         visualizer.start();
-        
-        // Create MediaRecorder for Deepgram's encoded audio
-        this.mediaRecorder = new MediaRecorder(audioCaptureManager.getMediaStream(), { mimeType: mimeType });
-        
-        // Capture current session ID in closure
-        const currentSessionId = this.sessionId;
-        
-        this.mediaRecorder.ondataavailable = async (event) => {
-            // Only process if this is still the active session
-            if (event.data && event.data.size > 0 && this.sessionId === currentSessionId) {
-                try {
-                    const arrayBuffer = await event.data.arrayBuffer();
-                    const audioData = Array.from(new Uint8Array(arrayBuffer));
-                    
-                    await this.invoke('send_streaming_audio', {
-                        sessionId: currentSessionId,
-                        audioData: audioData
-                    });
-                } catch (error) {
-                    console.error('[Deepgram] Failed to send audio:', error);
-                }
-            }
-        };
-        
-        this.mediaRecorder.onerror = (error) => {
-            console.error('[Deepgram] MediaRecorder error:', error);
-        };
-        
-        // Start recording with chunks every 250ms
-        try {
-            this.mediaRecorder.start(250);
-        } catch (e) {
-            this.mediaRecorder.start();
-        }
     }
 
     async stop() {
-        // Stop MediaRecorder
-        if (this.mediaRecorder) {
-            this.mediaRecorder.ondataavailable = null;
-            this.mediaRecorder.onerror = null;
-            
-            if (this.mediaRecorder.state !== 'inactive') {
-                this.mediaRecorder.stop();
-            }
-            this.mediaRecorder = null;
-        }
-        
         // Close backend streaming session
         if (this.sessionId) {
             try {

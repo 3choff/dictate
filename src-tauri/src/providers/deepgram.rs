@@ -47,13 +47,24 @@ pub async fn start_streaming(
     
     // When smart_format is false, punctuate should also be false (no formatting)
     // When smart_format is true, punctuate should be true (full formatting)
-    let url = format!(
-        "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=false&endpointing=100&encoding={}",
-        language,
-        smart_format,  // punctuate matches smart_format
-        smart_format,
-        enc
-    );
+    // Add sample_rate for raw audio formats like linear16
+    let url = if enc == "linear16" {
+        format!(
+            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=false&endpointing=100&encoding={}&sample_rate=16000",
+            language,
+            smart_format,  // punctuate matches smart_format
+            smart_format,
+            enc
+        )
+    } else {
+        format!(
+            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=false&endpointing=100&encoding={}",
+            language,
+            smart_format,  // punctuate matches smart_format
+            smart_format,
+            enc
+        )
+    };
     
     // Create WebSocket request with subprotocol authentication (like Electron: ['token', apiKey])
     let mut request = url.into_client_request()?;

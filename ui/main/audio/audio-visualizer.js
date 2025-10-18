@@ -94,23 +94,23 @@ export class AudioVisualizer {
     }
 
     /**
-     * Split frequency data into 9 buckets with balanced distribution
-     * Uses logarithmic scale to spread audio energy evenly across all bars
+     * Split frequency data into 9 buckets optimized for speech visualization
+     * Uses perceptual weighting to create balanced, engaging bars
      */
     splitIntoBuckets(freqData) {
         const buckets = new Array(9).fill(0);
         const dataLength = freqData.length;
         
-        // Use logarithmic distribution for more even energy spread
-        // This ensures all bars animate, not just low frequencies
+        // Focus on speech-relevant frequency range (85 Hz - 4 kHz)
+        // This creates more balanced visualization for human voice
         
-        // Start from bin 3 to skip DC offset and very low noise
-        const minBin = 3;
-        const maxBin = Math.min(dataLength - 1, 400); // Use up to ~9kHz for fuller spectrum
+        // Start from bin 2 (skip DC offset)
+        const minBin = 2;
+        const maxBin = Math.min(dataLength - 1, 200); // ~4kHz for speech range
         
         // Silence threshold - if overall energy is too low, return zeros
         const totalEnergy = freqData.reduce((sum, val) => sum + val, 0) / dataLength;
-        if (totalEnergy < 1.5) {  // Lower threshold for laptop mics (was 2)
+        if (totalEnergy < 1.5) {
             return buckets; // Return all zeros
         }
         
@@ -147,14 +147,16 @@ export class AudioVisualizer {
             const avg = sum / count;
             const combined = peak * 0.6 + avg * 0.4;
             
-            // Normalize and apply mild boost for higher frequencies
+            // Normalize
             const normalized = combined / 255.0;
-            const freqBoost = 1.0 + (i / 9) * 0.5; // Up to 50% boost for highest bar
             
-            // Add global gain boost for quieter microphones (laptop mics)
-            const gainBoost = 1.5;  // 50% boost for all bars
+            // Apply perceptual weighting curve optimized for speech
+            // Boosts mid and high frequencies to create balanced visualization
+            // Speech energy naturally decreases at higher frequencies, so we compensate
+            const perceptualWeights = [1.0, 1.1, 1.3, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0];
+            const perceptualBoost = perceptualWeights[i];
             
-            buckets[i] = Math.min(1.0, normalized * freqBoost * gainBoost);
+            buckets[i] = Math.min(1.0, normalized * perceptualBoost);
         }
         
         return buckets;

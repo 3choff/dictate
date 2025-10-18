@@ -1,3 +1,86 @@
+## [1.4.0] - 2025-10-18
+
+### 🎉 Major Architectural Refactor: Unified Audio Pipeline
+
+This release represents a comprehensive architectural overhaul of the audio capture and transcription system, completed across 5 phases. The new architecture provides a cleaner, more maintainable codebase with unified audio processing across all providers.
+
+### Added
+- **Provider Abstraction Layer (Phase 1)**: 
+  - Created `BaseProvider` interface with `BatchProvider` and streaming provider implementations
+  - Factory pattern for provider instantiation (`createProvider()`)
+  - All 7 providers now implement consistent interfaces: `start()`, `stop()`, `getName()`, `getType()`
+  
+- **Unified Audio Capture (Phase 2)**:
+  - `AudioCaptureManager` class as single point of microphone access
+  - Centralized AudioContext and AudioWorklet management
+  - Eliminates audio stream duplication and contention issues
+  - Shared audio pipeline for visualization and transcription
+  
+- **RecordingSession Manager (Phase 4)**:
+  - Encapsulates provider, audio capture, and visualizer lifecycle
+  - Single point of control for start/stop/cleanup operations
+  - Improved error handling and resource management
+  - Preserves mic warmup optimization for quick restarts
+
+### Changed
+- **Main.js Refactor (Phase 3)**:
+  - Migrated from provider-specific logic to unified provider system
+  - Simplified `startRecording()` and `stopRecording()` functions
+  - Removed provider-specific conditional branches
+  - Cleaner separation between UI and session management
+
+- **Deepgram Simplification (Phase 5)**:
+  - Removed MediaRecorder complexity (~60 lines of code eliminated)
+  - Now uses PCM16 directly like Cartesia and batch providers
+  - Unified audio pipeline: all 7 providers use same PCM16 format
+  - Added `sample_rate=16000` parameter for Deepgram's linear16 encoding
+
+### Improved
+- **Laptop Microphone Compatibility**:
+  - Enabled Auto Gain Control (AGC) for quieter laptop microphones
+  - Lowered silence detection threshold from -30dB to -40dB
+  - Visualizer sensitivity adjustments (threshold from 2 to 1.5)
+  - Fixes issue where laptop mics were detected as silent
+
+- **Speech-Optimized Audio Visualizer**:
+  - Focused frequency range on speech-relevant 85 Hz - 4 kHz (was 0-9 kHz)
+  - Applied perceptual weighting curve to balance all 9 bars
+  - Progressive boost: [1.0, 1.1, 1.3, 1.6, 2.0, 2.5, 3.0, 3.5, 4.0]
+  - Creates engaging, balanced visualization instead of flat right-side bars
+  - Follows industry-standard approach used in professional audio software
+
+### Technical
+- **Provider Architecture**:
+  - `BaseProvider` (base-provider.js): Common interface and configuration
+  - `BatchProvider` (batch-provider.js): Segmentation logic for non-streaming
+  - `DeepgramProvider`, `CartesiaProvider`: Streaming implementations
+  - `GroqProvider`, `GeminiProvider`, `MistralProvider`, `SambaNovaProvider`, `FireworksProvider`: Batch implementations
+  - `ProviderFactory` (provider-factory.js): Provider instantiation
+
+- **Audio Architecture**:
+  - `AudioCaptureManager` (audio-capture.js): Microphone and AudioContext management
+  - `AudioVisualizer` (audio-visualizer.js): Real-time frequency visualization
+  - `RecordingSession` (recording-session.js): Lifecycle orchestration
+  - Unified PCM16 pipeline at 16kHz for all providers
+
+- **Code Quality**:
+  - Removed ~100+ lines of duplicate/legacy code
+  - Eliminated provider-specific conditionals in main.js
+  - Improved error handling across all providers
+  - Added comprehensive logging for debugging
+
+### Benefits
+- **Maintainability**: Single codebase pattern for all providers
+- **Reliability**: Unified audio pipeline eliminates format inconsistencies  
+- **Performance**: Reduced complexity and memory overhead
+- **Extensibility**: Adding new providers requires minimal code
+- **UX**: Better laptop mic support and engaging visualizer
+
+### Breaking Changes
+- None - all existing functionality preserved
+
+---
+
 ## [1.3.3] - 2025-10-18
 
 ### Improved
