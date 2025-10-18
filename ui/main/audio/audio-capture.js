@@ -37,7 +37,7 @@ export class AudioCaptureManager {
                     audio: {
                         echoCancellation: false,
                         noiseSuppression: false,
-                        autoGainControl: false,
+                        autoGainControl: true,  // Enable AGC for laptop mics
                         sampleRate: 48000,
                     }
                 });

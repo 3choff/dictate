@@ -19,7 +19,7 @@ export class BatchProvider extends BaseProvider {
         
         // Segmentation constants
         this.SEGMENT_SILENCE_MS = 700;
-        this.SEGMENT_SILENCE_DB = -30;
+        this.SEGMENT_SILENCE_DB = -40;  // Lower threshold for quieter laptop mics (was -30)
         this.SEGMENT_MAX_DURATION_MS = 15000;
         this.SEGMENT_MIN_DURATION_MS = 200;
         

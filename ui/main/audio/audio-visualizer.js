@@ -110,7 +110,7 @@ export class AudioVisualizer {
         
         // Silence threshold - if overall energy is too low, return zeros
         const totalEnergy = freqData.reduce((sum, val) => sum + val, 0) / dataLength;
-        if (totalEnergy < 2) {
+        if (totalEnergy < 1.5) {  // Lower threshold for laptop mics (was 2)
             return buckets; // Return all zeros
         }
         
@@ -149,9 +149,12 @@ export class AudioVisualizer {
             
             // Normalize and apply mild boost for higher frequencies
             const normalized = combined / 255.0;
-            const boost = 1.0 + (i / 9) * 0.5; // Up to 50% boost for highest bar
+            const freqBoost = 1.0 + (i / 9) * 0.5; // Up to 50% boost for highest bar
             
-            buckets[i] = Math.min(1.0, normalized * boost);
+            // Add global gain boost for quieter microphones (laptop mics)
+            const gainBoost = 1.5;  // 50% boost for all bars
+            
+            buckets[i] = Math.min(1.0, normalized * freqBoost * gainBoost);
         }
         
         return buckets;
