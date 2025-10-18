@@ -1,5 +1,6 @@
-// Import frontend visualizer
+// Import frontend modules
 import { AudioVisualizer } from './audio-visualizer.js';
+import { AudioCaptureManager } from './audio-capture.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -14,27 +15,21 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 
-// Keep a warm microphone stream for faster start/stop
-let micStream = null;
+// Unified audio capture manager (replaces micStream + AudioContext variables)
+const audioCaptureManager = new AudioCaptureManager();
 let micReleaseTimer = null;
-const MIC_RELEASE_DELAY_MS = 8000; // release mic a bit after stopping to speed up re-starts
+const MIC_RELEASE_DELAY_MS = 8000; // release mic after stopping to speed up re-starts
 let ignoreNextMicClick = false; // suppress click after pointerdown-start
 let ignoreNextSettingsClick = false;
 let ignoreNextGrammarClick = false;
 
 // Segmentation state (for non-streaming providers)
 let segmentationActive = false;
-let segmentAudioCtx = null;
-let segmentSource = null;
-let segmentProcessor = null;
 let segmentSamples16k = [];
 let segmentLastBoundary = 0;
 let segmentInSilenceMs = 0;
 let segmentHadSpeech = false;
 let segmentIsProcessing = false; // Prevent duplicate requests
-
-// Track AudioWorklet module loading (shared across contexts)
-let audioWorkletModuleLoaded = new Set(); // Track which contexts have loaded the module
 
 // Segmentation constants
 const SEGMENT_SILENCE_MS = 700;      // 700ms of silence triggers segment
@@ -63,13 +58,6 @@ let API_SERVICE = 'groq';
 // Streaming provider detection
 const STREAMING_PROVIDERS = ['deepgram', 'cartesia'];
 let streamingSessionId = null;
-
-// ===== UNIFIED AUDIO CAPTURE ARCHITECTURE =====
-// Single AudioContext that serves all providers
-let unifiedAudioCtx = null;
-let unifiedSource = null;
-let unifiedProcessor = null;
-let unifiedClonedStream = null; // Store cloned stream for Deepgram cleanup
 
 // Provider-specific handlers (MediaRecorder for Deepgram)
 let deepgramMediaRecorder = null;
@@ -525,17 +513,14 @@ async function toggleRecording() {
     } else {
         // Play stop cue (may be blocked if not a user gesture)
         playClack();
+        // Stop recording
         await stopRecording();
     }
 }
 
 async function startRecording() {
     try {
-        // Reuse warm stream if available, otherwise request
-        if (!micStream) {
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        }
-        // Cancel any scheduled release
+        // Cancel any scheduled microphone release
         if (micReleaseTimer) {
             clearTimeout(micReleaseTimer);
             micReleaseTimer = null;
@@ -545,10 +530,10 @@ async function startRecording() {
         const isStreaming = STREAMING_PROVIDERS.includes(API_SERVICE);
         
         if (isStreaming) {
-            // STREAMING MODE: Use MediaRecorder and WebSocket
+            // STREAMING MODE
             await startStreamingRecording();
         } else {
-            // BATCH MODE: Use segmentation (existing logic)
+            // BATCH MODE
             await startBatchRecording();
         }
         
@@ -561,45 +546,21 @@ async function startRecording() {
 }
 
 async function startBatchRecording() {
-    // Use segmentation mode for batch providers
+    // Reset segmentation state
     segmentationActive = true;
-    if (!segmentAudioCtx) {
-        segmentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    try {
-        await segmentAudioCtx.resume();
-    } catch (_) {}
+    segmentSamples16k = [];
+    segmentLastBoundary = 0;
+    segmentInSilenceMs = 0;
+    segmentHadSpeech = false;
+    segmentIsProcessing = false;
     
-    segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
-    
-    // Create and start frontend visualizer
-    if (!visualizer) {
-        const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
-        visualizer = new AudioVisualizer(barElements);
-    }
-    visualizer.connect(segmentAudioCtx, segmentSource);
-    visualizer.start();
-    
-    // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
-    if (!audioWorkletModuleLoaded.has(segmentAudioCtx)) {
-        try {
-            await segmentAudioCtx.audioWorklet.addModule('./audio-processor.js');
-            audioWorkletModuleLoaded.add(segmentAudioCtx);
-        } catch (error) {
-            console.error('[AudioWorklet] Failed to load module:', error);
-            throw error;
-        }
-    }
-    
-    // Create AudioWorkletNode
-    segmentProcessor = new AudioWorkletNode(segmentAudioCtx, 'audio-capture-processor');
-    
-    // Handle audio data from worklet
-    segmentProcessor.port.onmessage = (event) => {
-        const { audioData, sampleRate } = event.data;
+    // Start unified audio capture with batch callback
+    const audioContext = await audioCaptureManager.start((audioData, sampleRate) => {
+        if (!segmentationActive) return;
+        
         const mono = audioData; // Already mono from worklet
         
-        // Calculate RMS and dB
+        // Calculate RMS and dB for silence detection
         let sumSq = 0;
         for (let i = 0; i < mono.length; i++) {
             const s = mono[i];
@@ -617,30 +578,28 @@ async function startBatchRecording() {
             segmentHadSpeech = true;
         }
         
-        // Downsample and accumulate
+        // Downsample to 16kHz and accumulate
         const int16 = downsampleTo16kInt16(mono, sampleRate);
         for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
-        
-        // Visualization is handled by frontend AnalyserNode (no backend call needed)
         
         const currentIndex = segmentSamples16k.length;
         const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
         
-        // Emit segment on silence or max duration (don't await to prevent blocking)
+        // Emit segment on silence or max duration
         if (segmentInSilenceMs >= SEGMENT_SILENCE_MS && segmentHadSpeech && !segmentIsProcessing) {
             emitSegmentIfReady(currentIndex);
         } else if (segmentHadSpeech && currentMsSinceBoundary >= SEGMENT_MAX_DURATION_MS && !segmentIsProcessing) {
             emitSegmentIfReady(currentIndex);
         }
-    };
+    });
     
-    // Connect audio nodes
-    try {
-        segmentSource.connect(segmentProcessor);
-    } catch (_) {}
-    try {
-        segmentProcessor.connect(segmentAudioCtx.destination);
-    } catch (_) {}
+    // Setup visualizer
+    if (!visualizer) {
+        const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
+        visualizer = new AudioVisualizer(barElements);
+    }
+    visualizer.connect(audioContext, audioCaptureManager.getSourceNode());
+    visualizer.start();
 }
 
 async function startStreamingRecording() {
@@ -667,99 +626,6 @@ async function startStreamingRecording() {
     } catch (error) {
         console.error('[Streaming] Failed to start:', error);
         status.textContent = `Error: ${error.message}`;
-        throw error;
-    }
-}
-
-// ===== UNIFIED AUDIO CAPTURE =====
-// Single AudioContext that serves both visualization and transcription
-async function startUnifiedAudioCapture(provider, sessionId) {
-    try {
-        // Create single AudioContext for all audio processing
-        unifiedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await unifiedAudioCtx.resume();
-        
-        // For Deepgram: clone stream to avoid contention with MediaRecorder
-        // For other providers: use original stream directly
-        if (provider === 'deepgram') {
-            unifiedClonedStream = micStream.clone();
-            unifiedSource = unifiedAudioCtx.createMediaStreamSource(unifiedClonedStream);
-        } else {
-            unifiedSource = unifiedAudioCtx.createMediaStreamSource(micStream);
-        }
-        
-        // Create and start frontend visualizer
-        if (!visualizer) {
-            const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
-            visualizer = new AudioVisualizer(barElements);
-        }
-        visualizer.connect(unifiedAudioCtx, unifiedSource);
-        visualizer.start();
-        
-        // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
-        if (!audioWorkletModuleLoaded.has(unifiedAudioCtx)) {
-            try {
-                await unifiedAudioCtx.audioWorklet.addModule('./audio-processor.js');
-                audioWorkletModuleLoaded.add(unifiedAudioCtx);
-            } catch (error) {
-                console.error('[AudioWorklet] Failed to load module:', error);
-                throw error;
-            }
-        }
-        
-        // Create AudioWorkletNode
-        unifiedProcessor = new AudioWorkletNode(unifiedAudioCtx, 'audio-capture-processor');
-        
-        // Handle audio data from worklet
-        unifiedProcessor.port.onmessage = async (event) => {
-            if (!streamingSessionId) return;
-            
-            const { audioData, sampleRate } = event.data;
-            const mono = audioData; // Already mono from worklet
-            
-            // Check for abnormal spikes (AGC artifacts)
-            let maxSample = 0;
-            for (let i = 0; i < mono.length; i++) {
-                const abs = Math.abs(mono[i]);
-                if (abs > maxSample) maxSample = abs;
-            }
-            
-            // Apply soft clipping to reduce AGC spike impact
-            if (maxSample > 0.9) {
-                for (let i = 0; i < mono.length; i++) {
-                    if (Math.abs(mono[i]) > 0.5) {
-                        mono[i] *= 0.3;
-                    }
-                }
-            }
-            
-            // Downsample to 16kHz
-            const int16 = downsampleTo16kInt16(mono, sampleRate);
-            
-            // Visualization is handled by frontend AnalyserNode (no backend call needed)
-            
-            // Transcription (provider-specific)
-            if (provider === 'cartesia') {
-                // Cartesia uses the same PCM16 data
-                try {
-                    const audioData = Array.from(new Uint8Array(int16.buffer));
-                    await invoke('send_streaming_audio', {
-                        sessionId: sessionId,
-                        audioData: audioData
-                    });
-                } catch (error) {
-                    console.error('[Cartesia] Failed to send audio:', error);
-                }
-            }
-            // Deepgram handled separately via MediaRecorder
-        };
-        
-        // Connect audio nodes
-        unifiedSource.connect(unifiedProcessor);
-        unifiedProcessor.connect(unifiedAudioCtx.destination);
-        
-    } catch (error) {
-        console.error('[UnifiedAudio] Failed to start:', error);
         throw error;
     }
 }
@@ -794,11 +660,19 @@ async function startDeepgramStreaming(apiKey) {
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
-        // Start unified audio capture (handles visualization automatically)
-        await startUnifiedAudioCapture('deepgram', streamingSessionId);
+        // Start unified audio capture with visualizer only (no audio processing callback)
+        const audioContext = await audioCaptureManager.start();
+        
+        // Setup visualizer
+        if (!visualizer) {
+            const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
+            visualizer = new AudioVisualizer(barElements);
+        }
+        visualizer.connect(audioContext, audioCaptureManager.getSourceNode());
+        visualizer.start();
         
         // Create MediaRecorder for Deepgram's encoded audio (transcription only)
-        deepgramMediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
+        deepgramMediaRecorder = new MediaRecorder(audioCaptureManager.getMediaStream(), { mimeType: mimeType });
         
         // Capture the current session ID in closure to prevent stale references
         const currentSessionId = streamingSessionId;
@@ -856,8 +730,49 @@ async function startCartesiaStreaming(apiKey) {
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED
         });
         
-        // Start unified audio capture (handles both visualization AND transcription)
-        await startUnifiedAudioCapture('cartesia', streamingSessionId);
+        // Start audio capture with Cartesia callback
+        const audioContext = await audioCaptureManager.start(async (audioData, sampleRate) => {
+            if (!streamingSessionId) return;
+            
+            const mono = audioData; // Already mono from worklet
+            
+            // Apply soft clipping to reduce AGC spike impact
+            let maxSample = 0;
+            for (let i = 0; i < mono.length; i++) {
+                const abs = Math.abs(mono[i]);
+                if (abs > maxSample) maxSample = abs;
+            }
+            
+            if (maxSample > 0.9) {
+                for (let i = 0; i < mono.length; i++) {
+                    if (Math.abs(mono[i]) > 0.5) {
+                        mono[i] *= 0.3;
+                    }
+                }
+            }
+            
+            // Downsample to 16kHz
+            const int16 = downsampleTo16kInt16(mono, sampleRate);
+            
+            // Send PCM16 data to Cartesia
+            try {
+                const audioData = Array.from(new Uint8Array(int16.buffer));
+                await invoke('send_streaming_audio', {
+                    sessionId: streamingSessionId,
+                    audioData: audioData
+                });
+            } catch (error) {
+                console.error('[Cartesia] Failed to send audio:', error);
+            }
+        });
+        
+        // Setup visualizer
+        if (!visualizer) {
+            const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
+            visualizer = new AudioVisualizer(barElements);
+        }
+        visualizer.connect(audioContext, audioCaptureManager.getSourceNode());
+        visualizer.start();
         
     } catch (error) {
         console.error('[Cartesia] Failed to start:', error);
@@ -888,49 +803,33 @@ async function stopRecording() {
     if (visualizer) {
         visualizer.stop();
     }
+    
+    // Stop audio capture
+    await audioCaptureManager.stop();
 
     // Schedule mic release to keep device warm for quick restart
-    if (micStream) {
-        micReleaseTimer = setTimeout(() => {
-            try {
-                for (const track of micStream.getTracks()) track.stop();
-            } catch (_) {}
-            micStream = null;
-        }, MIC_RELEASE_DELAY_MS);
-    }
+    micReleaseTimer = setTimeout(() => {
+        audioCaptureManager.cleanup();
+    }, MIC_RELEASE_DELAY_MS);
 }
 
 async function stopBatchRecording() {
-    if (segmentationActive) {
-        // Emit final segment if any
-        try {
-            const currentIndex = segmentSamples16k.length;
-            const msSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
-            if (segmentHadSpeech && msSinceBoundary >= SEGMENT_MIN_DURATION_MS && !segmentIsProcessing) {
-                await emitSegmentIfReady(currentIndex);
-            }
-        } catch (_) {}
-        
-        // Cleanup
-        try {
-            if (segmentProcessor) segmentProcessor.disconnect();
-        } catch (_) {}
-        try {
-            if (segmentSource) segmentSource.disconnect();
-        } catch (_) {}
-        try {
-            if (segmentAudioCtx && segmentAudioCtx.state !== 'closed') await segmentAudioCtx.suspend();
-        } catch (_) {}
-        
-        segmentProcessor = null;
-        segmentSource = null;
-        segmentationActive = false;
-        segmentSamples16k = [];
-        segmentLastBoundary = 0;
-        segmentInSilenceMs = 0;
-        segmentHadSpeech = false;
-        segmentIsProcessing = false;
-    }
+    // Emit final segment if any
+    try {
+        const currentIndex = segmentSamples16k.length;
+        const msSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
+        if (segmentHadSpeech && msSinceBoundary >= SEGMENT_MIN_DURATION_MS && !segmentIsProcessing) {
+            await emitSegmentIfReady(currentIndex);
+        }
+    } catch (_) {}
+    
+    // Reset segmentation state
+    segmentationActive = false;
+    segmentSamples16k = [];
+    segmentLastBoundary = 0;
+    segmentInSilenceMs = 0;
+    segmentHadSpeech = false;
+    segmentIsProcessing = false;
     
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
@@ -948,32 +847,6 @@ async function stopStreamingRecording() {
             deepgramMediaRecorder.stop();
         }
         deepgramMediaRecorder = null;
-    }
-    
-    // Stop unified audio capture (handles both visualization and transcription)
-    if (unifiedProcessor) {
-        try {
-            unifiedProcessor.disconnect();
-        } catch (_) {}
-        unifiedProcessor = null;
-    }
-    if (unifiedSource) {
-        try {
-            unifiedSource.disconnect();
-        } catch (_) {}
-        unifiedSource = null;
-    }
-    if (unifiedClonedStream) {
-        try {
-            unifiedClonedStream.getTracks().forEach(track => track.stop());
-        } catch (_) {}
-        unifiedClonedStream = null;
-    }
-    if (unifiedAudioCtx && unifiedAudioCtx.state !== 'closed') {
-        try {
-            await unifiedAudioCtx.suspend();
-        } catch (_) {}
-        unifiedAudioCtx = null;
     }
     
     // Close backend streaming session

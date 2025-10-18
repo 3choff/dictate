@@ -94,53 +94,64 @@ export class AudioVisualizer {
     }
 
     /**
-     * Split frequency data into 9 logarithmic buckets
-     * Uses logarithmic distribution to spread energy across all bars
-     * This matches human hearing perception and ensures all bars are active
+     * Split frequency data into 9 buckets with balanced distribution
+     * Uses logarithmic scale to spread audio energy evenly across all bars
      */
     splitIntoBuckets(freqData) {
         const buckets = new Array(9).fill(0);
         const dataLength = freqData.length;
         
-        // Logarithmic bucketing: bar 0 (left) = bass, bar 8 (right) = treble
-        // Use steeper log curve to push high frequencies more to the right
+        // Use logarithmic distribution for more even energy spread
+        // This ensures all bars animate, not just low frequencies
         
-        const minLog = Math.log(1);
-        const maxLog = Math.log(dataLength);
+        // Start from bin 3 to skip DC offset and very low noise
+        const minBin = 3;
+        const maxBin = Math.min(dataLength - 1, 400); // Use up to ~9kHz for fuller spectrum
+        
+        // Silence threshold - if overall energy is too low, return zeros
+        const totalEnergy = freqData.reduce((sum, val) => sum + val, 0) / dataLength;
+        if (totalEnergy < 2) {
+            return buckets; // Return all zeros
+        }
+        
+        const minLog = Math.log(minBin);
+        const maxLog = Math.log(maxBin);
         const logRange = maxLog - minLog;
         
         for (let i = 0; i < 9; i++) {
-            // Apply exponential skew to push high frequencies further right
-            // i/9 ranges from 0 to 1, raise to power to make curve steeper
-            const skewedRatio = Math.pow(i / 9, 0.7); // Lower power = steeper curve
-            const skewedRatioNext = Math.pow((i + 1) / 9, 0.7);
+            // Logarithmic bucket boundaries
+            const startLog = minLog + (i / 9) * logRange;
+            const endLog = minLog + ((i + 1) / 9) * logRange;
             
-            const startLog = minLog + skewedRatio * logRange;
-            const endLog = minLog + skewedRatioNext * logRange;
+            const start = Math.round(Math.exp(startLog));
+            const end = Math.round(Math.exp(endLog));
             
-            const start = Math.max(1, Math.round(Math.exp(startLog)));
-            const end = Math.min(dataLength, Math.round(Math.exp(endLog)));
-            
-            // Use peak value instead of average for better responsiveness
+            // Calculate energy in this range
             let peak = 0;
             let sum = 0;
             let count = 0;
             
-            for (let j = start; j < end; j++) {
+            for (let j = start; j < Math.min(end, maxBin); j++) {
                 const value = freqData[j];
                 sum += value;
                 count++;
                 if (value > peak) peak = value;
             }
             
-            // Use weighted combination of peak and average
-            const avg = count > 0 ? sum / count : 0;
-            const combined = peak * 0.7 + avg * 0.3;
+            if (count === 0) {
+                buckets[i] = 0;
+                continue;
+            }
             
-            // Apply boost to higher frequency buckets (compensate for natural rolloff)
-            const boost = 1 + (i / 9) * 0.8; // Progressive boost for higher frequencies
+            // Weighted combination: 60% peak, 40% average
+            const avg = sum / count;
+            const combined = peak * 0.6 + avg * 0.4;
             
-            buckets[i] = Math.min(1.0, (combined / 255.0) * boost);
+            // Normalize and apply mild boost for higher frequencies
+            const normalized = combined / 255.0;
+            const boost = 1.0 + (i / 9) * 0.5; // Up to 50% boost for highest bar
+            
+            buckets[i] = Math.min(1.0, normalized * boost);
         }
         
         return buckets;
