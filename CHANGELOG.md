@@ -1,3 +1,22 @@
+## [1.3.3] - 2025-10-18
+
+### Improved
+- **Settings Management**: Optimized settings loading to prevent unnecessary cascading reloads on startup
+- **Audio Processing**: Migrated from deprecated ScriptProcessorNode to modern AudioWorkletNode for better performance
+- **Event Emission**: Refined event system to only emit settings-changed events when user preferences change, not for internal updates like window position
+
+### Technical
+- **Selective Event Emission**: Window position and compact mode changes no longer trigger frontend reloads
+- **AudioWorklet Implementation**: Created dedicated audio-processor.js worklet for audio capture and processing in separate thread
+- **Loading Guards**: Added duplicate load prevention for both settings and AudioWorklet modules
+- **Reduced Log Noise**: Removed verbose settings loading/saving logs while preserving error logging
+- **Deepgram Session Management**: Improved session lifecycle with proper event handler cleanup and session ID validation
+
+### Fixed
+- **Startup Performance**: Reduced settings loads from 5+ to 2 on application startup
+- **Browser Console Warnings**: Eliminated ScriptProcessorNode deprecation warnings
+- **Deepgram Session Errors**: Fixed "Session not found" errors by preventing stale MediaRecorder callbacks from old sessions
+
 ## [1.3.2] - 2025-10-16
 
 ### Added

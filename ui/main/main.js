@@ -30,6 +30,9 @@ let segmentInSilenceMs = 0;
 let segmentHadSpeech = false;
 let segmentIsProcessing = false; // Prevent duplicate requests
 
+// Track AudioWorklet module loading (shared across contexts)
+let audioWorkletModuleLoaded = new Set(); // Track which contexts have loaded the module
+
 // Segmentation constants
 const SEGMENT_SILENCE_MS = 700;      // 700ms of silence triggers segment
 const SEGMENT_SILENCE_DB = -30;       // dB threshold for silence detection
@@ -260,8 +263,17 @@ async function emitSegmentIfReady(boundaryIndex) {
     }
 }
 
+// Guard to prevent duplicate loads
+let isLoadingSettings = false;
+
 // Load API key from settings and restore compact mode
 async function loadSettings() {
+    if (isLoadingSettings) {
+        console.log('[Settings] Skipping duplicate load (already in progress)');
+        return;
+    }
+    
+    isLoadingSettings = true;
     try {
         const settings = await invoke('get_settings');
         GROQ_API_KEY = settings.groq_api_key || '';
@@ -284,6 +296,8 @@ async function loadSettings() {
         }
     } catch (error) {
         console.error('Failed to load settings:', error);
+    } finally {
+        isLoadingSettings = false;
     }
 }
 
@@ -558,12 +572,25 @@ async function startBatchRecording() {
     }
     
     segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
-    const bufferSize = 4096; // ~85ms at 48kHz
-    segmentProcessor = segmentAudioCtx.createScriptProcessor(bufferSize, 1, 1);
     
-    segmentProcessor.onaudioprocess = (ev) => {
-        const inBuf = ev.inputBuffer;
-        const mono = mixToMonoFloat32(inBuf);
+    // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
+    if (!audioWorkletModuleLoaded.has(segmentAudioCtx)) {
+        try {
+            await segmentAudioCtx.audioWorklet.addModule('./audio-processor.js');
+            audioWorkletModuleLoaded.add(segmentAudioCtx);
+        } catch (error) {
+            console.error('[AudioWorklet] Failed to load module:', error);
+            throw error;
+        }
+    }
+    
+    // Create AudioWorkletNode
+    segmentProcessor = new AudioWorkletNode(segmentAudioCtx, 'audio-capture-processor');
+    
+    // Handle audio data from worklet
+    segmentProcessor.port.onmessage = (event) => {
+        const { audioData, sampleRate } = event.data;
+        const mono = audioData; // Already mono from worklet
         
         // Calculate RMS and dB
         let sumSq = 0;
@@ -573,7 +600,7 @@ async function startBatchRecording() {
         }
         const rms = Math.sqrt(sumSq / Math.max(1, mono.length));
         const db = dbfsFromRms(rms);
-        const frameMs = (mono.length / inBuf.sampleRate) * 1000;
+        const frameMs = (mono.length / sampleRate) * 1000;
         
         // Silence detection
         if (db < SEGMENT_SILENCE_DB) {
@@ -584,7 +611,7 @@ async function startBatchRecording() {
         }
         
         // Downsample and accumulate
-        const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
+        const int16 = downsampleTo16kInt16(mono, sampleRate);
         for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
         
         // Send to visualizer (non-blocking)
@@ -657,14 +684,27 @@ async function startUnifiedAudioCapture(provider, sessionId) {
         } else {
             unifiedSource = unifiedAudioCtx.createMediaStreamSource(micStream);
         }
-        const bufferSize = 4096;
-        unifiedProcessor = unifiedAudioCtx.createScriptProcessor(bufferSize, 1, 1);
         
-        unifiedProcessor.onaudioprocess = async (ev) => {
+        // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
+        if (!audioWorkletModuleLoaded.has(unifiedAudioCtx)) {
+            try {
+                await unifiedAudioCtx.audioWorklet.addModule('./audio-processor.js');
+                audioWorkletModuleLoaded.add(unifiedAudioCtx);
+            } catch (error) {
+                console.error('[AudioWorklet] Failed to load module:', error);
+                throw error;
+            }
+        }
+        
+        // Create AudioWorkletNode
+        unifiedProcessor = new AudioWorkletNode(unifiedAudioCtx, 'audio-capture-processor');
+        
+        // Handle audio data from worklet
+        unifiedProcessor.port.onmessage = async (event) => {
             if (!streamingSessionId) return;
             
-            const inBuf = ev.inputBuffer;
-            const mono = mixToMonoFloat32(inBuf);
+            const { audioData, sampleRate } = event.data;
+            const mono = audioData; // Already mono from worklet
             
             // Check for abnormal spikes (AGC artifacts)
             let maxSample = 0;
@@ -683,7 +723,7 @@ async function startUnifiedAudioCapture(provider, sessionId) {
             }
             
             // Downsample to 16kHz
-            const int16 = downsampleTo16kInt16(mono, inBuf.sampleRate);
+            const int16 = downsampleTo16kInt16(mono, sampleRate);
             
             // BRANCH 1: Visualization (works for ALL providers)
             try {
@@ -757,8 +797,12 @@ async function startDeepgramStreaming(apiKey) {
         // Create MediaRecorder for Deepgram's encoded audio (transcription only)
         deepgramMediaRecorder = new MediaRecorder(micStream, { mimeType: mimeType });
         
+        // Capture the current session ID in closure to prevent stale references
+        const currentSessionId = streamingSessionId;
+        
         deepgramMediaRecorder.ondataavailable = async (event) => {
-            if (event.data && event.data.size > 0 && streamingSessionId) {
+            // Only process if this is still the active session
+            if (event.data && event.data.size > 0 && streamingSessionId === currentSessionId) {
                 try {
                     // Convert Blob to ArrayBuffer to Uint8Array
                     const arrayBuffer = await event.data.arrayBuffer();
@@ -766,7 +810,7 @@ async function startDeepgramStreaming(apiKey) {
                     
                     // Send encoded audio to Deepgram for transcription
                     await invoke('send_streaming_audio', {
-                        sessionId: streamingSessionId,
+                        sessionId: currentSessionId,
                         audioData: audioData
                     });
                 } catch (error) {
@@ -895,8 +939,14 @@ async function stopBatchRecording() {
 
 async function stopStreamingRecording() {
     // Stop Deepgram MediaRecorder (if used)
-    if (deepgramMediaRecorder && deepgramMediaRecorder.state !== 'inactive') {
-        deepgramMediaRecorder.stop();
+    if (deepgramMediaRecorder) {
+        // Clear event handlers to prevent stale callbacks
+        deepgramMediaRecorder.ondataavailable = null;
+        deepgramMediaRecorder.onerror = null;
+        
+        if (deepgramMediaRecorder.state !== 'inactive') {
+            deepgramMediaRecorder.stop();
+        }
         deepgramMediaRecorder = null;
     }
     

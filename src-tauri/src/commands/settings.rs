@@ -119,22 +119,19 @@ pub async fn get_settings(app: AppHandle) -> Result<Settings, String> {
     let settings_path = get_settings_path(&app)?;
     
     if !settings_path.exists() {
-        println!("[SETTINGS] No settings file found, using defaults");
         return Ok(Settings::default());
     }
     
     let content = fs::read_to_string(&settings_path)
         .map_err(|e| format!("Failed to read settings: {}", e))?;
     
-    println!("[SETTINGS] Loaded from: {:?}", settings_path);
-    
     serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings JSON: {}", e))
 }
 
-#[tauri::command]
-pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), String> {
-    let settings_path = get_settings_path(&app)?;
+// Internal save function with optional event emission
+async fn save_settings_internal(app: &AppHandle, settings: Settings, emit_event: bool) -> Result<(), String> {
+    let settings_path = get_settings_path(app)?;
     
     let content = serde_json::to_string_pretty(&settings)
         .map_err(|e| e.to_string())?;
@@ -148,14 +145,20 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
     file.sync_all()
         .map_err(|e| format!("Failed to sync settings to disk: {}", e))?;
     
-    println!("[SETTINGS] Saved to: {:?}", settings_path);
-    
-    // Emit event to notify main window that settings changed
-    if let Some(main_window) = app.get_webview_window("main") {
-        let _ = main_window.emit("settings-changed", ());
+    // Only emit event if requested (skip for internal changes like window position)
+    if emit_event {
+        if let Some(main_window) = app.get_webview_window("main") {
+            let _ = main_window.emit("settings-changed", ());
+        }
     }
     
     Ok(())
+}
+
+#[tauri::command]
+pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), String> {
+    // Public API always emits event (used by settings window)
+    save_settings_internal(&app, settings, true).await
 }
 
 #[tauri::command]
@@ -466,9 +469,9 @@ pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), St
         })).map_err(|e| e.to_string())?;
     }
     
-    // Save compact mode preference
+    // Save compact mode preference without emitting event (UI already updated)
     settings.compact_mode = enabled;
-    save_settings(app, settings).await?;
+    save_settings_internal(&app, settings, false).await?;
     
     // println!("[COMPACT] Toggle complete, saved settings");
     
@@ -479,7 +482,8 @@ pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), St
 pub async fn save_window_position(app: AppHandle, x: i32, y: i32) -> Result<(), String> {
     let mut settings = get_settings(app.clone()).await?;
     settings.main_window_position = Some(WindowPosition { x, y });
-    save_settings(app, settings).await
+    // Don't emit event - frontend doesn't need to reload for position changes
+    save_settings_internal(&app, settings, false).await
 }
 
 #[tauri::command]
