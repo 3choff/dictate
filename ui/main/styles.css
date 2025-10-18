@@ -49,6 +49,7 @@ body.transitioning.compact-exit {
     background-color: var(--primary-bg);
     /* border: 1px solid rgba(252, 252, 252, 0.08); */
     border-radius: 14px;
+    box-shadow: inset -1px 0px 2px 0px rgba(255, 255, 255, 0.15);
     box-sizing: border-box;
     overflow: hidden;
     transform: scale(1);
