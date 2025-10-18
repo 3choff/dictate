@@ -2,6 +2,7 @@
 import { AudioVisualizer } from './audio/audio-visualizer.js';
 import { AudioCaptureManager } from './audio/audio-capture.js';
 import { createProvider } from './providers/provider-factory.js';
+import { RecordingSession } from './recording-session.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -12,8 +13,6 @@ if (!window.__TAURI__) {
 const { invoke } = window.__TAURI__?.core || {};
 const { listen } = window.__TAURI__?.event || {};
 
-let mediaRecorder;
-let audioChunks = [];
 let isRecording = false;
 
 // Unified audio capture manager
@@ -24,8 +23,8 @@ let ignoreNextMicClick = false; // suppress click after pointerdown-start
 let ignoreNextSettingsClick = false;
 let ignoreNextGrammarClick = false;
 
-// Active provider instance (replaces old branching logic)
-let activeProvider = null;
+// Active recording session (unified lifecycle management)
+let currentSession = null;
 
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -522,7 +521,7 @@ async function startRecording() {
         }
         
         // Create provider instance
-        activeProvider = createProvider(API_SERVICE, {
+        const provider = createProvider(API_SERVICE, {
             apiKey: apiKey,
             language: LANGUAGE,
             smartFormat: TEXT_FORMATTED,
@@ -538,14 +537,15 @@ async function startRecording() {
             visualizer = new AudioVisualizer(barElements);
         }
         
-        // Start provider (handles both audio capture and transcription)
-        await activeProvider.start(audioCaptureManager, visualizer);
+        // Create and start recording session
+        currentSession = new RecordingSession(provider, audioCaptureManager, visualizer);
+        await currentSession.start();
         
         // UI was already set by the caller for immediate feedback
         status.textContent = 'Recording...';
     } catch (error) {
         console.error('Error starting recording:', error);
-        activeProvider = null;
+        currentSession = null;
         throw error;
     }
 }
@@ -557,25 +557,17 @@ async function stopRecording() {
     visualizerContainer?.classList.remove('active');
     status.textContent = 'Press to record';
 
-    // Stop active provider (handles transcription cleanup)
-    if (activeProvider) {
+    // Stop recording session (handles all cleanup)
+    if (currentSession) {
         try {
-            await activeProvider.stop();
+            await currentSession.stop();
         } catch (error) {
-            console.error('Error stopping provider:', error);
+            console.error('Error stopping session:', error);
         }
-        activeProvider = null;
+        currentSession = null;
     }
-    
-    // Stop frontend visualizer
-    if (visualizer) {
-        visualizer.stop();
-    }
-    
-    // Stop audio capture
-    await audioCaptureManager.stop();
 
-    // Schedule mic release to keep device warm for quick restart
+    // Schedule full cleanup to release mic after delay (keeps device warm for quick restart)
     micReleaseTimer = setTimeout(() => {
         audioCaptureManager.cleanup();
     }, MIC_RELEASE_DELAY_MS);
