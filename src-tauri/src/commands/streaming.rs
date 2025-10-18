@@ -60,14 +60,6 @@ pub async fn start_streaming_transcription(
                 sessions.insert(session_id.clone(), audio_tx);
             }
             
-            // Start the visualizer
-            if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-                println!("[Streaming] Starting visualizer for session: {}", session_id);
-                visualizer.start().await;
-            } else {
-                eprintln!("[Streaming] Warning: VisualizerManager not found in app state");
-            }
-            
             // Spawn task to handle incoming transcripts
             let app_clone = app.clone();
             let session_id_clone = session_id.clone();
@@ -143,14 +135,6 @@ pub async fn start_streaming_transcription(
             {
                 let mut sessions = state.sessions.lock().await;
                 sessions.insert(session_id.clone(), audio_tx);
-            }
-            
-            // Start the visualizer before spawning task
-            if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-                println!("[Streaming] Starting visualizer for session: {}", session_id);
-                visualizer.start().await;
-            } else {
-                eprintln!("[Streaming] Warning: VisualizerManager not found in app state");
             }
             
             // Spawn task to handle incoming transcripts
@@ -233,23 +217,9 @@ pub async fn send_streaming_audio(
     if let Some(audio_tx) = sessions.get(&session_id) {
         // Send to transcription
         audio_tx
-            .send(audio_data.clone())
+            .send(audio_data)
             .await
             .map_err(|e| format!("Failed to send audio: {}", e))?;
-        
-        // Also send to visualizer (convert u8 to f32 PCM)
-        if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-            // Convert Vec<u8> to Vec<f32> assuming 16-bit PCM audio
-            let samples: Vec<f32> = audio_data
-                .chunks_exact(2)
-                .map(|chunk| {
-                    let sample = i16::from_le_bytes([chunk[0], chunk[1]]);
-                    sample as f32 / 32768.0  // Normalize to -1.0 to 1.0
-                })
-                .collect();
-            
-            visualizer.send_audio_chunk(samples).await;
-        }
         
         Ok(())
     } else {
@@ -257,28 +227,6 @@ pub async fn send_streaming_audio(
     }
 }
 
-/// Send audio chunk to visualizer only (for Deepgram which uses separate encoded stream)
-#[tauri::command]
-pub async fn send_visualization_audio(
-    app: AppHandle,
-    audio_data: Vec<u8>,
-) -> Result<(), String> {
-    // Only send to visualizer, not to transcription provider
-    if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-        // Convert Vec<u8> to Vec<f32> assuming 16-bit PCM audio
-        let samples: Vec<f32> = audio_data
-            .chunks_exact(2)
-            .map(|chunk| {
-                let sample = i16::from_le_bytes([chunk[0], chunk[1]]);
-                sample as f32 / 32768.0  // Normalize to -1.0 to 1.0
-            })
-            .collect();
-        
-        visualizer.send_audio_chunk(samples).await;
-    }
-    
-    Ok(())
-}
 
 /// Stop streaming transcription session
 #[tauri::command]
@@ -292,14 +240,6 @@ pub async fn stop_streaming_transcription(
     if let Some(audio_tx) = sessions.remove(&session_id) {
         // Send empty data to signal close
         let _ = audio_tx.send(vec![]).await;
-        
-        // Stop the visualizer
-        if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-            println!("[Streaming] Stopping visualizer for session: {}", session_id);
-            visualizer.stop().await;
-        } else {
-            eprintln!("[Streaming] Warning: Cannot stop visualizer - VisualizerManager not found");
-        }
         
         Ok(())
     } else {
@@ -375,32 +315,5 @@ async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandl
             // Text insertion is handled separately in the main flow
             Ok(())
         }
-    }
-}
-
-/// Start visualizer (for batch providers that don't use streaming sessions)
-#[tauri::command]
-pub async fn start_visualizer(
-    app: AppHandle,
-    session_id: String,
-) -> Result<(), String> {
-    if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-        println!("[Visualizer] Starting for session: {}", session_id);
-        visualizer.start().await;
-        Ok(())
-    } else {
-        Err("VisualizerManager not found in app state".to_string())
-    }
-}
-
-/// Stop visualizer (for batch providers)
-#[tauri::command]
-pub async fn stop_visualizer(app: AppHandle) -> Result<(), String> {
-    if let Some(visualizer) = app.try_state::<crate::visualizer_manager::VisualizerManager>() {
-        println!("[Visualizer] Stopping");
-        visualizer.stop().await;
-        Ok(())
-    } else {
-        Err("VisualizerManager not found in app state".to_string())
     }
 }

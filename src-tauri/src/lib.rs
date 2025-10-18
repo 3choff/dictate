@@ -7,11 +7,8 @@ mod commands;
 mod providers;
 mod services;
 mod voice_commands;
-mod audio_analyzer;
-mod visualizer_manager;
 
 use commands::streaming::StreamingState;
-use visualizer_manager::VisualizerManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,10 +19,6 @@ pub fn run() {
         .manage(StreamingState::default())
         .manage(commands::settings::ReleaseState::default())
         .setup(|app| {
-            // Initialize audio visualizer manager
-            let visualizer = VisualizerManager::new(app.app_handle().clone());
-            app.manage(visualizer);
-            
             // Register global shortcuts; on dev reload, ignore "already registered" errors
             let gs = app.global_shortcut();
 
@@ -191,10 +184,7 @@ pub fn run() {
             commands::update_settings_size,
             commands::start_streaming_transcription,
             commands::send_streaming_audio,
-            commands::send_visualization_audio,
             commands::stop_streaming_transcription,
-            commands::start_visualizer,
-            commands::stop_visualizer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

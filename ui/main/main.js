@@ -1,3 +1,6 @@
+// Import frontend visualizer
+import { AudioVisualizer } from './audio-visualizer.js';
+
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
     console.error('Tauri APIs not found!');
@@ -44,7 +47,7 @@ const settingsBtn = document.getElementById('settingsBtn');
 const grammarBtn = document.getElementById('grammarBtn');
 const closeBtnTop = document.getElementById('close-btn-top');
 const closeBtnCompact = document.getElementById('close-btn-compact');
-const audioVisualizer = document.getElementById('audioVisualizer');
+const visualizerContainer = document.getElementById('audioVisualizer');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
 // API key and insertion mode will be loaded from settings
@@ -70,6 +73,9 @@ let unifiedClonedStream = null; // Store cloned stream for Deepgram cleanup
 
 // Provider-specific handlers (MediaRecorder for Deepgram)
 let deepgramMediaRecorder = null;
+
+// Frontend visualizer instance
+let visualizer = null;
 
 let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
@@ -368,14 +374,14 @@ micButton.addEventListener('pointerdown', (e) => {
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
-        audioVisualizer?.classList.add('active');
+        visualizerContainer?.classList.add('active');
         status.textContent = 'Starting...';
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
-            audioVisualizer?.classList.remove('active');
+            visualizerContainer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         });
     } else {
@@ -405,14 +411,14 @@ micButton.addEventListener('click', (e) => {
         // Immediate visual response
         isRecording = true;
         micButton.classList.add('recording');
-        audioVisualizer?.classList.add('active');
+        visualizerContainer?.classList.add('active');
         status.textContent = 'Starting...';
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
-            audioVisualizer?.classList.remove('active');
+            visualizerContainer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         });
     } else {
@@ -505,7 +511,7 @@ async function toggleRecording() {
         // Mirror click behavior
         isRecording = true;
         micButton.classList.add('recording');
-        audioVisualizer?.classList.add('active');
+        visualizerContainer?.classList.add('active');
         status.textContent = 'Starting...';
         try {
             await startRecording();
@@ -513,7 +519,7 @@ async function toggleRecording() {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
-            audioVisualizer?.classList.remove('active');
+            visualizerContainer?.classList.remove('active');
             status.textContent = 'Microphone access denied';
         }
     } else {
@@ -564,14 +570,15 @@ async function startBatchRecording() {
         await segmentAudioCtx.resume();
     } catch (_) {}
     
-    // Start visualizer for batch providers
-    try {
-        await invoke('start_visualizer', { sessionId: 'batch_' + Date.now() });
-    } catch (error) {
-        console.error('[Batch] Failed to start visualizer:', error);
-    }
-    
     segmentSource = segmentAudioCtx.createMediaStreamSource(micStream);
+    
+    // Create and start frontend visualizer
+    if (!visualizer) {
+        const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
+        visualizer = new AudioVisualizer(barElements);
+    }
+    visualizer.connect(segmentAudioCtx, segmentSource);
+    visualizer.start();
     
     // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
     if (!audioWorkletModuleLoaded.has(segmentAudioCtx)) {
@@ -614,11 +621,7 @@ async function startBatchRecording() {
         const int16 = downsampleTo16kInt16(mono, sampleRate);
         for (let i = 0; i < int16.length; i++) segmentSamples16k.push(int16[i]);
         
-        // Send to visualizer (non-blocking)
-        try {
-            const audioData = Array.from(new Uint8Array(int16.buffer));
-            invoke('send_visualization_audio', { audioData: audioData }).catch(() => {});
-        } catch (_) {}
+        // Visualization is handled by frontend AnalyserNode (no backend call needed)
         
         const currentIndex = segmentSamples16k.length;
         const currentMsSinceBoundary = ((currentIndex - segmentLastBoundary) / 16000) * 1000;
@@ -685,6 +688,14 @@ async function startUnifiedAudioCapture(provider, sessionId) {
             unifiedSource = unifiedAudioCtx.createMediaStreamSource(micStream);
         }
         
+        // Create and start frontend visualizer
+        if (!visualizer) {
+            const barElements = visualizerContainer?.querySelectorAll('.bar') || [];
+            visualizer = new AudioVisualizer(barElements);
+        }
+        visualizer.connect(unifiedAudioCtx, unifiedSource);
+        visualizer.start();
+        
         // Load AudioWorklet module (modern replacement for ScriptProcessorNode)
         if (!audioWorkletModuleLoaded.has(unifiedAudioCtx)) {
             try {
@@ -725,17 +736,9 @@ async function startUnifiedAudioCapture(provider, sessionId) {
             // Downsample to 16kHz
             const int16 = downsampleTo16kInt16(mono, sampleRate);
             
-            // BRANCH 1: Visualization (works for ALL providers)
-            try {
-                const audioData = Array.from(new Uint8Array(int16.buffer));
-                await invoke('send_visualization_audio', {
-                    audioData: audioData
-                });
-            } catch (error) {
-                // Silently ignore - visualization is optional
-            }
+            // Visualization is handled by frontend AnalyserNode (no backend call needed)
             
-            // BRANCH 2: Transcription (provider-specific)
+            // Transcription (provider-specific)
             if (provider === 'cartesia') {
                 // Cartesia uses the same PCM16 data
                 try {
@@ -867,7 +870,7 @@ async function stopRecording() {
     // Immediate UI feedback
     isRecording = false;
     micButton.classList.remove('recording');
-    audioVisualizer?.classList.remove('active');
+    visualizerContainer?.classList.remove('active');
     status.textContent = 'Press to record';
 
     // Check if using streaming provider
@@ -881,8 +884,10 @@ async function stopRecording() {
         await stopBatchRecording();
     }
     
-    // Reset visualizer bars to default state AFTER stopping audio processing
-    resetBarHeights();
+    // Stop frontend visualizer
+    if (visualizer) {
+        visualizer.stop();
+    }
 
     // Schedule mic release to keep device warm for quick restart
     if (micStream) {
@@ -925,11 +930,6 @@ async function stopBatchRecording() {
         segmentInSilenceMs = 0;
         segmentHadSpeech = false;
         segmentIsProcessing = false;
-        
-        // Stop visualizer
-        try {
-            await invoke('stop_visualizer');
-        } catch (_) {}
     }
     
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -1081,80 +1081,6 @@ listen('settings-changed', async () => {
 loadSettings();
 loadAudioCues();
 
-// ===== AUDIO VISUALIZER =====
-// Implementation based on Handy project's approach
-
-// Smoothed levels for frontend interpolation (prevents jitter)
-let smoothedLevels = Array(9).fill(0);
-
-/**
- * Reset visualizer bars to CSS default state (disabled/rest state)
- */
-function resetBarHeights() {
-    if (!audioVisualizer) return;
-    
-    const barElements = audioVisualizer.querySelectorAll('.bar');
-    smoothedLevels = Array(9).fill(0);
-    
-    barElements.forEach(bar => {
-        if (bar) {
-            bar.style.height = '4px';
-            bar.style.backgroundColor = 'rgb(68, 86, 109)';
-            bar.style.opacity = '0.4';
-            bar.style.transition = 'height 200ms ease-out, background-color 200ms ease-out';
-        }
-    });
-}
-
-/**
- * Update bar heights and opacity based on audio frequency data
- * Visual amplification of Handy's formula for better responsiveness
- * Original: height = min(20, 4 + pow(v, 0.7) * 16)
- * Amplified: height = min(35, 4 + pow(v, 0.65) * 26)
- * @param {number[]} barValues - Array of 9 values (0.0 - 1.0)
- */
-function updateBarHeights(barValues) {
-    if (!audioVisualizer) return;
-    
-    const barElements = audioVisualizer.querySelectorAll('.bar');
-    
-    // Apply smoothing to reduce jitter (like the reference project)
-    smoothedLevels = smoothedLevels.map((prev, i) => {
-        const target = barValues[i] || 0;
-        return prev * 0.7 + target * 0.3; // Smooth transition: 70% old, 30% new
-    });
-    
-    smoothedLevels.forEach((value, index) => {
-        const bar = barElements[index];
-        if (bar) {
-            // Visually amplified formula: taller bars, more responsive to lower sounds
-            const height = Math.min(35, 4 + Math.pow(value, 0.65) * 26);
-            bar.style.height = `${height}px`;
-            
-            // Set transition for smooth animation
-            bar.style.transition = 'height 60ms ease-out';
-            
-            // Calculate opacity based on value (minimum 0.5 for visibility)
-            const opacity = Math.max(0.5, value * 2);
-            
-            // Calculate color from blue to light blue based on intensity
-            const blue = { r: 0, g: 169, b: 255 };      //rgb(160, 200, 248)
-            const lblue = { r: 160, g: 200, b: 248 };      //rgb(0, 169, 255) (accent color)
-            
-            const r = Math.round(blue.r + (lblue.r - blue.r) * value);
-            const g = Math.round(blue.g + (lblue.g - blue.g) * value);
-            const b = Math.round(blue.b + (lblue.b - blue.b) * value);
-            
-            bar.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-            bar.style.opacity = opacity;
-        }
-    });
-}
-
-// Listen for audio bar updates from backend
-listen('audio-bars-update', (event) => {
-    const data = event.payload;
-    if (data && data.bars) {
-        updateBarHeights(data.bars);
-    }
-});
+// ===== VISUALIZATION =====
+// Visualization is now handled entirely in the frontend using Web Audio API's AnalyserNode
+// See audio-visualizer.js for implementation
