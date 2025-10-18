@@ -55,7 +55,7 @@ export class AudioCaptureManager {
 
             // Load AudioWorklet processor (modern replacement for ScriptProcessor)
             if (!this.audioWorkletLoaded) {
-                await this.audioContext.audioWorklet.addModule('./audio-processor.js');
+                await this.audioContext.audioWorklet.addModule('./audio/audio-processor.js');
                 this.audioWorkletLoaded = true;
             }
 
