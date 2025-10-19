@@ -1,3 +1,43 @@
+## [1.5.0] - 2025-10-19
+
+### 🎯 Major Feature: Silero VAD (Voice Activity Detection)
+
+This release introduces ML-based Voice Activity Detection using the Silero VAD model, replacing the previous RMS (Root Mean Square) threshold approach. The new VAD system dramatically improves speech segmentation accuracy, eliminates false positives from background noise, and provides consistent performance across different microphones and environments.
+
+### Added
+- **Silero VAD Module (Rust)**:
+  - `vad/silero.rs` - Silero VAD wrapper for ML-based speech detection (30ms frames @ 16kHz)
+  - `vad/smoothed.rs` - SmoothedVad wrapper with onset detection (60ms), hangover (300ms), and prefill buffering (300ms)
+  - `vad/session_manager.rs` - Thread-safe session manager with tokio async processing
+  - `vad/mod.rs` - Public interface with VoiceActivityDetector trait and VadFrame enum
+  - Model file: `resources/models/silero_vad_v4.onnx` (bundled with application)
+
+- **VAD Commands (Tauri)**:
+  - `vad_create_session` - Initialize VAD session with configurable threshold and silence duration
+  - `vad_push_frame` - Send audio frames for processing (non-blocking async)
+  - `vad_stop_session` - Stop session and retrieve final buffered audio
+  - `vad_destroy_session` - Cleanup and remove session
+
+- **Event System**:
+  - `speech_segment_ready` event - Emitted from Rust to frontend when speech segment detected
+  - Includes session ID, PCM16 audio data, and duration metadata
+
+### Changed
+- **BatchProvider Refactor**:
+  - Replaced RMS-based segmentation (~90 lines) with VAD integration (~60 lines)
+  - Removed manual silence detection, boundary tracking, and buffer management
+  - Integrated event-driven segment reception from Rust VAD
+  - All 5 batch providers (Groq, Gemini, Mistral, SambaNova, Fireworks) now use VAD automatically
+
+- **Segmentation Parameters**:
+  - Silence threshold: Reduced from 1500ms to 400ms for faster response
+  - Hangover duration: Optimized from 450ms to 300ms for quicker segment cutoff
+  - Onset frames: 2 frames (~60ms) to prevent false positives
+  - Prefill buffer: 300ms to capture word beginnings
+  - Max segment duration: 30 seconds (enforced)
+
+---
+
 ## [1.4.0] - 2025-10-18
 
 ### 🎉 Major Architectural Refactor: Unified Audio Pipeline

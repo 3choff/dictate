@@ -6,6 +6,7 @@ use tokio::time::{sleep, Duration};
 mod commands;
 mod providers;
 mod services;
+mod vad;
 mod voice_commands;
 
 use commands::streaming::StreamingState;
@@ -19,6 +20,10 @@ pub fn run() {
         .manage(StreamingState::default())
         .manage(commands::settings::ReleaseState::default())
         .setup(|app| {
+            // Initialize VAD session manager
+            let vad_manager = vad::VadSessionManager::new(app.handle().clone());
+            app.manage(vad_manager);
+            
             // Register global shortcuts; on dev reload, ignore "already registered" errors
             let gs = app.global_shortcut();
 
@@ -185,6 +190,10 @@ pub fn run() {
             commands::start_streaming_transcription,
             commands::send_streaming_audio,
             commands::stop_streaming_transcription,
+            commands::vad::vad_create_session,
+            commands::vad::vad_push_frame,
+            commands::vad::vad_stop_session,
+            commands::vad::vad_destroy_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

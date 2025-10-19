@@ -4,7 +4,7 @@
 
 Dictate is a high-performance desktop dictation application for Windows built with Tauri and Rust, inspired by the familiar UI of Windows Voice Typing. It delivers powerful speech-to-text capabilities with minimal resource usage, allowing users to record audio, transcribe it in real-time, and seamlessly insert the transcription into any active application. With features like global hotkeys, audio cues, and voice commands, Dictate streamlines your workflow and boosts productivity.
 
-**Version:** 1.3.3
+**Version:** 1.5.0
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -20,13 +20,19 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 *   **Grammar Correction:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+G`) to correct grammar with your chosen provider (default: Groq). Click again while pulsing to abort.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Multiple Transcription Services:**
-    *   **Groq:** Silence-based chunking with continuous capture; sends WAV segments on ~1s silence.
+    *   **Groq:** ML-based Voice Activity Detection (VAD) with intelligent speech segmentation.
     *   **Deepgram:** Real-time streaming transcription for lower latency.
     *   **Cartesia:** Real-time streaming transcription using a dedicated PCM pipeline.
-    *   **Gemini:** Non‑streaming transcription via Google Gemini API using inline audio.
-    *   **Mistral:** Non‑streaming transcription via Mistral Audio Transcriptions API (multipart/form-data).
-    *   **SambaNova:** Non‑streaming transcription via SambaNova Whisper-Large-v3 endpoint.
-    *   **Fireworks:** Non‑streaming transcription via Fireworks Whisper endpoint.
+    *   **Gemini:** ML-based VAD with intelligent speech segmentation.
+    *   **Mistral:** ML-based VAD with intelligent speech segmentation.
+    *   **SambaNova:** ML-based VAD with intelligent speech segmentation.
+    *   **Fireworks:** ML-based VAD with intelligent speech segmentation.
+*   **Intelligent Speech Segmentation:** Uses Silero VAD (Voice Activity Detection) ML model for accurate speech detection:
+    *   Automatically trims silence before and after speech
+    *   Ignores keyboard/mouse noise and background sounds
+    *   Configurable silence threshold (400ms default)
+    *   No false positives from non-speech audio
+    *   Complete utterances preserved with smart buffering
 *   **Multilingual Understanding:** Pick a default transcription language in settings. Providers that accept language hints receive it automatically; leaving the selector on `Multilingual` falls back to each provider's auto-detect mode.
     * Deepgram streams with `language=multi`.
     * Groq Whisper (whisper-large-v3-turbo) auto-detects language.
@@ -138,8 +144,23 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
     *   Rust backend handles all API calls, transcription processing, and voice command execution
     *   Frontend provides UI and audio capture
     *   IPC communication via Tauri's command system
-*   **Performance:** Tauri reduces memory usage by ~80% compared to the Electron version while providing faster startup times
+*   **Performance:** 
+    *   Tauri reduces memory usage by ~80% compared to the Electron version
+    *   Faster startup times and lower resource usage
+    *   Non-blocking VAD processing with async Rust (tokio)
+    *   <50ms VAD latency per frame
 *   **Legacy Version:** The Electron-based version (v0.6.7) is available in the `electron/` directory for reference
+
+## Acknowledgements
+
+This project incorporates the Silero VAD (Voice Activity Detection) implementation from the [Handy](https://github.com/cjpais/Handy) project by cjpais. The VAD module provides intelligent speech segmentation using machine learning, significantly improving transcription accuracy by filtering out non-speech audio and properly detecting speech boundaries.
+
+The VAD integration includes:
+- Silero VAD model for ML-based speech detection
+- SmoothedVad wrapper with onset detection, hangover, and prefill buffering
+- Async session management for non-blocking audio processing
+
+Thank you to the Handy project for the excellent VAD implementation!
 
 ## License
 

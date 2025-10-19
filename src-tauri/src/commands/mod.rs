@@ -4,6 +4,7 @@ pub mod transcription;
 pub mod text_rewrite;
 pub mod text_injection;
 pub mod streaming;
+pub mod vad;
 
 // Re-export commonly used commands
 pub use transcription::*;

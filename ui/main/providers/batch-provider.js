@@ -5,23 +5,16 @@
 
 import { BaseProvider } from './base-provider.js';
 
+const { listen } = window.__TAURI__?.event || {};
+
 export class BatchProvider extends BaseProvider {
     constructor(config) {
         super(config);
         
-        // Segmentation state
-        this.segmentationActive = false;
-        this.segmentSamples16k = [];
-        this.segmentLastBoundary = 0;
-        this.segmentInSilenceMs = 0;
-        this.segmentHadSpeech = false;
-        this.segmentIsProcessing = false;
-        
-        // Segmentation constants
-        this.SEGMENT_SILENCE_MS = 700;
-        this.SEGMENT_SILENCE_DB = -40;  // Lower threshold for quieter laptop mics (was -30)
-        this.SEGMENT_MAX_DURATION_MS = 15000;
-        this.SEGMENT_MIN_DURATION_MS = 200;
+        // VAD session management
+        this.vadSessionId = null;
+        this.unlistenSegment = null;
+        this.isProcessing = false;
         
         // Audio processing helpers (passed from main.js)
         this.audioHelpers = config.audioHelpers;
@@ -32,109 +25,86 @@ export class BatchProvider extends BaseProvider {
     }
 
     /**
-     * Start batch transcription with segmentation
+     * Start batch transcription with VAD-based segmentation
      */
     async start(audioCaptureManager, visualizer) {
         this.isActive = true;
-        this.segmentationActive = true;
-        this.segmentSamples16k = [];
-        this.segmentLastBoundary = 0;
-        this.segmentInSilenceMs = 0;
-        this.segmentHadSpeech = false;
-        this.segmentIsProcessing = false;
-
-        // Start audio capture with segmentation callback
-        const audioContext = await audioCaptureManager.start((audioData, sampleRate) => {
-            if (!this.segmentationActive) return;
-            
-            this.processAudioChunk(audioData, sampleRate);
+        
+        // Create VAD session for this recording
+        this.vadSessionId = `vad_${Date.now()}`;
+        await this.invoke('vad_create_session', {
+            sessionId: this.vadSessionId,
+            threshold: null,  // Use default 0.3
+            silenceDurationMs: null  // Use default 1000ms (optimized for speed)
         });
-
+        
+        // Listen for speech segments from VAD
+        this.unlistenSegment = await listen('speech_segment_ready', async (event) => {
+            if (event.payload.session_id !== this.vadSessionId) return;
+            
+            const audioData = event.payload.audio_data;
+            const durationMs = event.payload.duration_ms;
+            
+            // Convert PCM16 bytes to WAV and transcribe
+            await this.processVadSegment(audioData);
+        });
+        
+        // Start audio capture with VAD callback
+        const audioContext = await audioCaptureManager.start(
+            async (audioData, sampleRate) => {
+                if (!this.vadSessionId) return;
+                
+                const mono = audioData; // Already mono from worklet
+                
+                // Downsample to 16kHz PCM16
+                const int16 = this.audioHelpers.downsampleTo16kInt16(mono, sampleRate);
+                
+                // Send to VAD thread (non-blocking)
+                try {
+                    await this.invoke('vad_push_frame', {
+                        sessionId: this.vadSessionId,
+                        audioData: Array.from(new Uint8Array(int16.buffer))
+                    });
+                } catch (error) {
+                    console.error(`[${this.getName()}] VAD push frame error:`, error);
+                }
+            }
+        );
+        
         // Setup visualizer
         visualizer.connect(audioContext, audioCaptureManager.getSourceNode());
         visualizer.start();
     }
 
     /**
-     * Process audio chunk for segmentation
+     * Process VAD-detected speech segment
      */
-    processAudioChunk(audioData, sampleRate) {
-        const mono = audioData; // Already mono from worklet
-        
-        // Calculate RMS and dB for silence detection
-        let sumSq = 0;
-        for (let i = 0; i < mono.length; i++) {
-            const s = mono[i];
-            sumSq += s * s;
-        }
-        const rms = Math.sqrt(sumSq / Math.max(1, mono.length));
-        const db = this.audioHelpers.dbfsFromRms(rms);
-        const frameMs = (mono.length / sampleRate) * 1000;
-        
-        // Silence detection
-        if (db < this.SEGMENT_SILENCE_DB) {
-            this.segmentInSilenceMs += frameMs;
-        } else {
-            this.segmentInSilenceMs = 0;
-            this.segmentHadSpeech = true;
-        }
-        
-        // Downsample to 16kHz and accumulate
-        const int16 = this.audioHelpers.downsampleTo16kInt16(mono, sampleRate);
-        for (let i = 0; i < int16.length; i++) {
-            this.segmentSamples16k.push(int16[i]);
-        }
-        
-        const currentIndex = this.segmentSamples16k.length;
-        const currentMsSinceBoundary = ((currentIndex - this.segmentLastBoundary) / 16000) * 1000;
-        
-        // Emit segment on silence or max duration
-        if (this.segmentInSilenceMs >= this.SEGMENT_SILENCE_MS && this.segmentHadSpeech && !this.segmentIsProcessing) {
-            this.emitSegment(currentIndex);
-        } else if (this.segmentHadSpeech && currentMsSinceBoundary >= this.SEGMENT_MAX_DURATION_MS && !this.segmentIsProcessing) {
-            this.emitSegment(currentIndex);
-        }
-    }
-
-    /**
-     * Emit audio segment for transcription
-     */
-    async emitSegment(boundaryIndex) {
-        if (this.segmentIsProcessing) return;
-        
-        const samplesSinceBoundary = boundaryIndex - this.segmentLastBoundary;
-        const msSinceBoundary = (samplesSinceBoundary / 16000) * 1000;
-        
-        if (!this.segmentHadSpeech || msSinceBoundary < this.SEGMENT_MIN_DURATION_MS) {
+    async processVadSegment(pcm16Bytes) {
+        if (this.isProcessing) {
+            console.warn(`[${this.getName()}] Skipping segment - already processing`);
             return;
         }
         
-        const seg = this.segmentSamples16k.slice(this.segmentLastBoundary, boundaryIndex);
-        const wavBytes = this.audioHelpers.encodeWav16kMono(Int16Array.from(seg));
+        this.isProcessing = true;
         
-        // Mark as processing
-        this.segmentIsProcessing = true;
-        
-        // Update boundary and reset state BEFORE sending
-        this.segmentLastBoundary = boundaryIndex;
-        this.segmentHadSpeech = false;
-        this.segmentInSilenceMs = 0;
-        
-        // Drop older samples
-        if (this.segmentLastBoundary > 0) {
-            this.segmentSamples16k = this.segmentSamples16k.slice(this.segmentLastBoundary);
-            this.segmentLastBoundary = 0;
-        }
-        
-        // Send to backend (provider-specific)
         try {
+            // Convert PCM16 bytes to Int16Array
+            const int16Array = new Int16Array(
+                pcm16Bytes.buffer || new Uint8Array(pcm16Bytes).buffer
+            );
+            
+            // Encode as WAV
+            const wavBytes = this.audioHelpers.encodeWav16kMono(int16Array);
+            
+            // Send to transcription API
             await this.transcribeSegment(wavBytes);
         } catch (error) {
-            console.error(`[${this.getName()}] Transcription error:`, error);
+            console.error(`[${this.getName()}] VAD segment processing error:`, error);
         } finally {
-            this.segmentIsProcessing = false;
+            this.isProcessing = false;
         }
     }
+
 
     /**
      * Transcribe audio segment (must be implemented by concrete provider)
@@ -148,25 +118,35 @@ export class BatchProvider extends BaseProvider {
      * Stop batch transcription
      */
     async stop() {
-        // Emit final segment if any
-        try {
-            const currentIndex = this.segmentSamples16k.length;
-            const msSinceBoundary = ((currentIndex - this.segmentLastBoundary) / 16000) * 1000;
-            
-            if (this.segmentHadSpeech && msSinceBoundary >= this.SEGMENT_MIN_DURATION_MS && !this.segmentIsProcessing) {
-                await this.emitSegment(currentIndex);
+        // Stop VAD and get final segment if any
+        if (this.vadSessionId) {
+            try {
+                const finalAudio = await this.invoke('vad_stop_session', {
+                    sessionId: this.vadSessionId
+                });
+                
+                if (finalAudio && finalAudio.length > 0) {
+                    await this.processVadSegment(finalAudio);
+                }
+                
+                await this.invoke('vad_destroy_session', {
+                    sessionId: this.vadSessionId
+                });
+            } catch (error) {
+                console.error(`[${this.getName()}] VAD stop error:`, error);
             }
-        } catch (error) {
-            console.error(`[${this.getName()}] Error emitting final segment:`, error);
+            
+            this.vadSessionId = null;
+        }
+        
+        // Cleanup segment listener
+        if (this.unlistenSegment) {
+            this.unlistenSegment();
+            this.unlistenSegment = null;
         }
         
         // Reset state
         this.isActive = false;
-        this.segmentationActive = false;
-        this.segmentSamples16k = [];
-        this.segmentLastBoundary = 0;
-        this.segmentInSilenceMs = 0;
-        this.segmentHadSpeech = false;
-        this.segmentIsProcessing = false;
+        this.isProcessing = false;
     }
 }
