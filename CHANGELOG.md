@@ -1,3 +1,59 @@
+## [1.6.0] - 2025-10-19
+
+### 🎨 Major UI Refactor: Settings Window Reorganization
+
+This release introduces a complete redesign of the settings interface, transitioning from a flat single-page layout to an organized tabbed section-based architecture with improved navigation and visual hierarchy.
+
+### Added
+- **Tabbed Section Navigation**:
+  - Sidebar navigation with icon-based tabs for easy section switching
+  - Four organized sections: General (Customize), Transcription, Grammar, and About
+  - Visual active state indicator with accent color highlighting
+  - Smooth transitions between sections
+  
+- **Modular Section Architecture**:
+  - `sections/general.js` - Customize panel for text insertion, auto-record, and audio cues
+  - `sections/transcription.js` - Transcription provider, language selection, and API keys
+  - `sections/grammar.js` - Grammar correction provider and shared API key management
+  - `sections/about.js` - Version info, update checker, and external links
+  - Component-based field system (SelectField, PasswordField, ToggleField)
+
+- **Enhanced About Section**:
+  - Dedicated About tab with app version display
+  - "Update Available" notice with direct link to GitHub releases
+  - Quick access buttons: Help (Issues), GitHub (Source), Ko-fi (Donate)
+  - External link handling via Tauri opener plugin
+
+### Changed
+- **Settings Architecture Refactor**:
+  - Migrated from monolithic `settings.js` to modular section-based system
+  - Created `SettingsManager` class to coordinate section rendering and state
+  - Implemented section factory pattern for clean instantiation
+  - Auto-save functionality preserved across all fields
+  
+- **UI Layout Improvements**:
+  - Left sidebar (55px) for navigation icons with tooltips
+  - Main content area with scrollable sections
+  - Footer with version info and quick action buttons
+  - Responsive design with proper overflow handling
+
+### Fixed
+- **Custom Dropdown Clipping**: 
+  - Fixed dropdown menus being cut off by footer in settings window
+  - Increased dropdown z-index from 2 to 1000 to render above all elements
+  - Implemented smart positioning with fixed positioning strategy
+  - Dropdowns automatically flip above trigger when insufficient space below
+  - Dynamic scrolling for tall dropdown lists with height calculation
+
+### Technical
+- **File Structure**:
+  - `settings.js` - Main settings manager and initialization
+  - `sections/` - Individual section implementations
+  - `fields/` - Reusable field components
+  - Preserved backward compatibility with existing settings storage
+
+---
+
 ## [1.5.0] - 2025-10-19
 
 ### 🎯 Major Feature: Silero VAD (Voice Activity Detection)

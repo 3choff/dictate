@@ -20,7 +20,9 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         { "url": "https://github.com/3choff/dictate/issues" },
-        { "url": "https://github.com/3choff/dictate/releases" }
+        { "url": "https://github.com/3choff/dictate/releases" },
+        { "url": "https://github.com/3choff/dictate" },
+        { "url": "https://ko-fi.com/3choff" }
       ]
     }
   ]

@@ -664,7 +664,3 @@ listen('settings-changed', async () => {
 // Load settings on startup
 loadSettings();
 loadAudioCues();
-
-// ===== VISUALIZATION =====
-// Visualization is now handled entirely in the frontend using Web Audio API's AnalyserNode
-// See audio-visualizer.js for implementation

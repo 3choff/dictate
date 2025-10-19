@@ -3,7 +3,8 @@
     --secondary-bg: #3c3c3c;
     --handle-color: #5f6368a9;
     --text-color: white;
-    --label-color: #b0b0b0;
+    /* --label-color: #b0b0b0; */
+    --label-color: white;
     --border-color: #555;
     --accent-color: #00a9ff;
     --accent-hover: #0087cc;
@@ -58,10 +59,13 @@ html, body {
 .window-frame {
     background-color: var(--primary-bg);
     /* border: 1px solid rgba(252, 252, 252, 0.08); */
-     box-shadow: inset -1px 0px 2px 0px rgba(255, 255, 255, 0.15);
+    box-shadow: inset -1px 0px 2px 0px rgba(255, 255, 255, 0.15);
     border-radius: 14px;
     box-sizing: border-box;
     overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .settings-popup {
@@ -69,12 +73,12 @@ html, body {
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     font-size: 12px;
     color: var(--label-color);
 }
@@ -120,8 +124,8 @@ html, body {
 
 .toggle-switch {
     position: relative;
-    width: 44px;
-    height: 24px;
+    width: 36px;
+    height: 20px;
     display: inline-block;
 }
 
@@ -144,9 +148,9 @@ html, body {
 .toggle-track::before {
     content: "";
     position: absolute;
-    height: 20px;
-    width: 20px;
-    left: 2px;
+    height: 16px;
+    width: 16px;
+    left: 1px;
     top: 50%;
     transform: translateY(-50%);
     background-color: var(--text-color);
@@ -161,7 +165,7 @@ html, body {
 }
 
 .toggle-switch input:checked + .toggle-track::before {
-    transform: translate(18px, -50%);
+    transform: translate(16px, -50%);
 }
 
 .toggle-switch input:focus-visible + .toggle-track {
@@ -194,15 +198,6 @@ html, body {
 }
 .eye-toggle:hover svg path {
     fill: var(--text-color);
-}
-
-.settings-footer {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    margin-top: 18px;
-    -webkit-app-region: no-drag;
 }
 
 .help-link {
@@ -242,6 +237,52 @@ html, body {
 }
 .update-notice:hover {
     text-decoration: underline;
+}
+
+.about-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+
+.about-label {
+    font-size: 14px;
+    color: var(--label-color);
+}
+
+.about-value {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.about-version {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.about-version .update-notice {
+    position: static;
+    display: none;
+}
+
+.about-button .about-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.about-button {
+    margin-left: auto;
+    width: 90px;
+    height: 35px;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
 }
 /* Custom Select Dropdown */
 .custom-select-wrapper {
@@ -289,7 +330,7 @@ html, body {
     border-radius: 8px; /* This is where you get the rounded corners for the list */
     margin-top: 4px;
     overflow: hidden;
-    z-index: 2;
+    z-index: 1000;
 }
 
 .custom-options.open {
@@ -329,5 +370,112 @@ html, body {
 #app-version,
 .toggle-label {
   cursor: default;
+}
+
+/* ===== Sidebar Layout ===== */
+.settings-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.settings-sidebar {
+    width: 55px;
+    height: calc(100% - 60px);
+    background-color: transparent;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+    cursor: pointer;
+    color: var(--label-color);
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    width: 100%;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
+}
+
+.sidebar-item.active {
+    background-color: rgba(0, 169, 255, 0.1);
+    border-left-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+.sidebar-item.active .sidebar-icon {
+    color: var(--accent-color);
+}
+
+.sidebar-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.settings-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 20px 30px 10px 30px;
+}
+
+#content-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-section {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+}
+
+.settings-section.active {
+    display: flex;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 600;
+        padding-bottom: 8px;
+    margin: 0 0 8px 0;
+    color: var(--text-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-description {
+    font-size: 13px;
+    color: var(--label-color);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+
+/* Settings Footer */
+.settings-footer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-top: auto;
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
+    flex-shrink: 0;
 }
 

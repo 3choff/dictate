@@ -163,9 +163,9 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 
 #[tauri::command]
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
-    // Settings window size
-    const SETTINGS_WIDTH: f64 = 300.0;
-    const SETTINGS_HEIGHT: f64 = 300.0;
+    // Settings window size (sized for tallest section to avoid scrollbars)
+    const SETTINGS_WIDTH: f64 = 420.0;
+    const SETTINGS_HEIGHT: f64 = 450.0;
     const GAP: f64 = 10.0;
     
     // If settings window already exists, toggle visibility without destroying it
@@ -505,19 +505,31 @@ pub async fn get_latest_release_tag(state: State<'_, ReleaseState>) -> Result<Op
 
     // Fetch from GitHub Releases API (stable only)
     let client = reqwest::Client::new();
-    let resp = client
+    let resp = match client
         .get("https://api.github.com/repos/3choff/dictate/releases?per_page=5")
         .header("User-Agent", "dictate-tauri")
         .header("Accept", "application/vnd.github+json")
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+    {
+        Ok(resp) => resp,
+        Err(err) => {
+            eprintln!("[settings] Failed to fetch latest release tag: {err}");
+            return Ok(None);
+        }
+    };
 
     if !resp.status().is_success() {
         return Ok(None); // graceful: no UI disruption
     }
 
-    let releases: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    let releases: serde_json::Value = match resp.json().await {
+        Ok(json) => json,
+        Err(err) => {
+            eprintln!("[settings] Failed to parse releases response: {err}");
+            return Ok(None);
+        }
+    };
     let tag_opt = releases.as_array()
         .and_then(|arr| arr.iter().find(|r| {
             let draft = r.get("draft").and_then(|v| v.as_bool()).unwrap_or(false);

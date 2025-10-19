@@ -1,6 +1,6 @@
 [package]
 name = "dictate"
-version = "1.5.0"
+version = "1.6.0"
 description = "A Tauri-based dictation app"
 authors = ["3choff"]
 edition = "2021"

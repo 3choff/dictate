@@ -58,8 +58,8 @@ Transcription service implementations for all supported providers.
 Reusable business logic shared across commands.
 
 **Current files:**
-- `keyboard.rs` - Text injection via clipboard
-- `keyboard_inject.rs` - Native keyboard injection using Windows API (via `enigo` crate)
+- `clipvoard_paste.rs` - Text injection via clipboard
+- `direct_typing.rs` - Native keyboard injection using Windows API (via `enigo` crate)
 - `windows_focus.rs` - Windows focus management (WS_EX_NOACTIVATE implementation)
 - `mod.rs` - Module exports
 
