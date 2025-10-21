@@ -51,6 +51,7 @@ let INSERTION_MODE = 'typing';
 let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
 let VOICE_COMMANDS_ENABLED = true;
+let AUDIO_CUES_ENABLED = true;
 
 // Audio cues (loaded at startup)
 let beepSound = null;
@@ -77,6 +78,7 @@ function loadAudioCues() {
 }
 
 function playBeep() {
+    if (!AUDIO_CUES_ENABLED) return;
     try {
         if (beepSound) {
             // reset to start for rapid replays
@@ -87,6 +89,7 @@ function playBeep() {
 }
 
 function playClack() {
+    if (!AUDIO_CUES_ENABLED) return;
     try {
         if (clackSound) {
             try { clackSound.currentTime = 0; } catch (_) {}
@@ -260,7 +263,8 @@ async function loadSettings() {
         LANGUAGE = (settings.language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
         VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
+        AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {

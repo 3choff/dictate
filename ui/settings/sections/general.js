@@ -1,5 +1,6 @@
 import { SelectField } from '../components/select-field.js';
 import { ToggleSwitch } from '../components/toggle-switch.js';
+import { Tooltip } from '../components/tooltip.js';
 
 /**
  * Customize settings section
@@ -13,6 +14,7 @@ export class GeneralSection {
         
         this.textFormattedToggle = new ToggleSwitch('text-formatted', 'Text formatted');
         this.voiceCommandsToggle = new ToggleSwitch('voice-commands-enabled', 'Voice commands');
+        this.audioCuesToggle = new ToggleSwitch('audio-cues-enabled', 'Audio feedback');
     }
 
     render() {
@@ -33,12 +35,57 @@ export class GeneralSection {
         section.appendChild(this.insertionModeField.render());
         section.appendChild(this.textFormattedToggle.render());
         section.appendChild(this.voiceCommandsToggle.render());
+        section.appendChild(this.audioCuesToggle.render());
         
         return section;
     }
 
     initialize() {
-        // No dynamic behavior needed for general section
+        // Add tooltip to audio feedback toggle
+        const audioCuesToggleElement = document.getElementById('audio-cues-enabled');
+        if (audioCuesToggleElement) {
+            const labelElement = audioCuesToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Play audio cues when recordings start and stop', 'top');
+                tooltip.attachTo(labelElement);
+            }
+        }
+
+        // Add tooltip to text formatted toggle
+        const textFormattedToggleElement = document.getElementById('text-formatted');
+        if (textFormattedToggleElement) {
+            const labelElement = textFormattedToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Apply punctuation and capitalization to transcribed text', 'top');
+                tooltip.attachTo(labelElement);
+            }
+        }
+
+        // Add tooltip to voice commands toggle
+        const voiceCommandsToggleElement = document.getElementById('voice-commands-enabled');
+        if (voiceCommandsToggleElement) {
+            const labelElement = voiceCommandsToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Enable voice commands during recording', 'top');
+                tooltip.attachTo(labelElement);
+            }
+        }
+
+        // Add tooltip to insertion mode label
+        const insertionModeLabel = document.querySelector('#general-section .form-group:first-of-type .toggle-label, #insertion-mode-label');
+        if (!insertionModeLabel) {
+            const selectWrapper = document.querySelector('#general-section .form-group:first-of-type');
+            if (selectWrapper) {
+                const label = selectWrapper.querySelector('label');
+                if (label) {
+                    const tooltip = new Tooltip('Select the insertion mode of the transcribed text', 'top');
+                    tooltip.attachTo(label);
+                }
+            }
+        } else {
+            const tooltip = new Tooltip('Select the insertion mode of the transcribed text', 'top');
+            tooltip.attachTo(insertionModeLabel);
+        }
     }
 
     loadValues(settings) {
@@ -51,13 +98,17 @@ export class GeneralSection {
         if (settings.voiceCommandsEnabled !== undefined) {
             this.voiceCommandsToggle.setValue(settings.voiceCommandsEnabled);
         }
+        if (settings.audioCuesEnabled !== undefined) {
+            this.audioCuesToggle.setValue(settings.audioCuesEnabled);
+        }
     }
 
     getValues() {
         return {
             insertionMode: this.insertionModeField.getValue(),
             formatted: this.textFormattedToggle.getValue(),
-            voiceCommandsEnabled: this.voiceCommandsToggle.getValue()
+            voiceCommandsEnabled: this.voiceCommandsToggle.getValue(),
+            audioCuesEnabled: this.audioCuesToggle.getValue()
         };
     }
 }

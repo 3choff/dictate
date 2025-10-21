@@ -37,6 +37,8 @@ pub struct Settings {
     pub text_formatted: bool,
     #[serde(default = "default_voice_commands_enabled")]
     pub voice_commands_enabled: bool,
+    #[serde(default = "default_audio_cues_enabled")]
+    pub audio_cues_enabled: bool,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
 }
@@ -62,6 +64,10 @@ fn default_text_formatted() -> bool {
 
 fn default_voice_commands_enabled() -> bool {
     true  // Default to enabling voice commands (matches Electron)
+}
+
+fn default_audio_cues_enabled() -> bool {
+    true  // Default to enabling audio feedback (beep/clack sounds)
 }
 
 fn default_api_service() -> String {
@@ -99,6 +105,7 @@ impl Default for Settings {
             language: default_language(),
             text_formatted: default_text_formatted(),
             voice_commands_enabled: default_voice_commands_enabled(),
+            audio_cues_enabled: default_audio_cues_enabled(),
             main_window_position: None,
         }
     }

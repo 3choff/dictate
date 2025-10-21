@@ -248,6 +248,7 @@ async function loadSettings() {
             insertionMode: settings.insertion_mode || 'typing',
             formatted: settings.text_formatted !== false,
             voiceCommandsEnabled: settings.voice_commands_enabled !== false,
+            audioCuesEnabled: settings.audio_cues_enabled !== false,
             groqApiKey: settings.groq_api_key || '',
             deepgramApiKey: settings.deepgram_api_key || '',
             cartesiaApiKey: settings.cartesia_api_key || '',
@@ -296,6 +297,7 @@ async function saveSettings() {
             insertion_mode: generalValues.insertionMode,
             text_formatted: generalValues.formatted,
             voice_commands_enabled: generalValues.voiceCommandsEnabled,
+            audio_cues_enabled: generalValues.audioCuesEnabled,
             groq_api_key: transcriptionValues.groqApiKey || grammarValues.groqApiKey || '',
             deepgram_api_key: transcriptionValues.deepgramApiKey || '',
             cartesia_api_key: transcriptionValues.cartesiaApiKey || '',
@@ -463,8 +465,8 @@ function createCustomSelect(selectElement) {
             trigger.querySelector('span').textContent = e.target.textContent;
             options.classList.remove('open');
             
-            // Manually trigger a change event for auto-saving
-            selectElement.dispatchEvent(new Event('change'));
+            // Manually trigger a change event for auto-saving (must bubble for document listener)
+            selectElement.dispatchEvent(new Event('change', { bubbles: true }));
         }
     });
 }
@@ -487,7 +489,7 @@ window.addEventListener('click', (e) => {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     initializeUI();
-    initializeCustomSelects();
     await loadSettings();
+    initializeCustomSelects();
     await checkForUpdates();
 });

@@ -1,3 +1,39 @@
+## [1.6.1] - 2025-10-21
+
+### Added
+- **Tooltip Component**: Created reusable tooltip system for better UX guidance
+  - `ui/settings/components/tooltip.js` - Flexible tooltip component with position options (top, bottom, left, right)
+  - Smart positioning with viewport boundary detection
+  - Smooth fade-in/scale animation
+  - Tooltips added to Customize section: Insertion Mode, Text formatted, Voice commands, and Audio feedback toggles
+  - Dark theme styling matching app design
+
+- **Audio Feedback Toggle**: New setting to control audio cues during recording
+  - Toggle in Customize section to enable/disable beep and clack sounds
+  - Setting persists across app restarts
+  - Respects user preference for silent operation
+
+### Fixed
+- **Settings Auto-save**: Fixed dropdown changes not triggering auto-save
+  - Custom select dropdowns now properly dispatch bubbling change events
+  - All settings (dropdowns, toggles, text inputs) now auto-save on change
+  - Eliminated need to close settings window to persist changes
+
+- **Settings Load on Startup**: Fixed settings window showing default values instead of saved preferences
+  - Corrected initialization order: settings now load before custom dropdowns render
+  - All saved settings properly display when opening settings window
+
+- **Cursor Behavior**: Removed unwanted text cursor in settings UI
+  - Applied `cursor: default` globally to prevent text selection cursor on labels and headings
+  - Text input fields retain proper text cursor
+  - Consistent cursor behavior throughout settings interface
+
+### Changed
+- **Label Display**: Insertion Mode label now uses `display: inline-block` for proper tooltip centering
+- **User Selection**: Disabled text selection on UI elements (labels, headings) for cleaner UX
+
+---
+
 ## [1.6.0] - 2025-10-19
 
 ### 🎨 Major UI Refactor: Settings Window Reorganization
