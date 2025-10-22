@@ -561,3 +561,110 @@ textarea {
     align-items: center;
 }
 
+/* Keyboard Shortcuts Section */
+.shortcut-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 6px;
+    /* padding: 12px;
+    background: rgba(255, 255, 255, 0.03); */
+    border-radius: 8px;
+}
+
+.shortcut-label-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.shortcut-label-container label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.shortcut-description {
+    font-size: 12px;
+    color: var(--label-color);
+    opacity: 0.8;
+}
+
+.shortcut-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shortcut-input {
+    width: 180px;
+    padding: 8px 32px 8px 12px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    transition: all 0.2s ease;
+}
+
+.shortcut-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background-color: rgba(60, 60, 60, 0.8);
+}
+
+.shortcut-input.shortcut-capturing {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.2);
+}
+
+.shortcut-restore-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: var(--label-color);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shortcut-restore-btn:hover {
+    opacity: 1;
+    color: var(--accent-color);
+    background: rgba(0, 169, 255, 0.1);
+    border-radius: 4px;
+}
+
+.shortcut-warning {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 8px;
+    color: #ffa726;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.section-description {
+    font-size: 13px;
+    color: var(--label-color);
+    margin-bottom: 16px;
+    opacity: 0.9;
+}
+

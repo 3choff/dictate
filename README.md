@@ -7,7 +7,7 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 If Dictate improves your workflow, please consider supporting ongoing AI memberships and inference costs via 
 [**Ko-fi**](https://ko-fi.com/3choff)           [![Support via Ko-fi](./assets/ko-fi/kofi_symbol.svg)](https://ko-fi.com/3choff)
 
-**Version:** 1.6.1
+**Version:** 1.6.2
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -123,7 +123,7 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 
 ### Keyboard Shortcuts
 
-Dictate provides global keyboard shortcuts that work from anywhere on your system:
+Dictate provides global keyboard shortcuts that work from anywhere on your system. **All shortcuts are fully customizable** - you can change them to your preferred key combinations in the Settings window under the "Shortcuts" tab:
 
 | Shortcut | Function | Description |
 |----------|----------|-------------|
@@ -134,7 +134,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 | `Ctrl+Shift+L` | **Toggle DevTools** | Open or close the developer console for debugging (development feature). |
 | `Ctrl+Shift+X` | **Exit Application** | Close Dictate gracefully. |
 
-**Note:** All shortcuts use `Ctrl+Shift` to avoid conflicts with common application shortcuts.
+**Note:** All shortcuts use `Ctrl+Shift` to avoid conflicts with common application shortcuts. You can customize any of these in Settings → Shortcuts.
 
 ## Development Notes
 
@@ -153,6 +153,17 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
     *   Non-blocking VAD processing with async Rust (tokio)
     *   <50ms VAD latency per frame
 *   **Legacy Version:** The Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
+
+## Roadmap
+
+### Upcoming Features
+
+- [ ] **Theme Toggle**: Add dark/light theme switching with system preference detection and manual override options
+- [ ] **System Tray Integration**: Launch on system startup and minimize to tray for always-available dictation access
+- [ ] **Word Correction**: Enhanced mis-transcribed word correction
+- [ ] **Cross-Platform Support**: Native support for Linux and macOS with platform-specific optimizations
+
+---
 
 ## Acknowledgements
 

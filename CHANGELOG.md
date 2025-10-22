@@ -1,3 +1,28 @@
+## [1.6.2] - 2025-10-22
+
+### Added
+- **Keyboard Shortcuts Customization**: Complete system for personalizing global keyboard shortcuts
+  - New "Shortcuts" tab in settings window with dedicated section
+  - 6 customizable shortcuts: Toggle Recording, Grammar Correction, Toggle View, Toggle Settings, Toggle Debug, Close App
+  - Click input field and press desired key combination to set new shortcuts
+  - Changes apply immediately without app restart
+  - Restore to default button for each shortcut
+  - Settings persist across app restarts
+
+### Fixed
+- **Trailing Space Issue**: Fixed missing spaces between transcribed segments in terminals and address bars
+  - Command prompt (cmd), PowerShell, and browser address bars now properly display spaces
+  - Clipboard paste method enhanced to explicitly type space after pasting if needed
+  - Works for all transcription providers (batch and streaming)
+  - Maintains existing behavior in text editors and word processors
+
+### Technical Improvements
+- **Backend**: Dynamic shortcut registration from saved settings
+- **Frontend**: Auto-save mechanism with debounced updates
+- **Cross-platform**: Space insertion works reliably across all applications
+
+---
+
 ## [1.6.1] - 2025-10-21
 
 ### Added

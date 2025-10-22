@@ -40,9 +40,19 @@ pub fn insert_text_via_clipboard(text: &str, app_handle: &AppHandle) -> Result<(
 
     // Get the current clipboard content
     let clipboard_content = clipboard.read_text().unwrap_or_default();
+    
+    // Check if text ends with a space (for segment spacing)
+    let has_trailing_space = text.ends_with(' ');
+    
+    // Write text to clipboard (trim trailing space if present, we'll add it via keypress)
+    let text_to_paste = if has_trailing_space {
+        text.trim_end()
+    } else {
+        text
+    };
 
     clipboard
-        .write_text(text)
+        .write_text(text_to_paste)
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
 
     // Small delay to ensure the clipboard content has been written
@@ -51,6 +61,16 @@ pub fn insert_text_via_clipboard(text: &str, app_handle: &AppHandle) -> Result<(
     send_paste()?;
 
     thread::sleep(Duration::from_millis(50));
+    
+    // If text had trailing space, type it explicitly to ensure it appears in all apps
+    if has_trailing_space {
+        let mut enigo = Enigo::new(&Settings::default())
+            .map_err(|e| format!("Failed to initialize Enigo for space: {}", e))?;
+        
+        enigo
+            .key(Key::Space, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to type space: {}", e))?;
+    }
 
     // Restore the clipboard
     clipboard

@@ -1,4 +1,4 @@
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, AppHandle};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
@@ -10,6 +10,94 @@ mod vad;
 mod voice_commands;
 
 use commands::streaming::StreamingState;
+use commands::settings::Settings;
+
+pub fn register_shortcuts(app: &AppHandle) {
+    // Load settings to get custom shortcuts
+    let settings = match commands::settings::get_settings_sync(app) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("[HOTKEY] Failed to load settings, using defaults: {}", e);
+            Settings::default()
+        }
+    };
+
+    let gs = app.global_shortcut();
+    let shortcuts = &settings.keyboard_shortcuts;
+
+    // Toggle recording
+    if let Ok(shortcut) = shortcuts.toggle_recording.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("toggle-recording", ());
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.toggle_recording, e);
+        }
+    }
+
+    // Toggle debug
+    if let Ok(shortcut) = shortcuts.toggle_debug.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                if window.is_devtools_open() {
+                    let _ = window.close_devtools();
+                } else {
+                    let _ = window.open_devtools();
+                }
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.toggle_debug, e);
+        }
+    }
+
+    // Toggle view
+    if let Ok(shortcut) = shortcuts.toggle_view.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("toggle-view", ());
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.toggle_view, e);
+        }
+    }
+
+    // Grammar correction
+    if let Ok(shortcut) = shortcuts.grammar_correction.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("sparkle-trigger", ());
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.grammar_correction, e);
+        }
+    }
+
+    // Toggle settings
+    if let Ok(shortcut) = shortcuts.toggle_settings.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.emit("toggle-settings", ());
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.toggle_settings, e);
+        }
+    }
+
+    // Close app
+    if let Ok(shortcut) = shortcuts.close_app.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.close();
+            }
+            if let Some(settings) = app.get_webview_window("settings") {
+                let _ = settings.close();
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.close_app, e);
+        }
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,77 +112,8 @@ pub fn run() {
             let vad_manager = vad::VadSessionManager::new(app.handle().clone());
             app.manage(vad_manager);
             
-            // Register global shortcuts; on dev reload, ignore "already registered" errors
-            let gs = app.global_shortcut();
-
-            // Ctrl+Shift+D -> toggle recording
-            let shortcut: Shortcut = "Ctrl+Shift+D".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.emit("toggle-recording", ());
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+D: {}", e);
-            }
-
-            // Ctrl+Shift+L -> toggle DevTools
-            let debug_shortcut: Shortcut = "Ctrl+Shift+L".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(debug_shortcut, |app, _event, _shortcut| {
-                if let Some(window) = app.get_webview_window("main") {
-                    if window.is_devtools_open() {
-                        let _ = window.close_devtools();
-                    } else {
-                        let _ = window.open_devtools();
-                    }
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+L: {}", e);
-            }
-
-            // Ctrl+Shift+V -> toggle compact view
-            let view_shortcut: Shortcut = "Ctrl+Shift+V".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(view_shortcut, |app, _event, _shortcut| {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.emit("toggle-view", ());
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+V: {}", e);
-            }
-
-            // Ctrl+Shift+G -> grammar correction
-            let grammar_shortcut: Shortcut = "Ctrl+Shift+G".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(grammar_shortcut, |app, _event, _shortcut| {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.emit("sparkle-trigger", ());
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+G: {}", e);
-            }
-
-            // Ctrl+Shift+S -> toggle settings window
-            let settings_shortcut: Shortcut = "Ctrl+Shift+S".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(settings_shortcut, |app, _event, _shortcut| {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.emit("toggle-settings", ());
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+S: {}", e);
-            }
-
-            // Ctrl+Shift+X -> close app gracefully
-            let close_shortcut: Shortcut = "Ctrl+Shift+X".parse().unwrap();
-            if let Err(e) = gs.on_shortcut(close_shortcut, |app, _event, _shortcut| {
-                // Close main window gracefully, which will trigger app exit
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.close();
-                }
-                // Close settings window if open
-                if let Some(settings) = app.get_webview_window("settings") {
-                    let _ = settings.close();
-                }
-            }) {
-                eprintln!("[HOTKEY] Failed to register Ctrl+Shift+X: {}", e);
-            }
+            // Register global shortcuts from settings
+            register_shortcuts(app.handle());
 
             // Apply Windows-specific no-activate style to prevent focus stealing
             #[cfg(target_os = "windows")]
@@ -180,6 +199,7 @@ pub fn run() {
             commands::correct_grammar,
             commands::get_settings,
             commands::save_settings,
+            commands::reregister_shortcuts,
             commands::open_settings_window,
             commands::exit_app,
             commands::toggle_compact_mode,

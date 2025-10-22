@@ -1,5 +1,6 @@
 use tauri::{AppHandle, Manager, Emitter};
 use tauri::State;
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use std::sync::Mutex;
 use std::fs;
 use std::path::PathBuf;
@@ -39,6 +40,8 @@ pub struct Settings {
     pub voice_commands_enabled: bool,
     #[serde(default = "default_audio_cues_enabled")]
     pub audio_cues_enabled: bool,
+    #[serde(default = "default_keyboard_shortcuts")]
+    pub keyboard_shortcuts: KeyboardShortcuts,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
 }
@@ -47,6 +50,22 @@ pub struct Settings {
 pub struct WindowPosition {
     pub x: i32,
     pub y: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KeyboardShortcuts {
+    #[serde(default = "default_toggle_recording")]
+    pub toggle_recording: String,
+    #[serde(default = "default_toggle_debug")]
+    pub toggle_debug: String,
+    #[serde(default = "default_toggle_view")]
+    pub toggle_view: String,
+    #[serde(default = "default_grammar_correction")]
+    pub grammar_correction: String,
+    #[serde(default = "default_toggle_settings")]
+    pub toggle_settings: String,
+    #[serde(default = "default_close_app")]
+    pub close_app: String,
 }
 
 fn default_insertion_mode() -> String {
@@ -68,6 +87,41 @@ fn default_voice_commands_enabled() -> bool {
 
 fn default_audio_cues_enabled() -> bool {
     true  // Default to enabling audio feedback (beep/clack sounds)
+}
+
+fn default_toggle_recording() -> String {
+    "Ctrl+Shift+D".to_string()
+}
+
+fn default_toggle_debug() -> String {
+    "Ctrl+Shift+L".to_string()
+}
+
+fn default_toggle_view() -> String {
+    "Ctrl+Shift+V".to_string()
+}
+
+fn default_grammar_correction() -> String {
+    "Ctrl+Shift+G".to_string()
+}
+
+fn default_toggle_settings() -> String {
+    "Ctrl+Shift+S".to_string()
+}
+
+fn default_close_app() -> String {
+    "Ctrl+Shift+X".to_string()
+}
+
+fn default_keyboard_shortcuts() -> KeyboardShortcuts {
+    KeyboardShortcuts {
+        toggle_recording: default_toggle_recording(),
+        toggle_debug: default_toggle_debug(),
+        toggle_view: default_toggle_view(),
+        grammar_correction: default_grammar_correction(),
+        toggle_settings: default_toggle_settings(),
+        close_app: default_close_app(),
+    }
 }
 
 fn default_api_service() -> String {
@@ -106,6 +160,7 @@ impl Default for Settings {
             text_formatted: default_text_formatted(),
             voice_commands_enabled: default_voice_commands_enabled(),
             audio_cues_enabled: default_audio_cues_enabled(),
+            keyboard_shortcuts: default_keyboard_shortcuts(),
             main_window_position: None,
         }
     }
@@ -121,9 +176,9 @@ fn get_settings_path(app: &AppHandle) -> Result<PathBuf, String> {
         })
 }
 
-#[tauri::command]
-pub async fn get_settings(app: AppHandle) -> Result<Settings, String> {
-    let settings_path = get_settings_path(&app)?;
+// Synchronous version for startup
+pub fn get_settings_sync(app: &AppHandle) -> Result<Settings, String> {
+    let settings_path = get_settings_path(app)?;
     
     if !settings_path.exists() {
         return Ok(Settings::default());
@@ -134,6 +189,11 @@ pub async fn get_settings(app: AppHandle) -> Result<Settings, String> {
     
     serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings JSON: {}", e))
+}
+
+#[tauri::command]
+pub async fn get_settings(app: AppHandle) -> Result<Settings, String> {
+    get_settings_sync(&app)
 }
 
 // Internal save function with optional event emission
@@ -552,4 +612,17 @@ pub async fn get_latest_release_tag(state: State<'_, ReleaseState>) -> Result<Op
     }
 
     Ok(tag_opt)
+}
+
+#[tauri::command]
+pub async fn reregister_shortcuts(app: AppHandle) -> Result<(), String> {
+    // Unregister all existing shortcuts first
+    let gs = app.global_shortcut();
+    gs.unregister_all()
+        .map_err(|e| format!("Failed to unregister shortcuts: {}", e))?;
+    
+    // Re-register with new shortcuts from settings
+    crate::register_shortcuts(&app);
+    
+    Ok(())
 }

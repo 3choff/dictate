@@ -2,6 +2,7 @@ import { Sidebar } from './components/sidebar.js';
 import { TranscriptionSection } from './sections/transcription.js';
 import { GrammarSection } from './sections/grammar.js';
 import { GeneralSection } from './sections/general.js';
+import { ShortcutsSection } from './sections/shortcuts.js';
 import { AboutSection } from './sections/about.js';
 
 const { invoke } = window.__TAURI__?.core || {};
@@ -17,6 +18,7 @@ const sections = {
     general: new GeneralSection(),
     transcription: new TranscriptionSection(),
     grammar: new GrammarSection(),
+    shortcuts: new ShortcutsSection(),
     about: new AboutSection()
 };
 
@@ -46,6 +48,19 @@ const sidebarItems = [
             <path d="M16.3206 1.36075C16.2973 1.15542 16.1237 1.00021 15.9171 1C15.7104 0.999789 15.5365 1.15464 15.5128 1.35993C15.365 2.64161 14.6416 3.36501 13.3599 3.51284C13.1546 3.53652 12.9998 3.71044 13 3.91708C13.0002 4.12373 13.1554 4.29733 13.3608 4.32059C14.6243 4.4637 15.3978 5.18014 15.5118 6.4628C15.5304 6.67271 15.7064 6.83357 15.9171 6.83333C16.1279 6.8331 16.3035 6.67184 16.3217 6.46189C16.4311 5.19736 17.1974 4.43112 18.4619 4.32166C18.6718 4.30348 18.8331 4.12787 18.8333 3.91712C18.8336 3.70638 18.6727 3.5304 18.4628 3.51176C17.1801 3.39782 16.4637 2.62425 16.3206 1.36075Z" fill="currentColor"></path>
             <path d="M9.50016 3C9.53056 7.05405 12.9459 10.4786 17 10.4999C12.9459 10.4999 9.53056 13.9459 9.50016 18C9.46975 13.9459 6.05405 10.4999 2 10.4999C6.05405 10.4999 9.46975 7.05405 9.50016 3Z" stroke="currentColor" stroke-width="1.33" stroke-linejoin="round"></path>
         </svg>`
+    },
+    {
+        id: 'shortcuts',
+        label: 'Shortcuts',
+        // icon: `<svg class="sidebar-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        //     <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+        //     <path d="M7 9h2M7 13h2M11 9h2M11 13h2M15 9h2M15 13h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        // </svg>`
+        icon: `<svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier"> <path d="M17.5 5.00006H6.5C5.37366 4.93715 4.2682 5.32249 3.42505 6.07196C2.5819 6.82143 2.06958 7.87411 2 9.00006V15.0001C2.06958 16.126 2.5819 17.1787 3.42505 17.9282C4.2682 18.6776 5.37366 19.0628 6.5 18.9999H17.5C18.6263 19.0628 19.7319 18.6776 20.575 17.9282C21.4182 17.1787 21.9304 16.126 22 15.0001V9.00006C21.9304 7.87411 21.4182 6.82143 20.575 6.07196C19.7319 5.32249 18.6263 4.93715 17.5 5.00006V5.00006Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> 
+            <path d="M6 15H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M6 12H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M6 9H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M11 12H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M11 9H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16 12H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16 9H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`
     },
     {
         id: 'about',
@@ -255,13 +270,22 @@ async function loadSettings() {
             geminiApiKey: settings.gemini_api_key || '',
             mistralApiKey: settings.mistral_api_key || '',
             sambanovaApiKey: settings.sambanova_api_key || '',
-            fireworksApiKey: settings.fireworks_api_key || ''
+            fireworksApiKey: settings.fireworks_api_key || '',
+            keyboardShortcuts: {
+                toggleRecording: settings.keyboard_shortcuts?.toggle_recording || 'Ctrl+Shift+D',
+                grammarCorrection: settings.keyboard_shortcuts?.grammar_correction || 'Ctrl+Shift+G',
+                toggleView: settings.keyboard_shortcuts?.toggle_view || 'Ctrl+Shift+V',
+                toggleSettings: settings.keyboard_shortcuts?.toggle_settings || 'Ctrl+Shift+S',
+                toggleDebug: settings.keyboard_shortcuts?.toggle_debug || 'Ctrl+Shift+L',
+                closeApp: settings.keyboard_shortcuts?.close_app || 'Ctrl+Shift+X'
+            }
         };
         
         // Load values into sections
         sections.transcription.loadValues(normalizedSettings);
         sections.grammar.loadValues(normalizedSettings);
         sections.general.loadValues(normalizedSettings);
+        sections.shortcuts.loadValues(normalizedSettings);
         
         console.log('[Settings] Loaded settings:', {
             provider: normalizedSettings.provider,
@@ -288,6 +312,7 @@ async function saveSettings() {
         const transcriptionValues = sections.transcription.getValues();
         const grammarValues = sections.grammar.getValues();
         const generalValues = sections.general.getValues();
+        const shortcutValues = sections.shortcuts.getValues();
         
         // Convert to snake_case for backend
         const settings = {
@@ -304,10 +329,22 @@ async function saveSettings() {
             gemini_api_key: transcriptionValues.geminiApiKey || grammarValues.geminiApiKey || '',
             mistral_api_key: transcriptionValues.mistralApiKey || grammarValues.mistralApiKey || '',
             sambanova_api_key: transcriptionValues.sambanovaApiKey || grammarValues.sambanovaApiKey || '',
-            fireworks_api_key: transcriptionValues.fireworksApiKey || grammarValues.fireworksApiKey || ''
+            fireworks_api_key: transcriptionValues.fireworksApiKey || grammarValues.fireworksApiKey || '',
+            keyboard_shortcuts: {
+                toggle_recording: shortcutValues.keyboardShortcuts.toggleRecording,
+                grammar_correction: shortcutValues.keyboardShortcuts.grammarCorrection,
+                toggle_view: shortcutValues.keyboardShortcuts.toggleView,
+                toggle_settings: shortcutValues.keyboardShortcuts.toggleSettings,
+                toggle_debug: shortcutValues.keyboardShortcuts.toggleDebug,
+                close_app: shortcutValues.keyboardShortcuts.closeApp
+            }
         };
         
         await invoke('save_settings', { settings });
+        
+        // Re-register shortcuts if they changed
+        await invoke('reregister_shortcuts');
+        
         console.log('[Settings] Saved:', {
             provider: settings.api_service,
             grammarProvider: settings.grammar_provider,
