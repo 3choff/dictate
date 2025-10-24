@@ -1,29 +1,32 @@
 use crate::providers;
 use tauri::AppHandle;
 
-/// Correct grammar using the selected provider from settings
+/// Rewrite text using the selected provider and mode from settings
 /// This command loads both the provider selection and API key from settings
 #[tauri::command]
-pub async fn correct_grammar(app: AppHandle, text: String, api_key: String) -> Result<String, String> {
+pub async fn rewrite_text(app: AppHandle, text: String, api_key: String) -> Result<String, String> {
     // Validate inputs
     if text.trim().is_empty() {
         return Err("No text provided".to_string());
     }
     
-    // Load settings to get grammar provider and prompt
+    // Load settings to get rewrite provider and prompt
     let settings = crate::commands::settings::get_settings(app)
         .await
         .map_err(|e| format!("Failed to load settings: {}", e))?;
     
-    // Get the grammar correction prompt from settings
+    // Get the selected rewrite mode from settings
+    let rewrite_mode = &settings.rewrite_mode;
+    
+    // Get the corresponding prompt for the selected rewrite mode
     let prompt = settings
         .prompts
-        .get("grammar_correction")
-        .ok_or("Grammar correction prompt not found in settings")?
+        .get(rewrite_mode)
+        .ok_or_else(|| format!("Rewrite prompt '{}' not found in settings", rewrite_mode))?
         .clone();
     
-    // Get selected grammar provider (default: groq)
-    let provider = &settings.grammar_provider;
+    // Get selected rewrite provider (default: groq)
+    let provider = &settings.rewrite_provider;
     
     // Get the appropriate API key for the selected provider
     let provider_api_key = match provider.as_str() {
@@ -66,7 +69,7 @@ pub async fn correct_grammar(app: AppHandle, text: String, api_key: String) -> R
         } else if error_msg.contains("401") || error_msg.contains("unauthorized") {
             "Invalid API key.".to_string()
         } else {
-            format!("Grammar correction failed: {}", error_msg)
+            format!("Text rewrite failed: {}", error_msg)
         }
     })
 }

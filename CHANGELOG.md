@@ -1,3 +1,71 @@
+## [1.7.0] - 2025-10-24
+
+### 🎨 Major Feature: Text Rewrite System
+
+This release introduces a comprehensive text rewriting system with multiple modes and provider support, replacing the limited grammar correction feature with a powerful text transformation toolkit.
+
+### Added
+- **Text Rewrite Functionality**:
+  - 5 rewrite modes: Grammar Correction, Professional Tone, Polite Tone, Casual Tone, Structured Reformulation
+  - Multi-provider support: Groq (GPT-OSS-120B), Gemini (2.5 Flash Lite), Mistral (Small), SambaNova (Llama-3.3-70B), Fireworks (GPT-OSS-20B)
+  - Customizable prompts stored in settings for each mode
+  - Rewrite button (sparkle icon) in main window for quick access
+  - Keyboard shortcut: Ctrl+Shift+R (customizable)
+  - Voice command: "press rewrite" triggers rewrite on selected text
+  
+- **Settings UI Enhancements**:
+  - New "Rewrite" settings tab with provider selection and mode dropdown
+  - Dedicated API key fields for rewrite providers
+  - Dynamic API key syncing between Transcription and Rewrite sections
+  - Separate provider selection for transcription and rewriting
+
+### Changed
+- **Renamed from "Grammar Correction" to "Rewrite"**:
+  - Command: `correct_grammar` → `rewrite_text`
+  - CommandAction enum: `GrammarCorrect` → `Rewrite`
+  - Keyboard shortcut field: `grammar_correction` → `rewrite`
+  - Frontend variables: `grammarBtn` → `rewriteBtn`, `performGrammarCorrection()` → `performRewrite()`
+  - Constants: `GRAMMAR_CORRECTION` → `REWRITE`
+  - API key field IDs: `grammar*` → `rewrite*`
+
+- **Voice Commands Cleanup**:
+  - Removed obsolete "correct grammar" voice commands
+  - Voice commands now defined entirely in Rust backend (`voice_commands.rs`)
+  - Deleted unused frontend `voice-commands.js` file
+
+### Improved
+- **Provider Architecture**:
+  - All 5 providers now support both transcription and text rewriting
+  - Unified `rewrite_text()` function across all providers
+  - Consistent error handling with user-friendly messages
+  - Settings-based provider and mode selection
+
+### Technical
+- **Backend Changes**:
+  - Updated `commands/text_rewrite.rs` with mode-based prompt selection
+  - Enhanced all provider modules with `rewrite_text()` functions
+  - Updated voice commands system to use `Rewrite` action
+  - Settings structure expanded to support rewrite configuration
+
+- **Frontend Changes**:
+  - Modular settings sections for better organization
+  - Auto-save functionality with 500ms debounce
+  - API key field synchronization between sections
+  - Removed unused shared utilities folder
+
+- **Documentation**:
+  - Updated `PROJECT_STRUCTURE.md` with complete rewrite system documentation
+  - Added Text Rewrite Flow section
+  - Documented all 5 rewrite modes with descriptions
+
+### Removed
+- `ui/shared/` folder (obsolete wrapper utilities)
+  - `voice-commands.js` - Replaced by backend implementation
+  - `constants.js` - Unused exports
+  - `api.js` - Unused Tauri API wrappers
+
+---
+
 ## [1.6.2] - 2025-10-22
 
 ### Added

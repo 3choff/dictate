@@ -156,7 +156,7 @@ struct ChatResponse {
 // ============================================================================
 
 /// Rewrite text using Mistral conversations API
-/// Used for grammar correction and text transformation
+/// Used for text rewriting and transformation
 pub async fn rewrite_text(
     text: String,
     prompt: String,

@@ -12,7 +12,7 @@ Tauri command handlers organized by feature area.
 - `transcription.rs` - Batch transcription commands (Groq, Gemini, Mistral, SambaNova, Fireworks)
 - `streaming.rs` - Streaming transcription commands (Deepgram, Cartesia) with WebSocket support
 - `text_injection.rs` - Text insertion commands (clipboard and native typing)
-- `text_rewrite.rs` - Grammar correction/text rewrite commands
+- `text_rewrite.rs` - Text rewrite commands (grammar correction, tone adjustment, structured reformulation)
 - `settings.rs` - Settings management (load, save, window control)
 - `vad.rs` - Voice Activity Detection commands (create, push, stop, destroy sessions)
 - `mod.rs` - Module exports
@@ -37,28 +37,29 @@ pub use my_feature::*;
 ```
 
 ### 2. Providers Module (`providers/`)
-Transcription service implementations for all supported providers.
+Service implementations for transcription and text rewriting.
 
 **Current files:**
-- `groq.rs` - Groq Whisper-Large-v3-Turbo (batch)
-- `deepgram.rs` - Deepgram Nova-3 (streaming WebSocket)
-- `cartesia.rs` - Cartesia streaming with PCM pipeline (streaming WebSocket)
-- `gemini.rs` - Google Gemini 2.5 Flash Lite (batch)
-- `mistral.rs` - Mistral Voxtral (batch)
-- `sambanova.rs` - SambaNova Whisper-Large-v3 (batch)
-- `fireworks.rs` - Fireworks Whisper (batch)
+- `groq.rs` - Groq Whisper-Large-v3-Turbo (batch transcription) + GPT-OSS-120B (text rewrite)
+- `deepgram.rs` - Deepgram Nova-3 (streaming WebSocket transcription)
+- `cartesia.rs` - Cartesia streaming with PCM pipeline (streaming WebSocket transcription)
+- `gemini.rs` - Google Gemini 2.5 Flash Lite (batch transcription + text rewrite)
+- `mistral.rs` - Mistral Voxtral (batch transcription) + Mistral Small (text rewrite)
+- `sambanova.rs` - SambaNova Whisper-Large-v3 (batch transcription) + Llama-3.3-70B (text rewrite)
+- `fireworks.rs` - Fireworks Whisper (batch transcription) + GPT-OSS-20B (text rewrite)
 - `mod.rs` - Module exports
 
 **Architecture:**
-- Batch providers: Accept audio bytes, return transcription string
-- Streaming providers: Return channels for audio input and transcript output
+- Batch transcription: Accept audio bytes, return transcription string
+- Streaming transcription: Return channels for audio input and transcript output
+- Text rewriting: Accept text + prompt, return rewritten text via chat completions API
 - All use `reqwest` for HTTP/HTTPS or `tokio-tungstenite` for WebSocket
 
 ### 3. Services Module (`services/`)
 Reusable business logic shared across commands.
 
 **Current files:**
-- `clipvoard_paste.rs` - Text injection via clipboard
+- `clipboard_paste.rs` - Text injection via clipboard
 - `direct_typing.rs` - Native keyboard injection using Windows API (via `enigo` crate)
 - `windows_focus.rs` - Windows focus management (WS_EX_NOACTIVATE implementation)
 - `mod.rs` - Module exports
@@ -105,18 +106,24 @@ Voice command processing system at root level.
 **Features:**
 - Regex-based command pattern matching
 - 40+ command definitions (punctuation, keys, combinations)
-- Command action types: KeyPress, KeyCombo, InsertText, DeleteLastWord, GrammarCorrect, PauseDictation
+- Command action types: KeyPress, KeyCombo, InsertText, DeleteLastWord, Rewrite, PauseDictation
 - Works with both streaming and batch providers
 - Configurable via settings toggle
 
 **Key structures:**
-- `VoiceCommand` - Command definition with patterns and actions
-- `CommandAction` - Enum of possible command actions
-- `ProcessedTranscript` - Result after command processing
-- `VoiceCommands` - Collection of all commands
-- `process_voice_commands()` - Main processing function
+- `VoiceCommands` - Collection of all command mappings (HashMap)
+- `CommandAction` - Enum of possible command actions (KeyPress, KeyCombo, InsertText, DeleteLastWord, Rewrite, PauseDictation)
+- `ProcessedText` - Result containing processed text and actions
+- `process_voice_commands()` - Main processing function using regex pattern matching
+
+**Notable commands:**
+- "press rewrite" - Triggers text rewrite (selects all + applies rewrite shortcut)
+- "delete that" / "remove that" - Deletes last word (Ctrl+Backspace)
+- "pause voice typing" / "stop dictation" - Pauses recording
 
 ## Frontend Structure (`ui/`)
+
+**Note:** The frontend uses direct Tauri API access (`window.__TAURI__`) without wrapper utilities. All shared constants and utilities have been removed in favor of direct implementation.
 
 ### Provider Architecture (`main/providers/`)
 Object-oriented provider system with inheritance and specialization.
@@ -202,15 +209,17 @@ Recording session orchestration and state management.
 Each window has its own folder with complete isolation:
 
 **main/** - Primary dictation window
-- `index.html` - Window markup with mic button, sparkle, status
-- `main.js` - Audio recording, transcription handling, UI state
+- `index.html` - Window markup with mic button, rewrite button (sparkle icon), close buttons
+- `main.js` - Audio recording, transcription handling, text rewrite functionality, UI state
 - `styles.css` - Window styles with compact/expanded modes
 - Audio assets: `beep.mp3`, `clack.mp3`
 
 **settings/** - Settings configuration window
-- `index.html` - Settings form with all provider options
-- `settings.js` - Settings load/save logic
+- `index.html` - Settings form with tabbed interface (Transcription, Rewrite, General, Shortcuts, About)
+- `settings.js` - Settings load/save logic with auto-save debouncing
 - `styles.css` - Settings window styling
+- `sections/` - Modular section components for each settings tab
+- `components/` - Reusable UI components (password fields, toggles, shortcuts)
 
 **Benefits:**
 - Clear separation of concerns
@@ -253,13 +262,49 @@ Static resources used by the app:
 10. Text inserted in real-time via keyboard service
 11. Stop → Close WebSocket → Cleanup
 
+### Text Rewrite Flow (Ctrl+Shift+R)
+1. User selects text and presses Ctrl+Shift+R (or clicks sparkle button)
+2. Voice command "press rewrite" also triggers this flow
+3. Frontend calls `copy_selected_text` (simulates Ctrl+C)
+4. Frontend calls `rewrite_text` with selected text
+5. Backend reads settings to get rewrite provider and mode
+6. Backend selects prompt based on mode:
+   - `grammar_correction` - Fix spelling and grammar
+   - `professional` - Formal business tone
+   - `polite` - Courteous and respectful
+   - `casual` - Conversational and relaxed
+   - `structured` - Well-organized with clear flow
+7. Backend calls provider API (Groq/Gemini/Mistral/SambaNova/Fireworks)
+8. Provider returns rewritten text
+9. Frontend calls `insert_text` with clipboard mode
+10. Rewritten text replaces selected text
+
 ### Settings Flow
 1. Settings window calls `load_settings` on open
 2. Backend reads JSON file from app data directory
-3. User modifies settings in UI
+3. User modifies settings in UI (with auto-save after 500ms)
 4. Frontend calls `save_settings` command
-5. Backend writes JSON file
-6. Main window reads settings on launch
+5. Backend writes JSON file with explicit disk sync
+6. Settings changes emit event to main window
+7. Keyboard shortcuts re-registered via `reregister_shortcuts`
+8. Main window reloads settings dynamically
+
+### Keyboard Shortcuts System
+**Current shortcuts (all customizable):**
+- `Ctrl+Shift+D` - Toggle recording
+- `Ctrl+Shift+R` - Text rewrite
+- `Ctrl+Shift+V` - Toggle compact mode
+- `Ctrl+Shift+S` - Toggle settings window
+- `Ctrl+Shift+L` - Toggle DevTools (debug)
+- `Ctrl+Shift+X` - Exit application
+
+**Architecture:**
+- Backend: `tauri-plugin-global-shortcut` for system-wide hotkeys
+- Settings: Stored in `keyboard_shortcuts` object in settings.json
+- Registration: Dynamic via `register_shortcuts()` in lib.rs at startup
+- Re-registration: `reregister_shortcuts()` command applies changes without restart
+- UI: Custom `ShortcutInput` component captures key combinations
+- Persistence: Auto-saved with 500ms debounce
 
 ## Key Design Decisions
 

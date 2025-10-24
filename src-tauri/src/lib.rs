@@ -62,14 +62,14 @@ pub fn register_shortcuts(app: &AppHandle) {
         }
     }
 
-    // Grammar correction
-    if let Ok(shortcut) = shortcuts.grammar_correction.parse::<Shortcut>() {
+    // Text rewrite
+    if let Ok(shortcut) = shortcuts.rewrite.parse::<Shortcut>() {
         if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.emit("sparkle-trigger", ());
             }
         }) {
-            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.grammar_correction, e);
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.rewrite, e);
         }
     }
 
@@ -196,7 +196,7 @@ pub fn run() {
             commands::transcribe_audio_segment,
             commands::insert_text,
             commands::copy_selected_text,
-            commands::correct_grammar,
+            commands::rewrite_text,
             commands::get_settings,
             commands::save_settings,
             commands::reregister_shortcuts,

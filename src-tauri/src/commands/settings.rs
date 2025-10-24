@@ -28,8 +28,10 @@ pub struct Settings {
     pub compact_mode: bool,
     #[serde(default = "default_api_service")]
     pub api_service: String,
-    #[serde(default = "default_grammar_provider")]
-    pub grammar_provider: String,
+    #[serde(default = "default_rewrite_provider")]
+    pub rewrite_provider: String,
+    #[serde(default = "default_rewrite_mode")]
+    pub rewrite_mode: String,
     #[serde(default = "default_insertion_mode")]
     pub insertion_mode: String,
     #[serde(default = "default_language")]
@@ -60,8 +62,8 @@ pub struct KeyboardShortcuts {
     pub toggle_debug: String,
     #[serde(default = "default_toggle_view")]
     pub toggle_view: String,
-    #[serde(default = "default_grammar_correction")]
-    pub grammar_correction: String,
+    #[serde(default = "default_rewrite")]
+    pub rewrite: String,
     #[serde(default = "default_toggle_settings")]
     pub toggle_settings: String,
     #[serde(default = "default_close_app")]
@@ -101,8 +103,8 @@ fn default_toggle_view() -> String {
     "Ctrl+Shift+V".to_string()
 }
 
-fn default_grammar_correction() -> String {
-    "Ctrl+Shift+G".to_string()
+fn default_rewrite() -> String {
+    "Ctrl+Shift+R".to_string()
 }
 
 fn default_toggle_settings() -> String {
@@ -118,7 +120,7 @@ fn default_keyboard_shortcuts() -> KeyboardShortcuts {
         toggle_recording: default_toggle_recording(),
         toggle_debug: default_toggle_debug(),
         toggle_view: default_toggle_view(),
-        grammar_correction: default_grammar_correction(),
+        rewrite: default_rewrite(),
         toggle_settings: default_toggle_settings(),
         close_app: default_close_app(),
     }
@@ -128,16 +130,47 @@ fn default_api_service() -> String {
     "groq".to_string()
 }
 
-fn default_grammar_provider() -> String {
+fn default_rewrite_provider() -> String {
     "groq".to_string()
+}
+
+fn default_rewrite_mode() -> String {
+    "grammar_correction".to_string()
 }
 
 fn default_prompts() -> HashMap<String, String> {
     let mut prompts = HashMap::new();
+    
+    // Text rewriting - grammar correction mode
     prompts.insert(
         "grammar_correction".to_string(),
-        "Correct the grammar and spelling of the following text. Return only the corrected text without any explanations or additional commentary.".to_string()
+        "Correct the grammar, spelling, and punctuation of the following text. Return only the corrected text without any explanations or additional commentary.".to_string()
     );
+    
+    // Professional tone
+    prompts.insert(
+        "professional".to_string(),
+        "Rewrite the following text in a professional and formal tone. Maintain the core message while making it suitable for business communication. Return only the rewritten text without any explanations.".to_string()
+    );
+    
+    // Polite tone
+    prompts.insert(
+        "polite".to_string(),
+        "Rewrite the following text in a polite and courteous tone. Make it more respectful and considerate while keeping the original meaning. Return only the rewritten text without any explanations.".to_string()
+    );
+    
+    // Casual tone
+    prompts.insert(
+        "casual".to_string(),
+        "Rewrite the following text in a casual and friendly tone. Make it more conversational and relaxed while maintaining clarity. Return only the rewritten text without any explanations.".to_string()
+    );
+    
+    // Structured reformulation
+    prompts.insert(
+        "structured".to_string(),
+        "Reformulate the following text in a well-organized and structured manner. Improve clarity, flow, and coherence while maintaining all key ideas. Organize thoughts logically and ensure smooth transitions between concepts. Return only the reformulated text without any explanations.".to_string()
+    );
+    
     prompts
 }
 
@@ -154,7 +187,8 @@ impl Default for Settings {
             prompts: default_prompts(),
             compact_mode: false,
             api_service: default_api_service(),
-            grammar_provider: default_grammar_provider(),
+            rewrite_provider: default_rewrite_provider(),
+            rewrite_mode: default_rewrite_mode(),
             insertion_mode: default_insertion_mode(),
             language: default_language(),
             text_formatted: default_text_formatted(),

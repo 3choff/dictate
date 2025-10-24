@@ -17,10 +17,10 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Desktop Dictation:** Record your voice and have it transcribed into text.
 *   **Seamless Text Insertion:** Automatically pastes or types the transcribed text into your active application.
 *   **Standalone Windows Executable:** Packaged as a portable `.exe` for easy distribution and use.
-*   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), grammar correction provider (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
+*   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), text rewrite provider and mode (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
-*   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, grammar correction, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
-*   **Grammar Correction:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+G`) to correct grammar with your chosen provider (default: Groq). Click again while pulsing to abort.
+*   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, text rewrite, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
+*   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it using your chosen mode and AI provider. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized (default: Grammar Correction with Groq). Click again while pulsing to abort.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Multiple Transcription Services:**
     *   **Groq:** ML-based Voice Activity Detection (VAD) with intelligent speech segmentation.
@@ -46,7 +46,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
-*   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "correct grammar") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
+*   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "press rewrite") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
 
 ## Installation
 
@@ -106,7 +106,9 @@ Right-click anywhere on the main window to quickly toggle between the compact an
 Click the gear icon in the Dictate window to open the settings. Here you can:
 *   Enter your API keys for Groq, Deepgram, Cartesia, Gemini, Mistral, SambaNova, and Fireworks.
 *   Select your preferred transcription service and transcription language (or leave `Multilingual`).
-*   Select grammar correction provider (Groq GPT-OSS-120B, Gemini 2.5 Flash, Mistral Small, Llama-3.3-70B, or Fireworks GPT-OSS-20B). Default is Groq.
+*   Configure text rewrite settings:
+    *   Choose rewrite mode: Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized
+    *   Select AI provider: Groq GPT-OSS-120B, Gemini 2.5 Flash Lite, Mistral Small, Llama-3.3-70B, or Fireworks GPT-OSS-20B (Default: Groq)
 *   Choose your text insertion mode (Simulated Typing via SendKeys or Clipboard paste).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 
@@ -118,7 +120,7 @@ Dictate supports several voice commands for hands-free text manipulation. The fu
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"
 *   **Control Combinations:** "press control plus c" (Ctrl+C), "press control plus v" (Ctrl+V)
 *   **Text Manipulation:** "delete that" (removes the most recent word), "select all" (Ctrl+A)
-*   **Grammar:** "correct grammar" / "correct the grammar" (selects all text and runs the grammar shortcut)
+*   **Text Rewrite:** "press rewrite" (selects all text and runs the text rewrite shortcut with current mode)
 *   **Dictation Controls:** "pause voice typing", "stop dictation", "pause voice mode", etc. (sends Ctrl+Shift+D to pause voice typing)
 
 ### Keyboard Shortcuts
@@ -128,7 +130,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 | Shortcut | Function | Description |
 |----------|----------|-------------|
 | `Ctrl+Shift+D` | **Toggle Recording** | Start or stop dictation. You'll hear a "beep" when recording starts and a "clack" when it stops. |
-| `Ctrl+Shift+G` | **Grammar Correction** | Correct grammar on selected text using your chosen AI provider. Click the sparkle button or use this shortcut, then select text in any application. |
+| `Ctrl+Shift+R` | **Text Rewrite** | Rewrite selected text using your chosen mode (Grammar Correction, Professional, Polite, Casual, or Structured) and AI provider. Click the sparkle button or use this shortcut, then select text in any application. |
 | `Ctrl+Shift+V` | **Toggle Compact Mode** | Switch between compact and expanded window layouts. This preference is saved and restored on app launch. |
 | `Ctrl+Shift+S` | **Toggle Settings** | Open or close the settings window. |
 | `Ctrl+Shift+L` | **Toggle DevTools** | Open or close the developer console for debugging (development feature). |

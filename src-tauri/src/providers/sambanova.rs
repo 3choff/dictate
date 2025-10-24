@@ -150,7 +150,7 @@ struct ChatCompletionResponse {
 // ============================================================================
 
 /// Rewrite text using SambaNova chat completions API
-/// Used for grammar correction and text transformation
+/// Used for text rewriting and transformation
 pub async fn rewrite_text(
     text: String,
     prompt: String,

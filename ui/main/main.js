@@ -21,14 +21,14 @@ let micReleaseTimer = null;
 const MIC_RELEASE_DELAY_MS = 8000; // release mic after stopping to speed up re-starts
 let ignoreNextMicClick = false; // suppress click after pointerdown-start
 let ignoreNextSettingsClick = false;
-let ignoreNextGrammarClick = false;
+let ignoreNextRewriteClick = false;
 
 // Active recording session (unified lifecycle management)
 let currentSession = null;
 
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
-const grammarBtn = document.getElementById('grammarBtn');
+const rewriteBtn = document.getElementById('rewriteBtn');
 const closeBtnTop = document.getElementById('close-btn-top');
 const closeBtnCompact = document.getElementById('close-btn-compact');
 const visualizerContainer = document.getElementById('audioVisualizer');
@@ -325,7 +325,7 @@ if (closeBtnCompact) {
 }
 
 // Instant pressed-state feedback for all buttons
-for (const el of [micButton, settingsBtn, grammarBtn]) {
+for (const el of [micButton, settingsBtn, rewriteBtn]) {
     if (!el) continue;
     el.addEventListener('pointerdown', () => el.classList.add('pressed'));
     el.addEventListener('pointerup', () => el.classList.remove('pressed'));
@@ -419,25 +419,25 @@ listen('toggle-settings', async () => {
     }
 });
 
-async function performGrammarCorrection() {
+async function performRewrite() {
     try {
-        // Backend will use the selected grammar provider from settings
+        // Backend will use the selected rewrite provider from settings
         // Pass Groq key for backward compatibility (backend reads provider's key from settings)
         if (!GROQ_API_KEY) {
             console.error('API key not set');
             return;
         }
         // Show loading state
-        grammarBtn.classList.add('loading');
+        rewriteBtn.classList.add('loading');
         // Copy selected text using backend (simulates Ctrl+C)
         const selectedText = await invoke('copy_selected_text');
         if (!selectedText || !selectedText.trim()) {
             console.warn('No text selected');
-            grammarBtn.classList.remove('loading');
+            rewriteBtn.classList.remove('loading');
             return;
         }
-        // Call backend to correct grammar
-        const correctedText = await invoke('correct_grammar', {
+        // Call backend to rewrite text
+        const correctedText = await invoke('rewrite_text', {
             text: selectedText,
             apiKey: GROQ_API_KEY
         });
@@ -447,30 +447,30 @@ async function performGrammarCorrection() {
             insertionMode: 'clipboard'
         });
     } catch (error) {
-        console.error('Grammar correction error:', error);
+        console.error('Text rewrite error:', error);
     } finally {
-        grammarBtn.classList.remove('loading');
+        rewriteBtn.classList.remove('loading');
     }
 }
 
-// Grammar correction on pointerdown for faster response
-grammarBtn.addEventListener('pointerdown', async (e) => {
+// Text rewrite on pointerdown for faster response
+rewriteBtn.addEventListener('pointerdown', async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    ignoreNextGrammarClick = true;
-    await performGrammarCorrection();
+    ignoreNextRewriteClick = true;
+    await performRewrite();
 });
-grammarBtn.addEventListener('pointercancel', () => { ignoreNextGrammarClick = false; });
-grammarBtn.addEventListener('click', async (e) => {
-    if (ignoreNextGrammarClick) {
+rewriteBtn.addEventListener('pointercancel', () => { ignoreNextRewriteClick = false; });
+rewriteBtn.addEventListener('click', async (e) => {
+    if (ignoreNextRewriteClick) {
         e.preventDefault();
         e.stopPropagation();
-        ignoreNextGrammarClick = false;
+        ignoreNextRewriteClick = false;
         return;
     }
     e.preventDefault();
     e.stopPropagation();
-    await performGrammarCorrection();
+    await performRewrite();
 });
 
 async function toggleRecording() {
@@ -647,17 +647,17 @@ listen('toggle-view', () => {
     toggleCompactMode();
 });
 
-// Listen for grammar correction shortcut (Ctrl+Shift+G)
-let lastGrammarTime = 0;
+// Listen for text rewrite shortcut (Ctrl+Shift+R)
+let lastRewriteTime = 0;
 listen('sparkle-trigger', async () => {
     const now = Date.now();
-    if (now - lastGrammarTime < 300) {
+    if (now - lastRewriteTime < 300) {
         return;
     }
-    lastGrammarTime = now;
+    lastRewriteTime = now;
     
-    // Directly call grammar correction function instead of simulating click
-    await performGrammarCorrection();
+    // Directly call text rewrite function instead of simulating click
+    await performRewrite();
 });
 
 // Listen for settings changes

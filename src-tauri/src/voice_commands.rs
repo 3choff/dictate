@@ -44,8 +44,7 @@ impl VoiceCommands {
         commands.insert("press tab".to_string(), "tab".to_string());
         commands.insert("delete that".to_string(), "delete_last_word".to_string());
         commands.insert("remove that".to_string(), "delete_last_word".to_string());
-        commands.insert("correct grammar".to_string(), "grammar_correct".to_string());
-        commands.insert("correct the grammar".to_string(), "grammar_correct".to_string());
+        commands.insert("press rewrite".to_string(), "rewrite".to_string());
         commands.insert("pause voice typing".to_string(), "pause_dictation".to_string());
         commands.insert("pause dictation".to_string(), "pause_dictation".to_string());
         commands.insert("stop voice typing".to_string(), "pause_dictation".to_string());
@@ -69,7 +68,7 @@ pub enum CommandAction {
     KeyPress(String),        // Single key (enter, backspace, space, tab)
     KeyCombo(String, String), // Modifier + key (ctrl+c, etc.)
     DeleteLastWord,          // Special: delete last word
-    GrammarCorrect,          // Special: trigger grammar correction
+    Rewrite,                 // Special: trigger text rewrite
     PauseDictation,          // Special: pause/stop dictation
 }
 
@@ -81,7 +80,7 @@ impl CommandAction {
             "space" => CommandAction::KeyPress("space".to_string()),
             "tab" => CommandAction::KeyPress("tab".to_string()),
             "delete_last_word" => CommandAction::DeleteLastWord,
-            "grammar_correct" => CommandAction::GrammarCorrect,
+            "rewrite" => CommandAction::Rewrite,
             "pause_dictation" => CommandAction::PauseDictation,
             _ if action.contains('+') => {
                 let parts: Vec<&str> = action.split('+').collect();
@@ -145,7 +144,7 @@ pub fn process_voice_commands(text: &str, voice_commands: &VoiceCommands) -> Pro
                         had_key_action = true;
                     }
                 }
-                CommandAction::GrammarCorrect | CommandAction::PauseDictation => {
+                CommandAction::Rewrite | CommandAction::PauseDictation => {
                     // Remove the command phrase and add action
                     if re.is_match(&remaining) {
                         remaining = re.replace_all(&remaining, "").to_string().trim().to_string();

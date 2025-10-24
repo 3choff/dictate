@@ -14,11 +14,11 @@ export class ShortcutsSection {
             'Start and stop dictation'
         );
         
-        this.grammarCorrectionInput = new ShortcutInput(
-            'shortcut-grammar-correction',
-            'Grammar Correction',
-            'Ctrl+Shift+G',
-            'Correct grammar of selected text'
+        this.rewriteInput = new ShortcutInput(
+            'shortcut-rewrite',
+            'Text Rewrite',
+            'Ctrl+Shift+R',
+            'Rewrite selected text (grammar, tone, style)'
         );
         
         this.toggleViewInput = new ShortcutInput(
@@ -56,7 +56,7 @@ export class ShortcutsSection {
         section.id = 'shortcuts-section';
         
         const title = document.createElement('h2');
-        title.textContent = 'Keyboard Shortcuts';
+        title.textContent = 'Shortcuts';
         title.className = 'section-title';
         section.appendChild(title);
         
@@ -68,7 +68,7 @@ export class ShortcutsSection {
         
         // Add all shortcut inputs
         section.appendChild(this.toggleRecordingInput.render());
-        section.appendChild(this.grammarCorrectionInput.render());
+        section.appendChild(this.rewriteInput.render());
         section.appendChild(this.toggleViewInput.render());
         section.appendChild(this.toggleSettingsInput.render());
         section.appendChild(this.toggleDebugInput.render());
@@ -81,7 +81,7 @@ export class ShortcutsSection {
         // Set up onChange handlers to trigger auto-save
         const inputs = [
             this.toggleRecordingInput,
-            this.grammarCorrectionInput,
+            this.rewriteInput,
             this.toggleViewInput,
             this.toggleSettingsInput,
             this.toggleDebugInput,
@@ -105,7 +105,7 @@ export class ShortcutsSection {
         if (settings.keyboardShortcuts) {
             const shortcuts = settings.keyboardShortcuts;
             this.toggleRecordingInput.setValue(shortcuts.toggleRecording || '');
-            this.grammarCorrectionInput.setValue(shortcuts.grammarCorrection || '');
+            this.rewriteInput.setValue(shortcuts.rewrite || '');
             this.toggleViewInput.setValue(shortcuts.toggleView || '');
             this.toggleSettingsInput.setValue(shortcuts.toggleSettings || '');
             this.toggleDebugInput.setValue(shortcuts.toggleDebug || '');
@@ -117,7 +117,7 @@ export class ShortcutsSection {
         return {
             keyboardShortcuts: {
                 toggleRecording: this.toggleRecordingInput.getValue(),
-                grammarCorrection: this.grammarCorrectionInput.getValue(),
+                rewrite: this.rewriteInput.getValue(),
                 toggleView: this.toggleViewInput.getValue(),
                 toggleSettings: this.toggleSettingsInput.getValue(),
                 toggleDebug: this.toggleDebugInput.getValue(),

@@ -1,6 +1,6 @@
 import { Sidebar } from './components/sidebar.js';
 import { TranscriptionSection } from './sections/transcription.js';
-import { GrammarSection } from './sections/grammar.js';
+import { RewriteSection } from './sections/rewrite.js';
 import { GeneralSection } from './sections/general.js';
 import { ShortcutsSection } from './sections/shortcuts.js';
 import { AboutSection } from './sections/about.js';
@@ -17,7 +17,7 @@ let currentSection = 'general';
 const sections = {
     general: new GeneralSection(),
     transcription: new TranscriptionSection(),
-    grammar: new GrammarSection(),
+    rewrite: new RewriteSection(),
     shortcuts: new ShortcutsSection(),
     about: new AboutSection()
 };
@@ -42,8 +42,8 @@ const sidebarItems = [
         </svg>`
     },
     {
-        id: 'grammar',
-        label: 'Grammar',
+        id: 'rewrite',
+        label: 'Rewrite',
         icon: `<svg class="sidebar-icon" width="24" height="24" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M16.3206 1.36075C16.2973 1.15542 16.1237 1.00021 15.9171 1C15.7104 0.999789 15.5365 1.15464 15.5128 1.35993C15.365 2.64161 14.6416 3.36501 13.3599 3.51284C13.1546 3.53652 12.9998 3.71044 13 3.91708C13.0002 4.12373 13.1554 4.29733 13.3608 4.32059C14.6243 4.4637 15.3978 5.18014 15.5118 6.4628C15.5304 6.67271 15.7064 6.83357 15.9171 6.83333C16.1279 6.8331 16.3035 6.67184 16.3217 6.46189C16.4311 5.19736 17.1974 4.43112 18.4619 4.32166C18.6718 4.30348 18.8331 4.12787 18.8333 3.91712C18.8336 3.70638 18.6727 3.5304 18.4628 3.51176C17.1801 3.39782 16.4637 2.62425 16.3206 1.36075Z" fill="currentColor"></path>
             <path d="M9.50016 3C9.53056 7.05405 12.9459 10.4786 17 10.4999C12.9459 10.4999 9.53056 13.9459 9.50016 18C9.46975 13.9459 6.05405 10.4999 2 10.4999C6.05405 10.4999 9.46975 7.05405 9.50016 3Z" stroke="currentColor" stroke-width="1.33" stroke-linejoin="round"></path>
@@ -126,25 +126,25 @@ function updateFooterVisibility() {
     footer.style.display = currentSection === 'about' ? 'none' : 'flex';
 }
 
-// Setup API key syncing between transcription and grammar sections
+// Setup API key syncing between transcription and rewrite sections
 function setupApiKeySync() {
-    // Shared providers between transcription and grammar
+    // Shared providers between transcription and rewrite
     const sharedProviders = ['groq', 'gemini', 'mistral', 'sambanova', 'fireworks'];
     
     sharedProviders.forEach(provider => {
         const transcriptionField = sections.transcription.apiKeyFields[provider];
-        const grammarField = sections.grammar.apiKeyFields[provider];
+        const rewriteField = sections.rewrite.apiKeyFields[provider];
         
-        if (transcriptionField && grammarField) {
-            // Sync from transcription to grammar
+        if (transcriptionField && rewriteField) {
+            // Sync from transcription to rewrite
             transcriptionField.onChange((value) => {
-                // Update the actual DOM element for grammar field
-                const grammarInput = document.getElementById('grammar' + provider.charAt(0).toUpperCase() + provider.slice(1) + 'ApiKey');
-                if (grammarInput) grammarInput.value = value;
+                // Update the actual DOM element for rewrite field
+                const rewriteInput = document.getElementById('rewrite' + provider.charAt(0).toUpperCase() + provider.slice(1) + 'ApiKey');
+                if (rewriteInput) rewriteInput.value = value;
             });
             
-            // Sync from grammar to transcription
-            grammarField.onChange((value) => {
+            // Sync from rewrite to transcription
+            rewriteField.onChange((value) => {
                 transcriptionField.setValue(value);
             });
         }
@@ -259,7 +259,8 @@ async function loadSettings() {
         const normalizedSettings = {
             provider: settings.api_service || 'groq',
             language: settings.language || 'multilingual',
-            grammarProvider: settings.grammar_provider || 'groq',
+            rewriteProvider: settings.rewrite_provider || 'groq',
+            rewriteMode: settings.rewrite_mode || 'grammar_correction',
             insertionMode: settings.insertion_mode || 'typing',
             formatted: settings.text_formatted !== false,
             voiceCommandsEnabled: settings.voice_commands_enabled !== false,
@@ -273,7 +274,7 @@ async function loadSettings() {
             fireworksApiKey: settings.fireworks_api_key || '',
             keyboardShortcuts: {
                 toggleRecording: settings.keyboard_shortcuts?.toggle_recording || 'Ctrl+Shift+D',
-                grammarCorrection: settings.keyboard_shortcuts?.grammar_correction || 'Ctrl+Shift+G',
+                rewrite: settings.keyboard_shortcuts?.rewrite || 'Ctrl+Shift+R',
                 toggleView: settings.keyboard_shortcuts?.toggle_view || 'Ctrl+Shift+V',
                 toggleSettings: settings.keyboard_shortcuts?.toggle_settings || 'Ctrl+Shift+S',
                 toggleDebug: settings.keyboard_shortcuts?.toggle_debug || 'Ctrl+Shift+L',
@@ -283,13 +284,13 @@ async function loadSettings() {
         
         // Load values into sections
         sections.transcription.loadValues(normalizedSettings);
-        sections.grammar.loadValues(normalizedSettings);
+        sections.rewrite.loadValues(normalizedSettings);
         sections.general.loadValues(normalizedSettings);
         sections.shortcuts.loadValues(normalizedSettings);
         
         console.log('[Settings] Loaded settings:', {
             provider: normalizedSettings.provider,
-            grammarProvider: normalizedSettings.grammarProvider,
+            rewriteProvider: normalizedSettings.rewriteProvider,
             hasGroqKey: !!normalizedSettings.groqApiKey,
             hasGeminiKey: !!normalizedSettings.geminiApiKey
         });
@@ -310,7 +311,7 @@ async function saveSettings() {
     try {
         // Collect values from all sections
         const transcriptionValues = sections.transcription.getValues();
-        const grammarValues = sections.grammar.getValues();
+        const rewriteValues = sections.rewrite.getValues();
         const generalValues = sections.general.getValues();
         const shortcutValues = sections.shortcuts.getValues();
         
@@ -318,21 +319,22 @@ async function saveSettings() {
         const settings = {
             api_service: transcriptionValues.provider,
             language: transcriptionValues.language,
-            grammar_provider: grammarValues.grammarProvider,
+            rewrite_provider: rewriteValues.rewriteProvider,
+            rewrite_mode: rewriteValues.rewriteMode,
             insertion_mode: generalValues.insertionMode,
             text_formatted: generalValues.formatted,
             voice_commands_enabled: generalValues.voiceCommandsEnabled,
             audio_cues_enabled: generalValues.audioCuesEnabled,
-            groq_api_key: transcriptionValues.groqApiKey || grammarValues.groqApiKey || '',
+            groq_api_key: transcriptionValues.groqApiKey || rewriteValues.groqApiKey || '',
             deepgram_api_key: transcriptionValues.deepgramApiKey || '',
             cartesia_api_key: transcriptionValues.cartesiaApiKey || '',
-            gemini_api_key: transcriptionValues.geminiApiKey || grammarValues.geminiApiKey || '',
-            mistral_api_key: transcriptionValues.mistralApiKey || grammarValues.mistralApiKey || '',
-            sambanova_api_key: transcriptionValues.sambanovaApiKey || grammarValues.sambanovaApiKey || '',
-            fireworks_api_key: transcriptionValues.fireworksApiKey || grammarValues.fireworksApiKey || '',
+            gemini_api_key: transcriptionValues.geminiApiKey || rewriteValues.geminiApiKey || '',
+            mistral_api_key: transcriptionValues.mistralApiKey || rewriteValues.mistralApiKey || '',
+            sambanova_api_key: transcriptionValues.sambanovaApiKey || rewriteValues.sambanovaApiKey || '',
+            fireworks_api_key: transcriptionValues.fireworksApiKey || rewriteValues.fireworksApiKey || '',
             keyboard_shortcuts: {
                 toggle_recording: shortcutValues.keyboardShortcuts.toggleRecording,
-                grammar_correction: shortcutValues.keyboardShortcuts.grammarCorrection,
+                rewrite: shortcutValues.keyboardShortcuts.rewrite,
                 toggle_view: shortcutValues.keyboardShortcuts.toggleView,
                 toggle_settings: shortcutValues.keyboardShortcuts.toggleSettings,
                 toggle_debug: shortcutValues.keyboardShortcuts.toggleDebug,
@@ -347,7 +349,7 @@ async function saveSettings() {
         
         console.log('[Settings] Saved:', {
             provider: settings.api_service,
-            grammarProvider: settings.grammar_provider,
+            rewriteProvider: settings.rewrite_provider,
             hasGroqKey: !!settings.groq_api_key,
             hasGeminiKey: !!settings.gemini_api_key
         });

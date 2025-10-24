@@ -177,7 +177,7 @@ struct ChatRequest {
 // ============================================================================
 
 /// Rewrite text using Gemini Flash Lite
-/// Used for grammar correction and text transformation
+/// Used for text rewriting and transformation
 pub async fn rewrite_text(
     text: String,
     prompt: String,
