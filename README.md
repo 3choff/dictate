@@ -22,6 +22,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, text rewrite, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
 *   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it using your chosen mode and AI provider. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized (default: Grammar Correction with Groq). Click again while pulsing to abort.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
+*   **Push‑to‑Talk (Batch Providers):** Optional mode that records only while you hold the recording shortcut, then transcribes immediately on release. Enable it in Settings → Customize. Supported with Groq, Gemini, Mistral, SambaNova, and Fireworks. When a streaming provider (Deepgram, Cartesia) is selected, Push‑to‑Talk is disabled and a brief warning explains it’s only available with batch providers.
 *   **Multiple Transcription Services:**
     *   **Groq:** ML-based Voice Activity Detection (VAD) with intelligent speech segmentation.
     *   **Deepgram:** Real-time streaming transcription for lower latency.
@@ -100,6 +101,10 @@ Right-click anywhere on the main window to quickly toggle between the compact an
 5.  **Text Insertion:** The transcribed text will automatically be pasted into your currently active application.
    * Groq, Mistral, SambaNova, Fireworks, Gemini: Speak, pause ~1s to emit a segment; text is inserted per segment.
    * Deepgram and Cartesia: Inserts finalized phrases as they arrive in streaming mode.
+
+#### Push‑to‑Talk Mode
+
+If you enable Push‑to‑Talk in Settings → Customize, hold the recording shortcut (`Ctrl+Shift+D` by default) to record; release to stop and transcribe instantly. Push‑to‑Talk is supported with batch providers (Groq, Gemini, Mistral, SambaNova, Fireworks). When a streaming provider (Deepgram or Cartesia) is selected, the app prevents enabling Push‑to‑Talk and shows a short in‑app notice.
 
 ### Settings
 
