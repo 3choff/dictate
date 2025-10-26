@@ -216,6 +216,7 @@ pub fn run() {
             commands::get_settings,
             commands::save_settings,
             commands::reregister_shortcuts,
+            commands::apply_theme,
             commands::open_settings_window,
             commands::exit_app,
             commands::toggle_compact_mode,

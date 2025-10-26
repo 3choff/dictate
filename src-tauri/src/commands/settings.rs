@@ -44,6 +44,8 @@ pub struct Settings {
     pub audio_cues_enabled: bool,
     #[serde(default = "default_push_to_talk_enabled")]
     pub push_to_talk_enabled: bool,
+    #[serde(default = "default_dark_mode_enabled")]
+    pub dark_mode_enabled: bool,
     #[serde(default = "default_keyboard_shortcuts")]
     pub keyboard_shortcuts: KeyboardShortcuts,
     #[serde(default)]
@@ -95,6 +97,10 @@ fn default_audio_cues_enabled() -> bool {
 
 fn default_push_to_talk_enabled() -> bool {
     false  // Default to toggle mode (press once to start, press again to stop)
+}
+
+fn default_dark_mode_enabled() -> bool {
+    true  // Default to dark mode
 }
 
 fn default_toggle_recording() -> String {
@@ -201,6 +207,7 @@ impl Default for Settings {
             voice_commands_enabled: default_voice_commands_enabled(),
             audio_cues_enabled: default_audio_cues_enabled(),
             push_to_talk_enabled: default_push_to_talk_enabled(),
+            dark_mode_enabled: default_dark_mode_enabled(),
             keyboard_shortcuts: default_keyboard_shortcuts(),
             main_window_position: None,
         }
@@ -664,6 +671,20 @@ pub async fn reregister_shortcuts(app: AppHandle) -> Result<(), String> {
     
     // Re-register with new shortcuts from settings
     crate::register_shortcuts(&app);
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn apply_theme(app: AppHandle, theme: String) -> Result<(), String> {
+    // Apply theme to main window
+    if let Some(main_window) = app.get_webview_window("main") {
+        let script = format!(
+            "document.documentElement.setAttribute('data-theme', '{}');",
+            theme
+        );
+        let _ = main_window.eval(&script);
+    }
     
     Ok(())
 }

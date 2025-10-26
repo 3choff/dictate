@@ -1,3 +1,50 @@
+## [1.9.0] - 2025-10-26
+
+### 🎨 Major Feature: Complete Theme System Implementation
+
+This release introduces a comprehensive dark/light theme system with centralized CSS variables, providing a polished and consistent user experience across all UI elements.
+
+### Added
+- **Complete Theme System**:
+  - Dark and light theme modes with smooth transitions (0.3s ease)
+  - Centralized theme variables in `ui/shared/theme.css` for all colors
+  - System preference detection and manual override options
+  - Theme toggle in settings under "Customize" section
+  - Theme persistence across app restarts
+
+- **Theme-Aware Components**:
+  - Sparkle icon (dot and star) with theme-responsive colors
+  - Audio visualizer bars with theme-appropriate colors for both inactive and active states
+  - Tooltip styling (main window and settings window) with theme colors
+  - All UI elements (buttons, borders, backgrounds) follow theme system
+  - Loading states and hover effects respect theme colors
+
+- **CSS Architecture Improvements**:
+  - CSS variables for all theme-dependent properties
+  - Consistent color naming convention (--primary-bg, --text-color, etc.)
+  - Theme-aware visualizer colors that change during animation
+  - Eliminated hardcoded colors throughout the codebase
+  - Future-proof theming system for easy customization
+
+### Technical
+- **Theme Implementation**:
+  - `theme.css` with comprehensive variable definitions for both themes
+  - JavaScript theme switching with smooth transitions
+  - Visualizer colors updated dynamically from CSS variables
+  - Tooltip styling unified across main and settings windows
+  - Help button functionality fixed in About section
+
+- **Color System**:
+  - Dark theme: Professional dark grays with blue accents
+  - Light theme: Clean whites with blue accents for consistency
+  - Visualizer: Theme-appropriate colors for both inactive and animated states
+  - Smooth color transitions between themes
+
+### Fixed
+- **Help Button**: Fixed missing event listener in About section settings
+
+---
+
 ## [1.8.0] - 2025-10-26
 
 ### 🎤 Major Feature: Push-to-Talk Mode

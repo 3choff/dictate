@@ -16,6 +16,7 @@ export class GeneralSection {
         this.voiceCommandsToggle = new ToggleSwitch('voice-commands-enabled', 'Voice commands');
         this.audioCuesToggle = new ToggleSwitch('audio-cues-enabled', 'Audio feedback');
         this.pushToTalkToggle = new ToggleSwitch('push-to-talk-enabled', 'Push-to-Talk');
+        this.darkModeToggle = new ToggleSwitch('dark-mode-enabled', 'Dark mode');
         
         // Warning timeout tracker
         this.warningTimeout = null;
@@ -41,6 +42,7 @@ export class GeneralSection {
         section.appendChild(this.voiceCommandsToggle.render());
         section.appendChild(this.audioCuesToggle.render());
         section.appendChild(this.pushToTalkToggle.render());
+        section.appendChild(this.darkModeToggle.render());
         
         // Add warning message for PTT with streaming providers
         const pttWarning = document.createElement('div');
@@ -103,6 +105,21 @@ export class GeneralSection {
             });
         }
         
+        // Add tooltip to dark mode toggle
+        const darkModeToggleElement = document.getElementById('dark-mode-enabled');
+        if (darkModeToggleElement) {
+            const labelElement = darkModeToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Switch between dark and light color scheme', 'top');
+                tooltip.attachTo(labelElement);
+            }
+            
+            // Handle theme change
+            darkModeToggleElement.addEventListener('change', (e) => {
+                this.handleThemeToggle(e.target.checked);
+            });
+        }
+        
         // Initial update of PTT warning
         this.updatePttWarning();
 
@@ -139,6 +156,9 @@ export class GeneralSection {
         if (settings.pushToTalkEnabled !== undefined) {
             this.pushToTalkToggle.setValue(settings.pushToTalkEnabled);
         }
+        if (settings.darkModeEnabled !== undefined) {
+            this.darkModeToggle.setValue(settings.darkModeEnabled);
+        }
     }
 
     getValues() {
@@ -147,7 +167,8 @@ export class GeneralSection {
             formatted: this.textFormattedToggle.getValue(),
             voiceCommandsEnabled: this.voiceCommandsToggle.getValue(),
             audioCuesEnabled: this.audioCuesToggle.getValue(),
-            pushToTalkEnabled: this.pushToTalkToggle.getValue()
+            pushToTalkEnabled: this.pushToTalkToggle.getValue(),
+            darkModeEnabled: this.darkModeToggle.getValue()
         };
     }
     
@@ -213,6 +234,18 @@ export class GeneralSection {
             
             // Hide warning if switching to batch provider
             pttWarning.style.display = 'none';
+        }
+    }
+    
+    handleThemeToggle(isDarkMode) {
+        const theme = isDarkMode ? 'dark' : 'light';
+        
+        // Apply theme to settings window
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // Apply theme to main window via IPC
+        if (window.__TAURI__?.core?.invoke) {
+            window.__TAURI__.core.invoke('apply_theme', { theme });
         }
     }
 }

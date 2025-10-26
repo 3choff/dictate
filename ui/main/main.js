@@ -276,6 +276,10 @@ async function loadSettings() {
         if (settings.compact_mode) {
             document.body.classList.add('compact-mode');
         }
+        
+        // Apply theme
+        const theme = (settings.dark_mode_enabled !== false) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
     } catch (error) {
         console.error('Failed to load settings:', error);
     } finally {

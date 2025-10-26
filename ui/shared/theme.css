@@ -1,0 +1,180 @@
+/**
+ * Centralized Theme System
+ * Supports dark (default) and light modes
+ * Usage: Add data-theme="light" or data-theme="dark" to html element
+ */
+
+/* Dark Theme (Default) */
+:root,
+:root[data-theme="dark"] {
+    /* Backgrounds */
+    --primary-bg: #161616cc;
+    --secondary-bg: #3c3c3c;
+    --tertiary-bg: #2a2a2a;
+    
+    /* Text Colors */
+    --text-color: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #808080;
+    
+    /* Border & Dividers */
+    --border-color: #555555;
+    --divider-color: #404040;
+    
+    /* Handle & Drag */
+    --handle-color: #5f6368a9;
+    
+    /* Accent Colors (Blue) */
+    --accent-color: #00a9ff;
+    --accent-hover: #0087cc;
+    --accent-glow: #00a9f880;
+    --accent-glow-strong: #00a9f84d;
+    
+    /* Pulse Animation */
+    --pulse-color: #00a9ffb3;
+    --pulse-end-color: #00a9ff00;
+    
+    /* Active States */
+    --active-mic-bg: #00a9ff;
+    --active-mic-icon: #202124;
+    
+    /* Input Fields */
+    --input-bg: #2a2a2a;
+    --input-border: #555555;
+    --input-focus-border: #00a9ff;
+    --input-text: #ffffff;
+    --input-placeholder: #808080;
+    
+    /* Buttons */
+    --button-bg: #3c3c3c;
+    --button-hover-bg: #4a4a4a;
+    --button-text: #ffffff;
+
+    /* Toggles */
+    --thumb-bg: #ffffff;
+    --track-bg: #3c3c3c;
+    
+    /* Tooltips */
+    --tooltip-bg: rgba(28, 28, 30, 0.95);
+    --tooltip-text: #e8eaed;
+    /* --tooltip-arrow: rgba(28, 28, 30, 0.95); */
+    
+    /* Shadows */
+    --shadow-light: rgba(255, 255, 255, 0.15);
+    --shadow-dark: rgba(0, 0, 0, 0.3);
+    
+    /* Icon Colors */
+    --icon-color: #e8eaed;
+    --icon-hover: #ffffff;
+    
+    /* Warning Colors */
+    --warning-bg: rgba(255, 193, 7, 0.1);
+    --warning-text: #ffc107;
+    --warning-border: rgba(255, 193, 7, 0.3);
+    
+    /* Icon specific properties */
+    --sparkle-stroke-width: 0.2;
+    --sparkle-fill: #e8eaed;
+    --sparkle-dot-fill: #8ab4f8;
+    
+    /* Audio Visualizer */
+    --visualizer-bar-bg: #44566d;
+    --visualizer-bar-opacity: 0.4;
+    --visualizer-active-from: rgb(0, 169, 255);      /* Blue when active */
+    --visualizer-active-to: rgb(160, 200, 248);       /* Light blue when active */
+    --visualizer-active-opacity-min: 0.5;
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    /* Backgrounds */
+    --primary-bg: #f5f5f7e6;
+    --secondary-bg: #ffffff;
+    --tertiary-bg: #e8e8ed;
+    
+    /* Text Colors */
+    --text-color: #1d1d1f;
+    --text-secondary: #515154;
+    --text-muted: #86868b;
+    
+    /* Border & Dividers */
+    --border-color: #d2d2d7;
+    --divider-color: #e5e5ea;
+    
+    /* Handle & Drag */
+    --handle-color: #9da4aca9;
+    
+    /* Accent Colors (Blue) */
+    --accent-color: #00a9ff;
+    --accent-hover: #0087cc;
+    --accent-glow: #00a9f880;
+    --accent-glow-strong: #00a9f84d;
+    
+    /* Pulse Animation */
+    --pulse-color: #00a9ffb3;
+    --pulse-end-color: #007aff00;
+    
+    /* Active States */
+    /* --active-mic-bg: #007aff; */
+    --active-mic-bg: #00a9ff;
+    --active-mic-icon: #ffffff;
+    
+    /* Input Fields */
+    --input-bg: #ffffff;
+    --input-border: #d2d2d7;
+    --input-focus-border: #00a9ff;
+    --input-text: #1d1d1f;
+    --input-placeholder: #86868b;
+    
+    /* Buttons */
+    --button-bg: #e8e8ed;
+    --button-hover-bg: #d2d2d7;
+    --button-text: #1d1d1f;
+
+    /* Toggles */
+    --thumb-bg: #ffffff;
+    --track-bg: #919191;
+    
+    /* Tooltips */
+    --tooltip-bg: rgba(255, 255, 255, 0.98);
+    --tooltip-text: #1d1d1f;
+    /* --tooltip-arrow: rgba(255, 255, 255, 0.98); */
+    
+    /* Shadows */
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-dark: rgba(0, 0, 0, 0.2);
+    
+    /* Icon Colors */
+    --icon-color: #1d1d1f;
+    --icon-hover: #000000;
+    
+    /* Warning Colors */
+    --warning-bg: rgba(255, 149, 0, 0.1);
+    --warning-text: #ff9500;
+    --warning-border: rgba(255, 149, 0, 0.3);
+    
+    /* Icon specific properties */
+    --sparkle-stroke-width: 1.0;
+    --sparkle-fill: transparent;
+    --sparkle-dot-fill: #6ea5fc;
+    
+    /* Audio Visualizer */
+    --visualizer-bar-bg: #44566d;
+    --visualizer-bar-opacity: 0.6;
+    --visualizer-active-from: rgb(160, 200, 248);
+    --visualizer-active-to:  rgb(0, 169, 255);
+    --visualizer-active-opacity-min: 0.6;
+}
+
+/* Smooth theme transitions */
+:root {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body, .container, .window-frame {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+input, select, textarea, button {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

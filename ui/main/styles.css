@@ -1,20 +1,4 @@
-:root {
-    --primary-bg: #161616cc;
-    --secondary-bg: #3c3c3c;
-    --handle-color: #5f6368a9;
-    --text-color: white;
-    --label-color: #b0b0b0;
-    --border-color: #555;
-    --icon-stroke-color: #e8eaed;
-    --accent-color: #00a9ff;
-    --accent-hover: #0087cc;
-    --accent-glow: #00a9f880;
-    --accent-glow-strong: #00a9f84d;
-    --pulse-color: #00a9ffb3;
-    --pulse-end-color: #00a9ff00;
-    --active-mic-bg: #00a9ff;
-    --active-mic-icon: #202124;
-}
+/* Theme colors now defined in ../shared/theme.css */
 
 html, body {
     background: transparent;
@@ -125,9 +109,9 @@ body.transitioning.compact-exit {
     flex: 1;
     max-width: 10px;
     height: 4px;
-    background-color: rgb(68, 86, 109);
+    background-color: var(--visualizer-bar-bg);
     border-radius: 2px;
-    opacity: 0.4;
+    opacity: var(--visualizer-bar-opacity);
 }
 
 .main-content {
@@ -214,6 +198,21 @@ body.transitioning.compact-exit {
     width: 26px;
     height: 26px; 
 }
+
+.sparkle-icon svg path {
+    stroke-width: var(--sparkle-stroke-width);
+}
+
+/* Target the small sparkle dot */
+.sparkle-icon svg path.sparkle-dot {
+    fill: var(--sparkle-dot-fill, #8ab4f8);
+}
+
+/* Target the star path using the class */
+.sparkle-icon svg path.star-path {
+    fill: var(--sparkle-fill);
+}
+
 .sparkle-icon.loading svg { width: 20px; height: 20px; }
 .sparkle-icon.loading svg path {
     fill: var(--active-mic-icon);
@@ -351,8 +350,8 @@ body.compact-mode .audio-visualizer .bar {
 /* API Key Missing Tooltip */
 .api-key-tooltip {
     position: fixed;
-    background: rgba(28, 28, 30, 0.95);
-    color: var(--text-color);
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 13px;

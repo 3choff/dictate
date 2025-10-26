@@ -1,14 +1,4 @@
-:root {
-    --primary-bg: #161616cc;
-    --secondary-bg: #3c3c3c;
-    --handle-color: #5f6368a9;
-    --text-color: white;
-    /* --label-color: #b0b0b0; */
-    --label-color: white;
-    --border-color: #555;
-    --accent-color: #00a9ff;
-    --accent-hover: #0087cc;
-}
+/* Theme colors now defined in ../shared/theme.css */
 
 html, body {
     background: transparent;
@@ -67,8 +57,8 @@ textarea {
 }
 
 .close-button svg {
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
 }
 
 .window-frame {
@@ -154,7 +144,7 @@ textarea {
     position: absolute;
     cursor: pointer;
     inset: 0;
-    background-color: var(--secondary-bg);
+    background-color: var(--track-bg);
     border: 1px solid var(--border-color);
     border-radius: 999px;
     transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -168,7 +158,7 @@ textarea {
     left: 1px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: var(--text-color);
+    background-color: var(--thumb-bg);
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     transition: transform 0.2s ease;
@@ -497,8 +487,8 @@ textarea {
 /* Tooltip Component */
 .tooltip {
     position: fixed;
-    background: rgba(28, 28, 30, 0.95);
-    color: var(--text-color);
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 12px;
@@ -519,7 +509,7 @@ textarea {
 }
 
 /* Tooltip arrow (optional enhancement) */
-.tooltip::after {
+/* .tooltip::after {
     content: '';
     position: absolute;
     width: 0;
@@ -531,29 +521,29 @@ textarea {
     bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
-    border-top-color: rgba(28, 28, 30, 0.95);
+    border-top-color: var(--tooltip-arrow);
 }
 
 .tooltip-bottom::after {
     top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    border-bottom-color: rgba(28, 28, 30, 0.95);
+    border-bottom-color: var(--tooltip-arrow);
 }
 
 .tooltip-left::after {
     right: -10px;
     top: 50%;
     transform: translateY(-50%);
-    border-left-color: rgba(28, 28, 30, 0.95);
+    border-left-color: var(--tooltip-arrow);
 }
 
 .tooltip-right::after {
     left: -10px;
     top: 50%;
     transform: translateY(-50%);
-    border-right-color: rgba(28, 28, 30, 0.95);
-}
+    border-right-color: var(--tooltip-arrow);
+} */
 
 /* Tooltip wrapper helper */
 .tooltip-wrapper {

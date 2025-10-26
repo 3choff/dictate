@@ -225,6 +225,11 @@ function setupEventListeners() {
     if (aboutDonateButton) {
         aboutDonateButton.addEventListener('click', openDonate);
     }
+
+    const aboutHelpButton = document.getElementById('about-help');
+    if (aboutHelpButton) {
+        aboutHelpButton.addEventListener('click', openHelp);
+    }
     
     // Auto-save on input changes (debounced)
     let saveTimeout;
@@ -271,6 +276,7 @@ async function loadSettings() {
             voiceCommandsEnabled: settings.voice_commands_enabled !== false,
             audioCuesEnabled: settings.audio_cues_enabled !== false,
             pushToTalkEnabled: settings.push_to_talk_enabled || false,
+            darkModeEnabled: settings.dark_mode_enabled !== false,
             groqApiKey: settings.groq_api_key || '',
             deepgramApiKey: settings.deepgram_api_key || '',
             cartesiaApiKey: settings.cartesia_api_key || '',
@@ -293,6 +299,14 @@ async function loadSettings() {
         sections.rewrite.loadValues(normalizedSettings);
         sections.general.loadValues(normalizedSettings);
         sections.shortcuts.loadValues(normalizedSettings);
+        
+        // Apply theme to both windows
+        const theme = normalizedSettings.darkModeEnabled ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        // Also apply to main window
+        if (invoke) {
+            invoke('apply_theme', { theme });
+        }
         
         console.log('[Settings] Loaded settings:', {
             provider: normalizedSettings.provider,
@@ -332,6 +346,7 @@ async function saveSettings() {
             voice_commands_enabled: generalValues.voiceCommandsEnabled,
             audio_cues_enabled: generalValues.audioCuesEnabled,
             push_to_talk_enabled: generalValues.pushToTalkEnabled,
+            dark_mode_enabled: generalValues.darkModeEnabled,
             groq_api_key: transcriptionValues.groqApiKey || rewriteValues.groqApiKey || '',
             deepgram_api_key: transcriptionValues.deepgramApiKey || '',
             cartesia_api_key: transcriptionValues.cartesiaApiKey || '',

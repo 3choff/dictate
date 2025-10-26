@@ -11,6 +11,33 @@ export class AudioVisualizer {
         this.animationId = null;
         this.isActive = false;
         this.smoothedLevels = new Array(9).fill(0); // Smoothing buffer to reduce jitter
+        
+        // Cache for CSS variables (updated on theme changes)
+        this.colors = this.getColorsFromCSS();
+    }
+    
+    /**
+     * Get colors from CSS variables to support theming
+     */
+    getColorsFromCSS() {
+        const styles = getComputedStyle(document.documentElement);
+        
+        // Parse RGB string like "rgb(0, 169, 255)" to {r, g, b}
+        const parseRGB = (rgbString) => {
+            const match = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (match) {
+                return { r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]) };
+            }
+            return { r: 0, g: 0, b: 0 };
+        };
+        
+        return {
+            activeFrom: parseRGB(styles.getPropertyValue('--visualizer-active-from').trim()),
+            activeTo: parseRGB(styles.getPropertyValue('--visualizer-active-to').trim()),
+            inactiveBg: styles.getPropertyValue('--visualizer-bar-bg').trim(),
+            inactiveOpacity: styles.getPropertyValue('--visualizer-bar-opacity').trim(),
+            activeOpacityMin: parseFloat(styles.getPropertyValue('--visualizer-active-opacity-min').trim())
+        };
     }
 
     /**
@@ -76,18 +103,17 @@ export class AudioVisualizer {
             // Set transition for smooth animation
             bar.style.transition = 'height 60ms ease-out';
             
-            // Calculate opacity based on value (minimum 0.5 for visibility)
-            const opacity = Math.max(0.5, value * 2);
+            // Calculate opacity based on value (minimum from CSS variable)
+            const opacity = Math.max(this.colors.activeOpacityMin, value * 2);
             bar.style.opacity = opacity;
             
-            // Color interpolation from blue to light blue based on intensity
-            // Matches original color scheme
-            const blue = { r: 0, g: 169, b: 255 };      // rgb(0, 169, 255)
-            const lblue = { r: 160, g: 200, b: 248 };   // rgb(160, 200, 248)
+            // Color interpolation using theme colors
+            const fromColor = this.colors.activeFrom;
+            const toColor = this.colors.activeTo;
             
-            const r = Math.round(blue.r + (lblue.r - blue.r) * value);
-            const g = Math.round(blue.g + (lblue.g - blue.g) * value);
-            const b = Math.round(blue.b + (lblue.b - blue.b) * value);
+            const r = Math.round(fromColor.r + (toColor.r - fromColor.r) * value);
+            const g = Math.round(fromColor.g + (toColor.g - fromColor.g) * value);
+            const b = Math.round(fromColor.b + (toColor.b - fromColor.b) * value);
             
             bar.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
         });
@@ -176,11 +202,14 @@ export class AudioVisualizer {
         // Reset smoothing buffer
         this.smoothedLevels = new Array(9).fill(0);
         
-        // Reset all bars to inactive state (matching original styling)
+        // Update colors from CSS (in case theme changed)
+        this.colors = this.getColorsFromCSS();
+        
+        // Reset all bars to inactive state using theme colors
         this.barElements.forEach(bar => {
             bar.style.height = '4px';
-            bar.style.backgroundColor = 'rgb(68, 86, 109)';
-            bar.style.opacity = '0.4';
+            bar.style.backgroundColor = this.colors.inactiveBg;
+            bar.style.opacity = this.colors.inactiveOpacity;
             bar.style.transition = 'height 200ms ease-out, background-color 200ms ease-out';
         });
     }
