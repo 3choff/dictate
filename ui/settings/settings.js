@@ -88,9 +88,14 @@ function initializeUI() {
     });
     
     // Initialize sections after DOM insertion (sets up onChange listeners)
-    Object.values(sections).forEach(section => {
+    Object.entries(sections).forEach(([id, section]) => {
         if (section.initialize) {
-            section.initialize();
+            // Pass general section to transcription for PTT warning updates
+            if (id === 'transcription') {
+                section.initialize(sections.general);
+            } else {
+                section.initialize();
+            }
         }
     });
     
@@ -265,6 +270,7 @@ async function loadSettings() {
             formatted: settings.text_formatted !== false,
             voiceCommandsEnabled: settings.voice_commands_enabled !== false,
             audioCuesEnabled: settings.audio_cues_enabled !== false,
+            pushToTalkEnabled: settings.push_to_talk_enabled || false,
             groqApiKey: settings.groq_api_key || '',
             deepgramApiKey: settings.deepgram_api_key || '',
             cartesiaApiKey: settings.cartesia_api_key || '',
@@ -325,6 +331,7 @@ async function saveSettings() {
             text_formatted: generalValues.formatted,
             voice_commands_enabled: generalValues.voiceCommandsEnabled,
             audio_cues_enabled: generalValues.audioCuesEnabled,
+            push_to_talk_enabled: generalValues.pushToTalkEnabled,
             groq_api_key: transcriptionValues.groqApiKey || rewriteValues.groqApiKey || '',
             deepgram_api_key: transcriptionValues.deepgramApiKey || '',
             cartesia_api_key: transcriptionValues.cartesiaApiKey || '',

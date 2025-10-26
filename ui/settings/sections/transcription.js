@@ -70,10 +70,17 @@ export class TranscriptionSection {
         return section;
     }
 
-    initialize() {
+    initialize(generalSection) {
+        // Store reference to general section for PTT warning updates
+        this.generalSection = generalSection;
+        
         // Set up change listener after DOM insertion
         this.providerField.onChange((value) => {
             this.updateApiKeyVisibility(value);
+            // Update PTT warning when provider changes
+            if (this.generalSection && this.generalSection.updatePttWarning) {
+                this.generalSection.updatePttWarning();
+            }
         });
     }
 

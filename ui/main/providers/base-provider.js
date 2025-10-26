@@ -10,6 +10,7 @@ export class BaseProvider {
         this.smartFormat = config.smartFormat !== false;
         this.insertionMode = config.insertionMode || 'typing';
         this.voiceCommandsEnabled = config.voiceCommandsEnabled !== false;
+        this.pushToTalkEnabled = config.pushToTalkEnabled || false;
         this.invoke = config.invoke; // Tauri invoke function
         
         // Provider state

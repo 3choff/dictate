@@ -34,6 +34,10 @@ const closeBtnCompact = document.getElementById('close-btn-compact');
 const visualizerContainer = document.getElementById('audioVisualizer');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
+// Tooltip for missing API key
+let apiKeyTooltip = null;
+let apiKeyTooltipTimeout = null;
+
 // API key and insertion mode will be loaded from settings
 let GROQ_API_KEY = '';
 let SAMBANOVA_API_KEY = '';
@@ -52,6 +56,7 @@ let LANGUAGE = 'multilingual';
 let TEXT_FORMATTED = true;
 let VOICE_COMMANDS_ENABLED = true;
 let AUDIO_CUES_ENABLED = true;
+let PUSH_TO_TALK_ENABLED = false;
 
 // Audio cues (loaded at startup)
 let beepSound = null;
@@ -264,7 +269,8 @@ async function loadSettings() {
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
         VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
         AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
+        PUSH_TO_TALK_ENABLED = (settings.push_to_talk_enabled === true);  // Default false
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -408,6 +414,34 @@ listen('toggle-recording', () => {
     toggleRecording();
 });
 
+// Listen for push-to-talk start (no debounce for immediate response)
+listen('start-recording', async () => {
+    if (!isRecording) {
+        playBeep();
+        isRecording = true;
+        micButton.classList.add('recording');
+        visualizerContainer?.classList.add('active');
+        status.textContent = 'Recording...';
+        try {
+            await startRecording();
+        } catch (err) {
+            console.error('Error starting recording:', err);
+            isRecording = false;
+            micButton.classList.remove('recording');
+            visualizerContainer?.classList.remove('active');
+            status.textContent = 'Microphone access denied';
+        }
+    }
+});
+
+// Listen for push-to-talk stop (no debounce for immediate response)
+listen('stop-recording', async () => {
+    if (isRecording) {
+        playClack();
+        await stopRecording();
+    }
+});
+
 listen('toggle-settings', async () => {
     const now = Date.now();
     if (now - lastShortcutTime < 500) return;
@@ -521,6 +555,7 @@ async function startRecording() {
         
         const apiKey = apiKeyMap[API_SERVICE];
         if (!apiKey) {
+            showApiKeyMissingTooltip();
             throw new Error(`API key not configured for ${API_SERVICE}`);
         }
         
@@ -531,6 +566,7 @@ async function startRecording() {
             smartFormat: TEXT_FORMATTED,
             insertionMode: INSERTION_MODE,
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED,
+            pushToTalkEnabled: PUSH_TO_TALK_ENABLED,
             invoke: invoke,
             audioHelpers: audioHelpers
         });
@@ -554,7 +590,92 @@ async function startRecording() {
     }
 }
 
+// Show tooltip notification for missing API key
+function showApiKeyMissingTooltip() {
+    // Remove existing tooltip if any
+    hideApiKeyTooltip();
+    
+    // Create tooltip element
+    apiKeyTooltip = document.createElement('div');
+    apiKeyTooltip.className = 'api-key-tooltip';
+    // apiKeyTooltip.textContent = `Missing ${getProviderDisplayName(API_SERVICE)} API key in settings`;
+    apiKeyTooltip.textContent = `No API key in settings`;
+    
+    document.body.appendChild(apiKeyTooltip);
+    
+    // Check if in compact mode
+    const isCompactMode = document.body.classList.contains('compact-mode');
+    
+    // Position tooltip
+    const micRect = micButton.getBoundingClientRect();
+    const tooltipRect = apiKeyTooltip.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    let left, top;
+    
+    if (isCompactMode) {
+        // In compact mode: center tooltip in the window
+        left = (windowWidth - tooltipRect.width) / 2;
+        top = (windowHeight - tooltipRect.height) / 2;
+        
+    } else {
+        // Normal mode: center horizontally relative to mic button
+        left = micRect.left + (micRect.width / 2) - (tooltipRect.width / 2);
+        // Position below mic button with gap
+        top = micRect.bottom - 45;
+    }
+    
+    apiKeyTooltip.style.left = `${left}px`;
+    apiKeyTooltip.style.top = `${top}px`;
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        apiKeyTooltip.classList.add('visible');
+    });
+    
+    // Auto-hide after 2 seconds
+    apiKeyTooltipTimeout = setTimeout(() => {
+        hideApiKeyTooltip();
+    }, 2000);
+}
+
+// Hide API key tooltip
+function hideApiKeyTooltip() {
+    if (apiKeyTooltip) {
+        apiKeyTooltip.classList.remove('visible');
+        // Wait for fade out animation before removing
+        setTimeout(() => {
+            if (apiKeyTooltip) {
+                apiKeyTooltip.remove();
+                apiKeyTooltip = null;
+            }
+        }, 150); // Match CSS transition duration
+    }
+    if (apiKeyTooltipTimeout) {
+        clearTimeout(apiKeyTooltipTimeout);
+        apiKeyTooltipTimeout = null;
+    }
+}
+
+// Get display name for provider
+function getProviderDisplayName(provider) {
+    const names = {
+        'groq': 'Groq',
+        'gemini': 'Gemini',
+        'mistral': 'Mistral',
+        'sambanova': 'SambaNova',
+        'fireworks': 'Fireworks',
+        'deepgram': 'Deepgram',
+        'cartesia': 'Cartesia'
+    };
+    return names[provider] || provider;
+}
+
 async function stopRecording() {
+    // Hide API key tooltip if showing
+    hideApiKeyTooltip();
+    
     // Immediate UI feedback
     isRecording = false;
     micButton.classList.remove('recording');

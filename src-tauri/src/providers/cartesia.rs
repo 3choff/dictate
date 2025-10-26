@@ -62,8 +62,13 @@ pub async fn start_streaming(
     tokio::spawn(async move {
         while let Some(audio_data) = audio_rx.recv().await {
             if audio_data.is_empty() {
-                // Empty data means close connection - send finalize + done
+                // Empty data means close connection - send finalize signal
                 let _ = write.send(Message::Text("finalize".to_string())).await;
+                
+                // Wait for final transcript processing
+                tokio::time::sleep(tokio::time::Duration::from_millis(800)).await;
+                
+                // Send done and close
                 let _ = write.send(Message::Text("done".to_string())).await;
                 let _ = write.send(Message::Close(None)).await;
                 break;

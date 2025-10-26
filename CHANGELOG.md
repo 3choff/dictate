@@ -1,3 +1,55 @@
+## [1.8.0] - 2025-10-26
+
+### 🎤 Major Feature: Push-to-Talk Mode
+
+This release introduces a highly requested push-to-talk functionality for batch providers, enhanced UI with new icons, and better user feedback for missing API keys.
+
+### Added
+- **Push-to-Talk (PTT) Mode**:
+  - Hold keyboard shortcut to record, release to stop and transcribe immediately
+  - Available for batch providers: Groq, Gemini, Mistral, SambaNova, Fireworks
+  - Toggle in settings under "Customize" section
+  - Automatic warning when trying to enable PTT with streaming providers (Deepgram, Cartesia)
+  - PTT disabled automatically when switching from batch to streaming provider
+  - No VAD buffering delay - transcription starts immediately on key release
+  
+- **API Key Missing Notification**:
+  - Tooltip notification appears when recording without configured API key
+  - Provider-specific message: "No API key in settings"
+  - Positioned intelligently (below mic button in normal mode, centered in compact mode)
+  - Auto-dismisses after 2 seconds
+  - Smooth fade-in/fade-out animation
+  - Matches settings tooltip styling
+
+- **New Visual Design**:
+  - Updated microphone icon with filled ellipse for better visibility
+  - Modern, cleaner recording button appearance
+  - New application logo
+
+### Changed
+- **Settings UI Improvements**:
+  - Push-to-Talk toggle with provider compatibility warnings
+  - Warning message displays temporarily (6 seconds) when incompatible configuration selected
+  - Dynamic provider change detection for PTT availability
+
+### Technical
+- **Backend Changes**:
+  - Removed PTT support from streaming providers (Deepgram, Cartesia)
+  - Cleaned up `start_streaming_transcription` command parameters
+  - Simplified voice command execution for streaming providers
+
+- **Frontend Changes**:
+  - Added mode detection for tooltip positioning (normal vs compact view)
+  - Enhanced SVG styling with separate CSS rules for `path` and `ellipse` elements
+  - Tooltip CSS moved to stylesheet for consistency
+  - Removed inline SVG styling for better maintainability
+
+### Fixed
+- Tooltip clipping issue in compact mode - now centered in window
+- SVG fill color not applying to ellipse element
+
+---
+
 ## [1.7.0] - 2025-10-24
 
 ### 🎨 Major Feature: Text Rewrite System

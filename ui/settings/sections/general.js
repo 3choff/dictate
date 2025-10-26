@@ -15,6 +15,10 @@ export class GeneralSection {
         this.textFormattedToggle = new ToggleSwitch('text-formatted', 'Text formatted');
         this.voiceCommandsToggle = new ToggleSwitch('voice-commands-enabled', 'Voice commands');
         this.audioCuesToggle = new ToggleSwitch('audio-cues-enabled', 'Audio feedback');
+        this.pushToTalkToggle = new ToggleSwitch('push-to-talk-enabled', 'Push-to-Talk');
+        
+        // Warning timeout tracker
+        this.warningTimeout = null;
     }
 
     render() {
@@ -36,6 +40,19 @@ export class GeneralSection {
         section.appendChild(this.textFormattedToggle.render());
         section.appendChild(this.voiceCommandsToggle.render());
         section.appendChild(this.audioCuesToggle.render());
+        section.appendChild(this.pushToTalkToggle.render());
+        
+        // Add warning message for PTT with streaming providers
+        const pttWarning = document.createElement('div');
+        pttWarning.id = 'ptt-warning';
+        pttWarning.className = 'setting-warning';
+        pttWarning.style.display = 'none';
+        pttWarning.innerHTML = `
+            <span style="color: white; font-size: 0.85em; margin-left: 10px;">
+                ⚠️ Push-to-Talk is only supported with batch providers (Groq, Gemini, Mistral, SambaNova, Fireworks)
+            </span>
+        `;
+        section.appendChild(pttWarning);
         
         return section;
     }
@@ -71,6 +88,24 @@ export class GeneralSection {
             }
         }
 
+        // Add tooltip to push-to-talk toggle
+        const pushToTalkToggleElement = document.getElementById('push-to-talk-enabled');
+        if (pushToTalkToggleElement) {
+            const labelElement = pushToTalkToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Hold keys shortcut to record, release to stop', 'top');
+                tooltip.attachTo(labelElement);
+            }
+            
+            // Prevent PTT toggle for streaming providers
+            pushToTalkToggleElement.addEventListener('change', (e) => {
+                this.handlePttToggle(e);
+            });
+        }
+        
+        // Initial update of PTT warning
+        this.updatePttWarning();
+
         // Add tooltip to insertion mode label
         const insertionModeLabel = document.querySelector('#general-section .form-group:first-of-type .toggle-label, #insertion-mode-label');
         if (!insertionModeLabel) {
@@ -101,6 +136,9 @@ export class GeneralSection {
         if (settings.audioCuesEnabled !== undefined) {
             this.audioCuesToggle.setValue(settings.audioCuesEnabled);
         }
+        if (settings.pushToTalkEnabled !== undefined) {
+            this.pushToTalkToggle.setValue(settings.pushToTalkEnabled);
+        }
     }
 
     getValues() {
@@ -108,7 +146,73 @@ export class GeneralSection {
             insertionMode: this.insertionModeField.getValue(),
             formatted: this.textFormattedToggle.getValue(),
             voiceCommandsEnabled: this.voiceCommandsToggle.getValue(),
-            audioCuesEnabled: this.audioCuesToggle.getValue()
+            audioCuesEnabled: this.audioCuesToggle.getValue(),
+            pushToTalkEnabled: this.pushToTalkToggle.getValue()
         };
+    }
+    
+    handlePttToggle(event) {
+        const currentProvider = document.getElementById('api-service')?.value || 'groq';
+        const streamingProviders = ['deepgram', 'cartesia'];
+        const isStreamingProvider = streamingProviders.includes(currentProvider);
+        
+        // If trying to enable PTT with streaming provider, prevent it
+        if (event.target.checked && isStreamingProvider) {
+            // Prevent the toggle from being enabled
+            event.preventDefault();
+            event.target.checked = false;
+            
+            // Show warning temporarily
+            this.showTemporaryWarning();
+        } else {
+            this.updatePttWarning();
+        }
+    }
+    
+    showTemporaryWarning() {
+        const pttWarning = document.getElementById('ptt-warning');
+        if (pttWarning) {
+            // Show warning
+            pttWarning.style.display = 'block';
+            
+            // Clear any existing timeout
+            if (this.warningTimeout) {
+                clearTimeout(this.warningTimeout);
+            }
+            
+            // Auto-hide after 6 seconds (enough time to read)
+            this.warningTimeout = setTimeout(() => {
+                pttWarning.style.display = 'none';
+            }, 6000);
+        }
+    }
+    
+    updatePttWarning() {
+        const pttWarning = document.getElementById('ptt-warning');
+        const pttToggle = document.getElementById('push-to-talk-enabled');
+        const pttEnabled = pttToggle?.checked || false;
+        const currentProvider = document.getElementById('api-service')?.value || 'groq';
+        
+        // Streaming providers that don't support PTT
+        const streamingProviders = ['deepgram', 'cartesia'];
+        const isStreamingProvider = streamingProviders.includes(currentProvider);
+        
+        // If PTT is enabled but user switched to streaming provider, disable PTT and show warning
+        if (pttEnabled && isStreamingProvider && pttToggle) {
+            pttToggle.checked = false;
+            this.showTemporaryWarning();
+            return;
+        }
+        
+        if (pttWarning) {
+            // Clear any auto-hide timeout when manually updating
+            if (this.warningTimeout) {
+                clearTimeout(this.warningTimeout);
+                this.warningTimeout = null;
+            }
+            
+            // Hide warning if switching to batch provider
+            pttWarning.style.display = 'none';
+        }
     }
 }

@@ -1,5 +1,5 @@
 use tauri::{Emitter, Manager, AppHandle};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 
@@ -24,12 +24,28 @@ pub fn register_shortcuts(app: &AppHandle) {
 
     let gs = app.global_shortcut();
     let shortcuts = &settings.keyboard_shortcuts;
+    let push_to_talk = settings.push_to_talk_enabled;
 
-    // Toggle recording
+    // Toggle recording (supports both push-to-talk and toggle modes)
     if let Ok(shortcut) = shortcuts.toggle_recording.parse::<Shortcut>() {
-        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
+        if let Err(e) = gs.on_shortcut(shortcut, move |app, _shortcut, event| {
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.emit("toggle-recording", ());
+                if push_to_talk {
+                    // Push-to-talk mode: hold to record, release to stop
+                    match event.state {
+                        ShortcutState::Pressed => {
+                            let _ = window.emit("start-recording", ());
+                        }
+                        ShortcutState::Released => {
+                            let _ = window.emit("stop-recording", ());
+                        }
+                    }
+                } else {
+                    // Toggle mode: press once to start/stop
+                    if event.state == ShortcutState::Pressed {
+                        let _ = window.emit("toggle-recording", ());
+                    }
+                }
             }
         }) {
             eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.toggle_recording, e);

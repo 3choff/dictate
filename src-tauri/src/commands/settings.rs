@@ -42,6 +42,8 @@ pub struct Settings {
     pub voice_commands_enabled: bool,
     #[serde(default = "default_audio_cues_enabled")]
     pub audio_cues_enabled: bool,
+    #[serde(default = "default_push_to_talk_enabled")]
+    pub push_to_talk_enabled: bool,
     #[serde(default = "default_keyboard_shortcuts")]
     pub keyboard_shortcuts: KeyboardShortcuts,
     #[serde(default)]
@@ -89,6 +91,10 @@ fn default_voice_commands_enabled() -> bool {
 
 fn default_audio_cues_enabled() -> bool {
     true  // Default to enabling audio feedback (beep/clack sounds)
+}
+
+fn default_push_to_talk_enabled() -> bool {
+    false  // Default to toggle mode (press once to start, press again to stop)
 }
 
 fn default_toggle_recording() -> String {
@@ -194,6 +200,7 @@ impl Default for Settings {
             text_formatted: default_text_formatted(),
             voice_commands_enabled: default_voice_commands_enabled(),
             audio_cues_enabled: default_audio_cues_enabled(),
+            push_to_talk_enabled: default_push_to_talk_enabled(),
             keyboard_shortcuts: default_keyboard_shortcuts(),
             main_window_position: None,
         }

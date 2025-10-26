@@ -88,7 +88,8 @@ pub async fn start_streaming(
     tokio::spawn(async move {
         while let Some(audio_data) = audio_rx.recv().await {
             if audio_data.is_empty() {
-                // Empty data means close connection
+                // Empty data means close connection - wait briefly for final transcripts
+                tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
                 let _ = write.send(Message::Close(None)).await;
                 break;
             }

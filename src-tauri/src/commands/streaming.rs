@@ -296,11 +296,9 @@ async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandl
             // Emit event to trigger text rewrite
             if let Some(window) = app.get_webview_window("main") {
                 tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-                // First select all
-                let _ = services::direct_typing::send_key_combo_native("control", "a");
-                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
-                // Then trigger rewrite shortcut
                 let _ = window.emit("sparkle-trigger", ());
+            } else {
+                eprintln!("[Voice Commands] Main window not found for rewrite trigger");
             }
             Ok(())
         }
