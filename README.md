@@ -7,7 +7,7 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 If Dictate improves your workflow, please consider supporting ongoing AI memberships and inference costs via 
 [**Ko-fi**](https://ko-fi.com/3choff)           [![Support via Ko-fi](./assets/ko-fi/kofi_symbol.svg)](https://ko-fi.com/3choff)
 
-**Version:** 1.6.2
+**Version:** 1.8.0
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
