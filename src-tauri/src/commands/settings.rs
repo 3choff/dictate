@@ -279,8 +279,8 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 #[tauri::command]
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Settings window size (sized for tallest section to avoid scrollbars)
-    const SETTINGS_WIDTH: f64 = 420.0;
-    const SETTINGS_HEIGHT: f64 = 450.0;
+    const SETTINGS_WIDTH: f64 = 450.0;
+    const SETTINGS_HEIGHT: f64 = 550.0;
     const GAP: f64 = 10.0;
     
     // If settings window already exists, toggle visibility without destroying it

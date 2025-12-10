@@ -3,6 +3,7 @@ import { AudioVisualizer } from './audio/audio-visualizer.js';
 import { AudioCaptureManager } from './audio/audio-capture.js';
 import { createProvider } from './providers/provider-factory.js';
 import { RecordingSession } from './recording-session.js';
+import { Tooltip } from '../shared/tooltip.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -34,8 +35,8 @@ const closeBtnCompact = document.getElementById('close-btn-compact');
 const visualizerContainer = document.getElementById('audioVisualizer');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
-// Tooltip for missing API key
-let apiKeyTooltip = null;
+// Tooltip for missing API key (shared component)
+let apiKeyTooltipInstance = null;
 let apiKeyTooltipTimeout = null;
 
 // API key and insertion mode will be loaded from settings
@@ -596,69 +597,37 @@ async function startRecording() {
 
 // Show tooltip notification for missing API key
 function showApiKeyMissingTooltip() {
-    // Remove existing tooltip if any
+    // Remove existing tooltip visibility if present
     hideApiKeyTooltip();
-    
-    // Create tooltip element
-    apiKeyTooltip = document.createElement('div');
-    apiKeyTooltip.className = 'api-key-tooltip';
-    // apiKeyTooltip.textContent = `Missing ${getProviderDisplayName(API_SERVICE)} API key in settings`;
-    apiKeyTooltip.textContent = `No API key in settings`;
-    
-    document.body.appendChild(apiKeyTooltip);
-    
-    // Check if in compact mode
-    const isCompactMode = document.body.classList.contains('compact-mode');
-    
-    // Position tooltip
-    const micRect = micButton.getBoundingClientRect();
-    const tooltipRect = apiKeyTooltip.getBoundingClientRect();
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    let left, top;
-    
-    if (isCompactMode) {
-        // In compact mode: center tooltip in the window
-        left = (windowWidth - tooltipRect.width) / 2;
-        top = (windowHeight - tooltipRect.height) / 2;
-        
+
+    if (!apiKeyTooltipInstance) {
+        apiKeyTooltipInstance = new Tooltip('No API key in settings', 'bottom');
+        apiKeyTooltipInstance.attachTo(micButton);
     } else {
-        // Normal mode: center horizontally relative to mic button
-        left = micRect.left + (micRect.width / 2) - (tooltipRect.width / 2);
-        // Position below mic button with gap
-        top = micRect.bottom - 45;
+        apiKeyTooltipInstance.setText('No API key in settings');
     }
-    
-    apiKeyTooltip.style.left = `${left}px`;
-    apiKeyTooltip.style.top = `${top}px`;
-    
-    // Trigger animation
-    requestAnimationFrame(() => {
-        apiKeyTooltip.classList.add('visible');
-    });
-    
-    // Auto-hide after 2 seconds
-    apiKeyTooltipTimeout = setTimeout(() => {
-        hideApiKeyTooltip();
-    }, 2000);
+
+    const tooltipEl = document.getElementById(apiKeyTooltipInstance.tooltipId);
+    if (tooltipEl) {
+        apiKeyTooltipInstance.show(micButton, tooltipEl);
+        // Auto-hide after 2 seconds
+        apiKeyTooltipTimeout = setTimeout(() => {
+            hideApiKeyTooltip();
+        }, 2000);
+    }
 }
 
 // Hide API key tooltip
 function hideApiKeyTooltip() {
-    if (apiKeyTooltip) {
-        apiKeyTooltip.classList.remove('visible');
-        // Wait for fade out animation before removing
-        setTimeout(() => {
-            if (apiKeyTooltip) {
-                apiKeyTooltip.remove();
-                apiKeyTooltip = null;
-            }
-        }, 150); // Match CSS transition duration
-    }
     if (apiKeyTooltipTimeout) {
         clearTimeout(apiKeyTooltipTimeout);
         apiKeyTooltipTimeout = null;
+    }
+    if (apiKeyTooltipInstance) {
+        const tooltipEl = document.getElementById(apiKeyTooltipInstance.tooltipId);
+        if (tooltipEl) {
+            apiKeyTooltipInstance.hide(tooltipEl);
+        }
     }
 }
 

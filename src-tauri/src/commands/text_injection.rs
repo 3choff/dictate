@@ -14,6 +14,12 @@ pub async fn insert_text(
 }
 
 #[tauri::command]
+pub async fn select_all_text() -> Result<(), String> {
+    direct_typing::send_key_combo_native("control", "a")
+        .map_err(|e| format!("Failed to send Ctrl+A: {}", e))
+}
+
+#[tauri::command]
 pub async fn copy_selected_text(app_handle: AppHandle) -> Result<String, String> {
     clipboard_paste::copy_selected_text(&app_handle)
 }

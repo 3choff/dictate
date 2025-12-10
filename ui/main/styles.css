@@ -375,3 +375,32 @@ body.compact-mode .audio-visualizer .bar {
 body.compact-mode .api-key-tooltip::before {
     display: none;
 }
+
+/* Shared tooltip component */
+.tooltip {
+    position: fixed;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.tooltip-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.tooltip-wrapper {
+    display: inline-flex;
+    align-items: center;
+}

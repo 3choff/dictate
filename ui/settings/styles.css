@@ -78,7 +78,8 @@ textarea {
 }
 
 .form-group {
-    margin-bottom: 12px;
+    margin-top: 6px;
+    margin-bottom: 6px;
 }
 
 .form-group label {
@@ -86,6 +87,29 @@ textarea {
     margin-bottom: 4px;
     font-size: 12px;
     color: var(--label-color);
+}
+
+.settings-group {
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.settings-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--label-color);
+    margin-bottom: 4px;
+}
+
+.settings-group-body {
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    /* gap: 8px; */
 }
 
 .form-group select,
@@ -555,7 +579,7 @@ textarea {
 .shortcut-group {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: anchor-center;
     gap: 16px;
     margin-bottom: 6px;
     /* padding: 12px;

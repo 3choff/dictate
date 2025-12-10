@@ -186,9 +186,9 @@ async fn execute_command_action(action: &CommandAction, app: &AppHandle) -> Resu
         CommandAction::Rewrite => {
             // Emit event to trigger text rewrite
             if let Some(window) = app.get_webview_window("main") {
-                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-                // First select all
-                let _ = services::direct_typing::send_key_combo_native("control", "a");
+                // Wait briefly for focus to settle, then select all and trigger rewrite
+                tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+                let _ = crate::commands::text_injection::select_all_text().await;
                 tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
                 // Then trigger rewrite shortcut
                 let _ = window.emit("sparkle-trigger", ());

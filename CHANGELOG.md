@@ -1,3 +1,14 @@
+## [1.9.1] - 2025-12-10
+
+### Fixed
+- **Rewrite Shortcut & Voice Command**: Ensures Ctrl+Shift+R and the “press rewrite” voice command now select all text before rewriting across all text fields (batch and streaming flows).
+
+### Changed
+- **Customize UI**: Settings “Customize” section reorganized into Input, Output, and UI groups with subtle borders and labels for clearer grouping.
+- **Tooltip Refactor**: Shared tooltip component moved to `ui/shared/tooltip.js` and reused by both settings and main windows to avoid duplication.
+
+---
+
 ## [1.9.0] - 2025-10-26
 
 ### 🎨 Major Feature: Complete Theme System Implementation

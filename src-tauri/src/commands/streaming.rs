@@ -295,7 +295,9 @@ async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandl
         CommandAction::Rewrite => {
             // Emit event to trigger text rewrite
             if let Some(window) = app.get_webview_window("main") {
-                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+                let _ = crate::commands::text_injection::select_all_text().await;
+                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
                 let _ = window.emit("sparkle-trigger", ());
             } else {
                 eprintln!("[Voice Commands] Main window not found for rewrite trigger");

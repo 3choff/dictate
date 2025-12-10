@@ -78,11 +78,21 @@ pub fn register_shortcuts(app: &AppHandle) {
         }
     }
 
-    // Text rewrite
+    // Text rewrite (select-all, then trigger rewrite) on key release to avoid SHIFT still held
     if let Ok(shortcut) = shortcuts.rewrite.parse::<Shortcut>() {
-        if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.emit("sparkle-trigger", ());
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _shortcut, event| {
+            if event.state == ShortcutState::Released {
+                if let Some(window) = app.get_webview_window("main") {
+                    let window_clone = window.clone();
+                    tauri::async_runtime::spawn(async move {
+                        // Wait a bit for all modifiers from the hotkey to be released
+                        sleep(Duration::from_millis(200)).await;
+                        // Select all using the same command we expose to the frontend
+                        let _ = commands::text_injection::select_all_text().await;
+                        sleep(Duration::from_millis(150)).await;
+                        let _ = window_clone.emit("sparkle-trigger", ());
+                    });
+                }
             }
         }) {
             eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.rewrite, e);
@@ -211,6 +221,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::transcribe_audio_segment,
             commands::insert_text,
+            commands::select_all_text,
             commands::copy_selected_text,
             commands::rewrite_text,
             commands::get_settings,

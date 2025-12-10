@@ -1,6 +1,6 @@
 import { SelectField } from '../components/select-field.js';
 import { ToggleSwitch } from '../components/toggle-switch.js';
-import { Tooltip } from '../components/tooltip.js';
+import { Tooltip } from '../../shared/tooltip.js';
 
 /**
  * Customize settings section
@@ -37,12 +37,53 @@ export class GeneralSection {
         // description.className = 'section-description';
         // section.appendChild(description);
         
-        section.appendChild(this.insertionModeField.render());
-        section.appendChild(this.textFormattedToggle.render());
-        section.appendChild(this.voiceCommandsToggle.render());
-        section.appendChild(this.audioCuesToggle.render());
-        section.appendChild(this.pushToTalkToggle.render());
-        section.appendChild(this.darkModeToggle.render());
+        // Input group: Voice commands, Push-to-Talk
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'settings-group';
+
+        const inputLabel = document.createElement('div');
+        inputLabel.className = 'settings-group-label';
+        inputLabel.textContent = 'Input';
+        inputGroup.appendChild(inputLabel);
+
+        const inputBody = document.createElement('div');
+        inputBody.className = 'settings-group-body';
+        inputBody.appendChild(this.voiceCommandsToggle.render());
+        inputBody.appendChild(this.pushToTalkToggle.render());
+        inputGroup.appendChild(inputBody);
+        section.appendChild(inputGroup);
+
+        // Output group: Insertion Mode, Text formatted, Audio feedback
+        const outputGroup = document.createElement('div');
+        outputGroup.className = 'settings-group';
+
+        const outputLabel = document.createElement('div');
+        outputLabel.className = 'settings-group-label';
+        outputLabel.textContent = 'Output';
+        outputGroup.appendChild(outputLabel);
+
+        const outputBody = document.createElement('div');
+        outputBody.className = 'settings-group-body';
+        outputBody.appendChild(this.insertionModeField.render());
+        outputBody.appendChild(this.textFormattedToggle.render());
+        outputBody.appendChild(this.audioCuesToggle.render());
+        outputGroup.appendChild(outputBody);
+        section.appendChild(outputGroup);
+
+        // UI group: Dark mode
+        const uiGroup = document.createElement('div');
+        uiGroup.className = 'settings-group';
+
+        const uiLabel = document.createElement('div');
+        uiLabel.className = 'settings-group-label';
+        uiLabel.textContent = 'UI';
+        uiGroup.appendChild(uiLabel);
+
+        const uiBody = document.createElement('div');
+        uiBody.className = 'settings-group-body';
+        uiBody.appendChild(this.darkModeToggle.render());
+        uiGroup.appendChild(uiBody);
+        section.appendChild(uiGroup);
         
         // Add warning message for PTT with streaming providers
         const pttWarning = document.createElement('div');
