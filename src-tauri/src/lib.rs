@@ -1,5 +1,8 @@
 use tauri::{Emitter, Manager, AppHandle};
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState, TrayIconEvent};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 
@@ -131,6 +134,10 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .manage(StreamingState::default())
         .manage(commands::settings::ReleaseState::default())
         .setup(|app| {
@@ -140,6 +147,57 @@ pub fn run() {
             
             // Register global shortcuts from settings
             register_shortcuts(app.handle());
+
+            // Initialize System Tray
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "Show/Hide", true, None::<&str>)?;
+            let separator = tauri::menu::PredefinedMenuItem::separator(app)?;
+            let menu = Menu::with_items(app, &[&show_i, &settings_i, &separator, &quit_i])?;
+
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .show_menu_on_left_click(false)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => app.exit(0),
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                    "settings" => {
+                        let app_clone = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = commands::settings::open_settings_window(app_clone).await;
+                        });
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                })
+                .build(app)?;
 
             // Apply Windows-specific no-activate style to prevent focus stealing
             #[cfg(target_os = "windows")]
@@ -155,13 +213,27 @@ pub fn run() {
                 }
             }
 
+            // Configure autostart based on user setting
+            {
+                let settings = commands::settings::get_settings_sync(&app.handle())
+                    .unwrap_or_default();
+                let autostart_manager = app.autolaunch();
+                if settings.autostart_enabled {
+                    let _ = autostart_manager.enable();
+                } else {
+                    let _ = autostart_manager.disable();
+                }
+            }
+
             // Restore window size and position based on preferences
             if let Some(window) = app.get_webview_window("main") {
                 let app_handle = app.app_handle().clone();
                 let window_clone = window.clone();
                 
                 tauri::async_runtime::spawn(async move {
+                    let mut start_hidden = false;
                     if let Ok(settings) = commands::settings::get_settings(app_handle).await {
+                        start_hidden = settings.start_hidden;
                         // Restore compact mode
                         if settings.compact_mode {
                             let _ = window_clone.set_size(tauri::Size::Logical(tauri::LogicalSize {
@@ -181,8 +253,10 @@ pub fn run() {
                         }
                     }
                     
-                    // Show window after positioning (prevents flash)
-                    let _ = window_clone.show();
+                    // Show window after positioning (prevents flash) if not starting hidden
+                    if !start_hidden {
+                        let _ = window_clone.show();
+                    }
                 });
                 
                 // Debounced position saving (like Electron: 75ms after last move)
@@ -207,11 +281,19 @@ pub fn run() {
                     }
                 });
                 
-                // Listen for move events
+                // Listen for events
+                let window_ref = window.clone();
                 window.on_window_event(move |event| {
-                    if let tauri::WindowEvent::Moved(position) = event {
-                        // Send position to debouncer
-                        let _ = tx.try_send((position.x, position.y));
+                    match event {
+                        tauri::WindowEvent::Moved(position) => {
+                            // Send position to debouncer
+                            let _ = tx.try_send((position.x, position.y));
+                        }
+                        tauri::WindowEvent::CloseRequested { api, .. } => {
+                            api.prevent_close();
+                            let _ = window_ref.hide();
+                        }
+                        _ => {}
                     }
                 });
             }
@@ -242,6 +324,7 @@ pub fn run() {
             commands::vad::vad_push_frame,
             commands::vad::vad_stop_session,
             commands::vad::vad_destroy_session,
+            commands::set_autostart_enabled,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -7,7 +7,7 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 If Dictate improves your workflow, please consider supporting ongoing AI memberships and inference costs via 
 [**Ko-fi**](https://ko-fi.com/3choff)           [![Support via Ko-fi](./assets/ko-fi/kofi_symbol.svg)](https://ko-fi.com/3choff)
 
-**Version:** 1.9.1
+**Version:** 1.10.0
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -48,6 +48,9 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
 *   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "press rewrite") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
+*   **System Tray Integration:** The app runs in the system tray with quick access to Show/Hide, Settings, and Quit. Close button minimizes to tray instead of exiting.
+*   **Start Hidden:** Option to launch the app hidden to system tray without showing the main window.
+*   **Launch on Startup:** Automatically start Dictate when you log in to Windows. Configurable in Settings → Customize.
 
 ## Installation
 
@@ -166,7 +169,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 ### Upcoming Features
 
 - [x] **Theme Toggle**: Add dark/light theme switching
-- [ ] **System Tray Integration**: Launch on system startup and minimize to tray for always-available dictation access
+- [x] **System Tray Integration**: Launch on system startup and minimize to tray for always-available dictation access
 - [ ] **Word Correction**: Enhanced mis-transcribed word correction
 - [ ] **Cross-Platform Support**: Native support for Linux and macOS with platform-specific optimizations
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Dictate",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "identifier": "com.3choff.dictate",
   "build": {
     "frontendDist": "../ui"
@@ -33,7 +33,7 @@
         "decorations": false,
         "shadow": false,
         "alwaysOnTop": true,
-        "skipTaskbar": false,
+        "skipTaskbar": true,
         "url": "main/index.html",
         "focus": false,
         "visible": false,

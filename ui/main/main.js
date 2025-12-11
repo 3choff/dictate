@@ -13,6 +13,7 @@ if (!window.__TAURI__) {
 
 const { invoke } = window.__TAURI__?.core || {};
 const { listen } = window.__TAURI__?.event || {};
+const { getCurrentWindow } = window.__TAURI__?.window || {};
 
 let isRecording = false;
 
@@ -26,6 +27,9 @@ let ignoreNextRewriteClick = false;
 
 // Active recording session (unified lifecycle management)
 let currentSession = null;
+
+// Track if window was auto-shown for dictation (to auto-hide on stop)
+let windowAutoShownForDictation = false;
 
 const micButton = document.getElementById('micButton');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -586,6 +590,20 @@ async function startRecording() {
         currentSession = new RecordingSession(provider, audioCaptureManager, visualizer);
         await currentSession.start();
         
+        // Auto-show window if it was hidden when dictation started
+        try {
+            const win = getCurrentWindow();
+            const isVisible = await win.isVisible();
+            if (!isVisible) {
+                await win.show();
+                windowAutoShownForDictation = true;
+            } else {
+                windowAutoShownForDictation = false;
+            }
+        } catch (e) {
+            console.error('[AUTO-SHOW] Failed to check/show window:', e);
+        }
+        
         // UI was already set by the caller for immediate feedback
         status.textContent = 'Recording...';
     } catch (error) {
@@ -669,6 +687,17 @@ async function stopRecording() {
     micReleaseTimer = setTimeout(() => {
         audioCaptureManager.cleanup();
     }, MIC_RELEASE_DELAY_MS);
+    
+    // Auto-hide window if it was auto-shown for this dictation session
+    if (windowAutoShownForDictation) {
+        try {
+            const win = getCurrentWindow();
+            await win.hide();
+        } catch (e) {
+            console.error('[AUTO-HIDE] Failed to hide window:', e);
+        }
+        windowAutoShownForDictation = false;
+    }
 }
 
 // Compact mode toggle functionality

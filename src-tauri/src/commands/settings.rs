@@ -50,6 +50,10 @@ pub struct Settings {
     pub keyboard_shortcuts: KeyboardShortcuts,
     #[serde(default)]
     pub main_window_position: Option<WindowPosition>,
+    #[serde(default = "default_start_hidden")]
+    pub start_hidden: bool,
+    #[serde(default = "default_autostart_enabled")]
+    pub autostart_enabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -101,6 +105,14 @@ fn default_push_to_talk_enabled() -> bool {
 
 fn default_dark_mode_enabled() -> bool {
     true  // Default to dark mode
+}
+
+fn default_start_hidden() -> bool {
+    false // Default to showing window on start
+}
+
+fn default_autostart_enabled() -> bool {
+    false // Default to not launching on startup
 }
 
 fn default_toggle_recording() -> String {
@@ -210,6 +222,8 @@ impl Default for Settings {
             dark_mode_enabled: default_dark_mode_enabled(),
             keyboard_shortcuts: default_keyboard_shortcuts(),
             main_window_position: None,
+            start_hidden: default_start_hidden(),
+            autostart_enabled: default_autostart_enabled(),
         }
     }
 }
@@ -280,7 +294,7 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Settings window size (sized for tallest section to avoid scrollbars)
     const SETTINGS_WIDTH: f64 = 450.0;
-    const SETTINGS_HEIGHT: f64 = 550.0;
+    const SETTINGS_HEIGHT: f64 = 630.0;
     const GAP: f64 = 10.0;
     
     // If settings window already exists, toggle visibility without destroying it
@@ -685,6 +699,25 @@ pub async fn apply_theme(app: AppHandle, theme: String) -> Result<(), String> {
         );
         let _ = main_window.eval(&script);
     }
+    
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_autostart_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    
+    let autostart_manager = app.autolaunch();
+    if enabled {
+        autostart_manager.enable().map_err(|e| e.to_string())?;
+    } else {
+        autostart_manager.disable().map_err(|e| e.to_string())?;
+    }
+    
+    // Also update the setting
+    let mut settings = get_settings(app.clone()).await?;
+    settings.autostart_enabled = enabled;
+    save_settings_internal(&app, settings, false).await?;
     
     Ok(())
 }

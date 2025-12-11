@@ -17,6 +17,8 @@ export class GeneralSection {
         this.audioCuesToggle = new ToggleSwitch('audio-cues-enabled', 'Audio feedback');
         this.pushToTalkToggle = new ToggleSwitch('push-to-talk-enabled', 'Push-to-Talk');
         this.darkModeToggle = new ToggleSwitch('dark-mode-enabled', 'Dark mode');
+        this.startHiddenToggle = new ToggleSwitch('start-hidden', 'Start hidden');
+        this.autostartToggle = new ToggleSwitch('autostart-enabled', 'Launch on startup');
         
         // Warning timeout tracker
         this.warningTimeout = null;
@@ -82,6 +84,8 @@ export class GeneralSection {
         const uiBody = document.createElement('div');
         uiBody.className = 'settings-group-body';
         uiBody.appendChild(this.darkModeToggle.render());
+        uiBody.appendChild(this.startHiddenToggle.render());
+        uiBody.appendChild(this.autostartToggle.render());
         uiGroup.appendChild(uiBody);
         section.appendChild(uiGroup);
         
@@ -161,6 +165,31 @@ export class GeneralSection {
             });
         }
         
+        // Add tooltip to start hidden toggle
+        const startHiddenToggleElement = document.getElementById('start-hidden');
+        if (startHiddenToggleElement) {
+            const labelElement = startHiddenToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Launch application to system tray without opening window', 'top');
+                tooltip.attachTo(labelElement);
+            }
+        }
+        
+        // Add tooltip to autostart toggle and handle change
+        const autostartToggleElement = document.getElementById('autostart-enabled');
+        if (autostartToggleElement) {
+            const labelElement = autostartToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                const tooltip = new Tooltip('Automatically start Dictate when you log in to Windows', 'top');
+                tooltip.attachTo(labelElement);
+            }
+            
+            // Handle autostart toggle separately - call backend command
+            autostartToggleElement.addEventListener('change', (e) => {
+                this.handleAutostartToggle(e.target.checked);
+            });
+        }
+        
         // Initial update of PTT warning
         this.updatePttWarning();
 
@@ -200,6 +229,12 @@ export class GeneralSection {
         if (settings.darkModeEnabled !== undefined) {
             this.darkModeToggle.setValue(settings.darkModeEnabled);
         }
+        if (settings.startHidden !== undefined) {
+            this.startHiddenToggle.setValue(settings.startHidden);
+        }
+        if (settings.autostartEnabled !== undefined) {
+            this.autostartToggle.setValue(settings.autostartEnabled);
+        }
     }
 
     getValues() {
@@ -209,7 +244,9 @@ export class GeneralSection {
             voiceCommandsEnabled: this.voiceCommandsToggle.getValue(),
             audioCuesEnabled: this.audioCuesToggle.getValue(),
             pushToTalkEnabled: this.pushToTalkToggle.getValue(),
-            darkModeEnabled: this.darkModeToggle.getValue()
+            darkModeEnabled: this.darkModeToggle.getValue(),
+            startHidden: this.startHiddenToggle.getValue(),
+            autostartEnabled: this.autostartToggle.getValue()
         };
     }
     
@@ -287,6 +324,18 @@ export class GeneralSection {
         // Apply theme to main window via IPC
         if (window.__TAURI__?.core?.invoke) {
             window.__TAURI__.core.invoke('apply_theme', { theme });
+        }
+    }
+    
+    handleAutostartToggle(enabled) {
+        // Call backend command to enable/disable autostart
+        if (window.__TAURI__?.core?.invoke) {
+            window.__TAURI__.core.invoke('set_autostart_enabled', { enabled })
+                .catch((error) => {
+                    console.error('Failed to set autostart:', error);
+                    // Revert toggle on error
+                    this.autostartToggle.setValue(!enabled);
+                });
         }
     }
 }

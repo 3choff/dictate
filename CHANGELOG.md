@@ -1,3 +1,41 @@
+## [1.10.0] - 2025-12-11
+
+### 🚀 Major Feature: System Tray Integration
+
+This release introduces comprehensive system tray functionality, allowing Dictate to run quietly in the background and be always accessible without cluttering your taskbar.
+
+### Added
+- **System Tray Icon**:
+  - Dedicated tray icon for quick access to Dictate
+  - Right-click menu with Show/Hide, Settings, and Quit options
+  - Left-click toggles main window visibility
+  - App icon removed from Windows taskbar for cleaner desktop
+
+- **Start Hidden Option**:
+  - New setting in Customize → UI section
+  - Launch Dictate to system tray without opening the main window
+  - Perfect for users who want Dictate always available but out of the way
+
+- **Launch on Startup**:
+  - Automatically start Dictate when you log in to Windows
+  - Uses Windows Registry for reliable startup integration
+  - Toggle in Settings → Customize → UI section
+
+- **Auto Show/Hide During Dictation**:
+  - When app is hidden and dictation starts via shortcut, window automatically appears
+  - Window hides again when dictation stops (if it was auto-shown)
+  - If window was already visible, it stays visible after stopping
+
+### Changed
+- **Close Button Behavior**: Clicking the close button now minimizes to tray instead of exiting the app. Use tray menu → Quit to fully exit.
+
+### Technical
+- **Dependencies**: Added `tauri-plugin-autostart` for Windows startup integration
+- **Tauri Features**: Added `tray-icon` and `image-ico` features for system tray support
+- **Settings**: Added `start_hidden` and `autostart_enabled` boolean settings
+
+---
+
 ## [1.9.1] - 2025-12-10
 
 ### Fixed
