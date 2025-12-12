@@ -1,29 +1,19 @@
 use crate::providers;
 use tauri::AppHandle;
 
-/// Rewrite text using the selected provider and mode from settings
-/// This command loads both the provider selection and API key from settings
+/// Rewrite text using the selected provider and prompting instructions
+/// This command loads the provider selection and API key from settings
 #[tauri::command]
-pub async fn rewrite_text(app: AppHandle, text: String, api_key: String) -> Result<String, String> {
+pub async fn rewrite_text(app: AppHandle, text: String, prompt: String, api_key: String) -> Result<String, String> {
     // Validate inputs
     if text.trim().is_empty() {
         return Err("No text provided".to_string());
     }
     
-    // Load settings to get rewrite provider and prompt
+    // Load settings to get rewrite provider
     let settings = crate::commands::settings::get_settings(app)
         .await
         .map_err(|e| format!("Failed to load settings: {}", e))?;
-    
-    // Get the selected rewrite mode from settings
-    let rewrite_mode = &settings.rewrite_mode;
-    
-    // Get the corresponding prompt for the selected rewrite mode
-    let prompt = settings
-        .prompts
-        .get(rewrite_mode)
-        .ok_or_else(|| format!("Rewrite prompt '{}' not found in settings", rewrite_mode))?
-        .clone();
     
     // Get selected rewrite provider (default: groq)
     let provider = &settings.rewrite_provider;

@@ -39,7 +39,13 @@ export class SelectField {
 
     setValue(value) {
         const select = document.getElementById(this.id);
-        if (select) select.value = value;
+        if (select) {
+            // Use selectedIndex to force visual update
+            const optionIndex = Array.from(select.options).findIndex(opt => opt.value === value);
+            if (optionIndex !== -1) {
+                select.selectedIndex = optionIndex;
+            }
+        }
     }
 
     onChange(callback) {

@@ -1,3 +1,35 @@
+## [1.11.0] - 2025-12-12
+
+### ✨ Highlights
+- **Word Correction System**: fix common mis-transcriptions instantly with your own custom dictionary
+- **Custom Rewrite Prompts**: fully control how the AI rewrites your text by editing prompts directly
+
+### Added
+- **Word Correction**:
+  - Automatically replaces mis-transcribed words/phrases with your preferred corrections
+  - Interactive "Custom Words" management in Settings → Transcription
+  - Add, remove, and manage replacement pairs (e.g., "chat gpt" → "ChatGPT")
+  - Adjustable fuzzy matching threshold (default: 0.18) to catch slight variations
+  - Toggle to enable/disable correction globally
+
+- **Custom Rewrite Prompts**:
+  - Edit the system prompt for any rewrite mode (Grammar, Professional, etc.)
+  - Real-time prompt editing in Settings → Rewrite
+  - Automatic switch to "Custom" mode when a preset is modified
+  - Custom prompts are saved and restored automatically
+  - Visual feedback in settings dropdown when using a custom prompt
+
+### Changed
+- **Settings UI**:
+  - Enhanced Rewrite section with expandable text area for prompt editing
+  - Improved Transcription section layout to accommodate Word Correction tools
+  - Better visual feedback for active modes and settings
+
+### Fixed
+- **Dropdown Updates**: Fixed issue where settings dropdowns wouldn't visually update when changed programmatically
+
+---
+
 ## [1.10.0] - 2025-12-11
 
 ### 🚀 Major Feature: System Tray Integration

@@ -75,11 +75,23 @@ pub async fn transcribe_audio_segment(
     
     // Format text based on text_formatted setting
     let preserve_formatting = text_formatted.unwrap_or(true);  // Default true
-    let formatted = if preserve_formatting {
+    let mut formatted = if preserve_formatting {
         format_whisper_transcript(&text)
     } else {
         normalize_whisper_transcript(&text)
     };
+    
+    // Apply word correction if custom words are configured
+    // Load settings to get custom words and threshold
+    if let Ok(settings) = crate::commands::settings::get_settings(app.clone()).await {
+        if settings.word_correction_enabled && !settings.custom_words.is_empty() {
+            formatted = services::word_correction::apply_custom_words(
+                &formatted,
+                &settings.custom_words,
+                settings.word_correction_threshold,
+            );
+        }
+    }
     
     // Process voice commands if enabled
     let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);

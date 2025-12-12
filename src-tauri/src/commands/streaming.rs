@@ -68,10 +68,22 @@ pub async fn start_streaming_transcription(
             let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
+                    // Apply word correction if custom words are configured
+                    // Apply word correction if custom words are configured
+                    let corrected_transcript = if let Ok(settings) = crate::commands::settings::get_settings(app_clone.clone()).await {
+                        if settings.word_correction_enabled {
+                            apply_word_correction_sync(&transcript, &settings.custom_words, settings.word_correction_threshold)
+                        } else {
+                            transcript.clone()
+                        }
+                    } else {
+                        transcript.clone()
+                    };
+                    
                     // Process voice commands if enabled
                     if voice_cmds_enabled {
                         let voice_commands = VoiceCommands::new();
-                        let processed = process_voice_commands(&transcript, &voice_commands);
+                        let processed = process_voice_commands(&corrected_transcript, &voice_commands);
                         
                         // Execute command actions
                         for action in &processed.actions {
@@ -98,13 +110,13 @@ pub async fn start_streaming_transcription(
                         }
                     } else {
                         // No voice commands - insert directly with space
-                        let transcript_with_space = format!("{} ", transcript);
+                        let transcript_with_space = format!("{} ", corrected_transcript);
                         let _ = insert_transcript_text(&transcript_with_space, &insertion_mode, &app).await;
                     }
                     
                     // Emit event to frontend for status update
                     if let Some(window) = app_clone.get_webview_window("main") {
-                        let _ = window.emit("streaming-transcript", transcript);
+                        let _ = window.emit("streaming-transcript", corrected_transcript);
                     }
                 }
                 
@@ -153,10 +165,22 @@ pub async fn start_streaming_transcription(
                         normalize_whisper_transcript(&transcript)
                     };
                     
+                    // Apply word correction if custom words are configured
+                    // Apply word correction if custom words are configured
+                    let corrected_transcript = if let Ok(settings) = crate::commands::settings::get_settings(app_clone.clone()).await {
+                        if settings.word_correction_enabled {
+                            apply_word_correction_sync(&formatted_transcript, &settings.custom_words, settings.word_correction_threshold)
+                        } else {
+                            formatted_transcript.clone()
+                        }
+                    } else {
+                        formatted_transcript.clone()
+                    };
+                    
                     // Process voice commands if enabled
                     if voice_cmds_enabled {
                         let voice_commands = VoiceCommands::new();
-                        let processed = process_voice_commands(&formatted_transcript, &voice_commands);
+                        let processed = process_voice_commands(&corrected_transcript, &voice_commands);
                         
                         // Execute command actions
                         for action in &processed.actions {
@@ -183,13 +207,13 @@ pub async fn start_streaming_transcription(
                         }
                     } else {
                         // No voice commands - insert directly with space
-                        let transcript_with_space = format!("{} ", formatted_transcript);
+                        let transcript_with_space = format!("{} ", corrected_transcript);
                         let _ = insert_transcript_text(&transcript_with_space, &insertion_mode, &app_clone).await;
                     }
                     
                     // Emit event to frontend for status update
                     if let Some(window) = app_clone.get_webview_window("main") {
-                        let _ = window.emit("streaming-transcript", formatted_transcript);
+                        let _ = window.emit("streaming-transcript", corrected_transcript);
                     }
                 }
                 
@@ -274,6 +298,14 @@ fn normalize_whisper_transcript(text: &str) -> String {
     
     // Replace multiple spaces with single space and trim
     cleaned.split_whitespace().collect::<Vec<&str>>().join(" ")
+}
+
+// Helper function to apply word correction to transcript
+fn apply_word_correction_sync(text: &str, custom_words: &[String], threshold: f64) -> String {
+    if custom_words.is_empty() {
+        return text.to_string();
+    }
+    services::word_correction::apply_custom_words(text, custom_words, threshold)
 }
 
 /// Execute a voice command action (for streaming)

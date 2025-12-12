@@ -1,23 +1,14 @@
 import { SelectField } from '../components/select-field.js';
 import { PasswordField } from '../components/password-field.js';
+import { PRESET_PROMPTS } from '../../shared/prompts.js';
 
 /**
  * Text Rewrite settings section
  */
 export class RewriteSection {
     constructor() {
-        // Rewrite mode dropdown
-        this.rewriteModeField = new SelectField('rewrite-mode', 'Rewrite Mode', [
-            { value: 'grammar_correction', label: 'Grammar Correction' },
-            { value: 'structured', label: 'Structured' },
-            { value: 'professional', label: 'Professional' },
-            { value: 'polite', label: 'Polite' },
-            { value: 'casual', label: 'Casual' }
-            
-        ]);
-
         // Provider selection dropdown
-        this.rewriteProviderField = new SelectField('rewrite-provider', 'AI Model', [
+        this.rewriteProviderField = new SelectField('rewrite-provider', 'Model', [
             { value: 'groq', label: 'Groq GPT-OSS-120B' },
             { value: 'fireworks', label: 'Fireworks GPT-OSS-20B' },
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
@@ -33,6 +24,16 @@ export class RewriteSection {
             gemini: new PasswordField('rewriteGeminiApiKey', 'Gemini API Key', 'Enter your Gemini API key'),
             mistral: new PasswordField('rewriteMistralApiKey', 'Mistral API Key', 'Enter your Mistral API key')
         };
+
+        // Rewrite mode dropdown
+        this.rewriteModeField = new SelectField('rewrite-mode', 'Mode', [
+            { value: 'grammar_correction', label: 'Grammar Correction' },
+            { value: 'structured', label: 'Structured' },
+            { value: 'professional', label: 'Professional' },
+            { value: 'polite', label: 'Polite' },
+            { value: 'casual', label: 'Casual' },
+            { value: 'custom', label: 'Custom' }
+        ]);
     }
 
     render() {
@@ -45,14 +46,6 @@ export class RewriteSection {
         title.className = 'section-title';
         section.appendChild(title);
         
-        // const description = document.createElement('p');
-        // description.textContent = 'Configure text rewriting mode and AI model. Use the sparkle button or keyboard shortcut to rewrite selected text.';
-        // description.className = 'section-description';
-        // section.appendChild(description);
-        
-        // Add rewrite mode dropdown
-        section.appendChild(this.rewriteModeField.render());
-        
         // Add provider dropdown
         section.appendChild(this.rewriteProviderField.render());
         
@@ -64,6 +57,20 @@ export class RewriteSection {
             fieldEl.classList.add('rewrite-api-key');
             section.appendChild(fieldEl);
         });
+
+        // Add rewrite mode dropdown
+        const modeFieldEl = this.rewriteModeField.render();
+        modeFieldEl.style.display = 'flex';
+        modeFieldEl.style.flexDirection = 'column';
+        section.appendChild(modeFieldEl);
+
+        // Prompt edit area
+        this.promptTextarea = document.createElement('textarea');
+        this.promptTextarea.className = 'prompt-textarea';
+        this.promptTextarea.placeholder = 'Enter explanation of how to rewrite the text...';
+        
+        // Append textarea inside the mode field container
+        modeFieldEl.appendChild(this.promptTextarea);
         
         return section;
     }
@@ -73,6 +80,42 @@ export class RewriteSection {
         this.rewriteProviderField.onChange((value) => {
             this.updateApiKeyVisibility(value);
         });
+
+        this.rewriteModeField.onChange((value) => {
+            this.handleModeChange(value);
+        });
+
+        // Add input listener to textarea
+        if (this.promptTextarea) {
+            this.promptTextarea.addEventListener('input', () => {
+                // If user edits text and we're not in custom mode, switch to custom
+                const currentMode = this.rewriteModeField.getValue();
+                
+                if (currentMode !== 'custom') {
+                    // Check if text actually differs from preset
+                    const presetText = PRESET_PROMPTS[currentMode];
+                    
+                    if (this.promptTextarea.value !== presetText) {
+                        this.rewriteModeField.setValue('custom');
+                    }
+                }
+            });
+        }
+    }
+
+    handleModeChange(mode) {
+        if (mode === 'custom') {
+            // If switching to custom manually, keep current text or load default if empty
+            if (!this.promptTextarea.value.trim()) {
+                // this.promptTextarea.value = ''; // Keep empty or set default?
+            }
+        } else {
+            // Switch to preset text
+            const presetText = PRESET_PROMPTS[mode];
+            if (presetText) {
+                this.promptTextarea.value = presetText;
+            }
+        }
     }
 
     updateApiKeyVisibility(provider) {
@@ -95,26 +138,35 @@ export class RewriteSection {
         console.log('[Rewrite] Loading values:', {
             rewriteMode: settings.rewriteMode,
             rewriteProvider: settings.rewriteProvider,
+            customRewritePrompt: settings.customRewritePrompt,
             apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!settings[p + 'ApiKey'] }))
         });
         
-        // Load rewrite mode
-        if (settings.rewriteMode) {
-            this.rewriteModeField.setValue(settings.rewriteMode);
-        }
-        
+        // Load settings to internal state
+        this.customRewritePrompt = settings.customRewritePrompt || '';
+
         // Load provider selection
         if (settings.rewriteProvider) {
             this.rewriteProviderField.setValue(settings.rewriteProvider);
             this.updateApiKeyVisibility(settings.rewriteProvider);
         }
+
+        // Load mode and prompt text
+        if (settings.rewriteMode) {
+            this.rewriteModeField.setValue(settings.rewriteMode);
+            
+            if (settings.rewriteMode === 'custom') {
+                this.promptTextarea.value = this.customRewritePrompt;
+            } else {
+                this.promptTextarea.value = PRESET_PROMPTS[settings.rewriteMode] || '';
+            }
+        }
         
-        // Load all API keys from backend (same keys as transcription section)
+        // Load all API keys from backend
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             const key = provider + 'ApiKey';
             if (settings[key]) {
                 field.setValue(settings[key]);
-                console.log(`[Rewrite] Set ${provider} API key`);
             }
         });
     }
@@ -122,7 +174,8 @@ export class RewriteSection {
     getValues() {
         const values = {
             rewriteMode: this.rewriteModeField.getValue(),
-            rewriteProvider: this.rewriteProviderField.getValue()
+            rewriteProvider: this.rewriteProviderField.getValue(),
+            customRewritePrompt: this.promptTextarea.value
         };
         
         // Get all API key values
@@ -133,6 +186,7 @@ export class RewriteSection {
         console.log('[Rewrite] getValues:', {
             rewriteMode: values.rewriteMode,
             rewriteProvider: values.rewriteProvider,
+            customRewritePrompt: values.customRewritePrompt,
             apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!values[p + 'ApiKey'], length: values[p + 'ApiKey']?.length }))
         });
         

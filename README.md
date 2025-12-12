@@ -7,7 +7,7 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 If Dictate improves your workflow, please consider supporting ongoing AI memberships and inference costs via 
 [**Ko-fi**](https://ko-fi.com/3choff)           [![Support via Ko-fi](./assets/ko-fi/kofi_symbol.svg)](https://ko-fi.com/3choff)
 
-**Version:** 1.10.0
+**Version:** 1.11.0
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -20,7 +20,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), text rewrite provider and mode (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, text rewrite, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
-*   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it using your chosen mode and AI provider. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized (default: Grammar Correction with Groq). Click again while pulsing to abort.
+*   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it using your chosen mode and AI provider. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized. **Fully customizable prompts:** Edit the instructions for any mode directly in settings to tailor the AI's behavior to your exact needs.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Push‑to‑Talk (Batch Providers):** Optional mode that records only while you hold the recording shortcut, then transcribes immediately on release. Enable it in Settings → Customize. Supported with Groq, Gemini, Mistral, SambaNova, and Fireworks. When a streaming provider (Deepgram, Cartesia) is selected, Push‑to‑Talk is disabled and a brief warning explains it’s only available with batch providers.
 *   **Multiple Transcription Services:**
@@ -43,6 +43,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     * Gemini Flash Lite handles multilingual audio.
     * Mistral Voxtral receives the selected language when provided.
     * SambaNova Whisper receives the selected language when provided.
+*   **Word Correction:** Automatically correct frequent mis-transcriptions (e.g., "chat gpt" -> "ChatGPT") using a customizable dictionary. Supports fuzzy matching (configurable threshold) to catch slight variations in spelling or spacing. Manage your custom word list easily in Settings.
 *   **Text Formatting Control:** Single "Text formatted" setting controls output:
     * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
@@ -170,7 +171,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 
 - [x] **Theme Toggle**: Add dark/light theme switching
 - [x] **System Tray Integration**: Launch on system startup and minimize to tray for always-available dictation access
-- [ ] **Word Correction**: Enhanced mis-transcribed word correction
+- [x] **Word Correction**: Enhanced mis-transcribed word correction with custom dictionary and fuzzy matching
 - [ ] **Cross-Platform Support**: Native support for Linux and macOS with platform-specific optimizations
 
 ---

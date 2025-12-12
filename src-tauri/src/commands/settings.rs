@@ -54,6 +54,14 @@ pub struct Settings {
     pub start_hidden: bool,
     #[serde(default = "default_autostart_enabled")]
     pub autostart_enabled: bool,
+    #[serde(default)]
+    pub custom_words: Vec<String>,
+    #[serde(default = "default_word_correction_threshold")]
+    pub word_correction_threshold: f64,
+    #[serde(default = "default_word_correction_enabled")]
+    pub word_correction_enabled: bool,
+    #[serde(default)]
+    pub custom_rewrite_prompt: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -113,6 +121,14 @@ fn default_start_hidden() -> bool {
 
 fn default_autostart_enabled() -> bool {
     false // Default to not launching on startup
+}
+
+fn default_word_correction_threshold() -> f64 {
+    0.18 // Default threshold for word correction
+}
+
+fn default_word_correction_enabled() -> bool {
+    true // Default enabled if they have custom words (initially true for discovery)
 }
 
 fn default_toggle_recording() -> String {
@@ -224,6 +240,10 @@ impl Default for Settings {
             main_window_position: None,
             start_hidden: default_start_hidden(),
             autostart_enabled: default_autostart_enabled(),
+            custom_words: Vec::new(),
+            word_correction_threshold: default_word_correction_threshold(),
+            word_correction_enabled: default_word_correction_enabled(),
+            custom_rewrite_prompt: String::new(),
         }
     }
 }
@@ -294,7 +314,7 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Settings window size (sized for tallest section to avoid scrollbars)
     const SETTINGS_WIDTH: f64 = 450.0;
-    const SETTINGS_HEIGHT: f64 = 630.0;
+    const SETTINGS_HEIGHT: f64 = 650.0;
     const GAP: f64 = 10.0;
     
     // If settings window already exists, toggle visibility without destroying it

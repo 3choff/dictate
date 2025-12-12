@@ -2,8 +2,10 @@
 import { AudioVisualizer } from './audio/audio-visualizer.js';
 import { AudioCaptureManager } from './audio/audio-capture.js';
 import { createProvider } from './providers/provider-factory.js';
+
 import { RecordingSession } from './recording-session.js';
 import { Tooltip } from '../shared/tooltip.js';
+import { PRESET_PROMPTS } from '../shared/prompts.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -62,6 +64,8 @@ let TEXT_FORMATTED = true;
 let VOICE_COMMANDS_ENABLED = true;
 let AUDIO_CUES_ENABLED = true;
 let PUSH_TO_TALK_ENABLED = false;
+let REWRITE_MODE = 'grammar_correction';
+let CUSTOM_REWRITE_PROMPT = '';
 
 // Audio cues (loaded at startup)
 let beepSound = null;
@@ -275,7 +279,10 @@ async function loadSettings() {
         VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
         AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
         PUSH_TO_TALK_ENABLED = (settings.push_to_talk_enabled === true);  // Default false
-        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
+        REWRITE_MODE = settings.rewrite_mode || 'grammar_correction';
+        CUSTOM_REWRITE_PROMPT = settings.custom_rewrite_prompt || '';
+        
+        console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} rewriteMode=${REWRITE_MODE} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
         // Restore compact mode state
         if (settings.compact_mode) {
@@ -480,8 +487,17 @@ async function performRewrite() {
             return;
         }
         // Call backend to rewrite text
+        // Determine prompt based on loaded settings
+        let prompt = '';
+        if (REWRITE_MODE === 'custom') {
+            prompt = CUSTOM_REWRITE_PROMPT;
+        } else {
+            prompt = PRESET_PROMPTS[REWRITE_MODE] || PRESET_PROMPTS['grammar_correction'];
+        }
+
         const correctedText = await invoke('rewrite_text', {
             text: selectedText,
+            prompt: prompt,
             apiKey: GROQ_API_KEY
         });
         // Insert corrected text via clipboard regardless of settings

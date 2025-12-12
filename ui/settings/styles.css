@@ -1,6 +1,7 @@
 /* Theme colors now defined in ../shared/theme.css */
 
-html, body {
+html,
+body {
     background: transparent;
     color: var(--text-color);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -11,14 +12,23 @@ html, body {
 }
 
 /* Prevent text cursor on all text elements in settings */
-h1, h2, h3, h4, h5, h6, p, span, label, div {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+label,
+div {
     cursor: default;
     user-select: none;
 }
 
 /* Keep text cursor for input fields */
-input[type="text"], 
-input[type="password"], 
+input[type="text"],
+input[type="password"],
 textarea {
     cursor: text;
     user-select: text;
@@ -91,7 +101,7 @@ textarea {
 
 .settings-group {
     margin-top: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .settings-group-label {
@@ -188,16 +198,16 @@ textarea {
     transition: transform 0.2s ease;
 }
 
-.toggle-switch input:checked + .toggle-track {
+.toggle-switch input:checked+.toggle-track {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
 }
 
-.toggle-switch input:checked + .toggle-track::before {
+.toggle-switch input:checked+.toggle-track::before {
     transform: translate(16px, -50%);
 }
 
-.toggle-switch input:focus-visible + .toggle-track {
+.toggle-switch input:focus-visible+.toggle-track {
     outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
@@ -206,9 +216,11 @@ textarea {
 .input-with-eye {
     position: relative;
 }
+
 .input-with-eye input {
     padding-right: 36px;
 }
+
 .eye-toggle {
     position: absolute;
     right: 8px;
@@ -225,6 +237,7 @@ textarea {
     align-items: center;
     justify-content: center;
 }
+
 .eye-toggle:hover svg path {
     fill: var(--text-color);
 }
@@ -254,7 +267,8 @@ textarea {
 }
 
 .update-notice {
-    display: none; /* shown only when update available */
+    display: none;
+    /* shown only when update available */
     font-size: 11px;
     color: var(--accent-color);
     cursor: pointer;
@@ -264,6 +278,7 @@ textarea {
     position: relative;
     z-index: 1;
 }
+
 .update-notice:hover {
     text-decoration: underline;
 }
@@ -313,6 +328,7 @@ textarea {
     align-items: center;
     justify-content: flex-start;
 }
+
 /* Custom Select Dropdown */
 .custom-select-wrapper {
     position: relative;
@@ -344,7 +360,7 @@ textarea {
     transition: transform 0.2s ease;
 }
 
-.custom-options.open + .custom-select-trigger .icon-sm {
+.custom-options.open+.custom-select-trigger .icon-sm {
     transform: rotate(180deg);
 }
 
@@ -356,7 +372,8 @@ textarea {
     right: 0;
     background-color: var(--secondary-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px; /* This is where you get the rounded corners for the list */
+    border-radius: 8px;
+    /* This is where you get the rounded corners for the list */
     margin-top: 4px;
     overflow: hidden;
     z-index: 1000;
@@ -393,12 +410,13 @@ textarea {
 }
 
 .custom-options::-webkit-scrollbar-thumb:hover {
-    background-color: #7a7e82; /* A slightly lighter version of handle-color */
+    background-color: #7a7e82;
+    /* A slightly lighter version of handle-color */
 }
 
 #app-version,
 .toggle-label {
-  cursor: default;
+    cursor: default;
 }
 
 /* ===== Sidebar Layout ===== */
@@ -483,8 +501,8 @@ textarea {
 .section-title {
     font-size: 22px;
     font-weight: 600;
-        padding-bottom: 8px;
-    margin: 0 0 8px 0;
+    padding-bottom: 8px;
+    margin: 0 0 4px 0;
     color: var(--text-color);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -682,3 +700,250 @@ textarea {
     opacity: 0.9;
 }
 
+/* Slider Field */
+
+.slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.slider-label {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.slider-value-display {
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: var(--accent-color);
+    background: rgba(0, 169, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.slider-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-input {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--secondary-bg);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.slider-input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider-description {
+    font-size: 11px;
+    color: var(--label-color);
+    margin-top: 6px;
+    opacity: 0.8;
+}
+
+/* Custom Words List */
+.custom-words-container {
+    margin-top: 8px;
+}
+
+.custom-words-label {
+    display: block;
+    font-size: 14px;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.custom-words-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.custom-words-input {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.custom-words-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.custom-words-add-btn {
+    padding: 8px 16px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-words-add-btn:hover {
+    background: #0093e8;
+    transform: translateY(-1px);
+}
+
+.custom-words-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    max-height: 90px;
+    /* Limit height */
+    overflow-y: auto;
+    /* Enable vertical scroll */
+    padding: 8px;
+    /* background: rgba(0, 0, 0, 0.1); */
+    border-radius: 8px;
+}
+
+/* Custom scrollbar for words list */
+.custom-words-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-words-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.custom-words-list::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.custom-words-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--label-color);
+}
+
+.custom-words-empty {
+    color: var(--label-color);
+    font-size: 13px;
+    opacity: 0.7;
+    padding: 4px;
+}
+
+.custom-words-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 12px;
+    background: var(--accent-glow-strong);
+    border: 1px solid var(--accent-glow);
+    border-radius: 16px;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.custom-words-tag-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.custom-words-remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    background: rgba(128, 128, 128, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.custom-words-remove-btn:hover {
+    background: rgba(255, 100, 100, 0.6);
+    color: #fff;
+}
+
+/* Prompt Textarea Restyling */
+.prompt-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 150px;
+    /* flex: 1; */
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.prompt-textarea:focus {
+    border-color: var(--accent-color);
+}
+
+
+/* Prompt Textarea Scrollbar */
+.prompt-textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.prompt-textarea::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.prompt-textarea::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.prompt-textarea::-webkit-scrollbar-thumb:hover {
+    background-color: var(--label-color);
+}

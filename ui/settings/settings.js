@@ -240,15 +240,15 @@ function setupEventListeners() {
     
     // Add change and input listeners to all inputs
     document.addEventListener('change', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
-            console.log('[Settings] Change detected:', e.target.id);
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+            console.log('[Settings] Change detected:', e.target.id || e.target.className);
             debouncedSave();
         }
     });
     
     document.addEventListener('input', (e) => {
-        if (e.target.tagName === 'INPUT') {
-            console.log('[Settings] Input detected:', e.target.id);
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            console.log('[Settings] Input detected:', e.target.id || e.target.className);
             debouncedSave();
         }
     });
@@ -271,6 +271,7 @@ async function loadSettings() {
             language: settings.language || 'multilingual',
             rewriteProvider: settings.rewrite_provider || 'groq',
             rewriteMode: settings.rewrite_mode || 'grammar_correction',
+            customRewritePrompt: settings.custom_rewrite_prompt || '',
             insertionMode: settings.insertion_mode || 'typing',
             formatted: settings.text_formatted !== false,
             voiceCommandsEnabled: settings.voice_commands_enabled !== false,
@@ -293,7 +294,11 @@ async function loadSettings() {
                 toggleSettings: settings.keyboard_shortcuts?.toggle_settings || 'Ctrl+Shift+S',
                 toggleDebug: settings.keyboard_shortcuts?.toggle_debug || 'Ctrl+Shift+L',
                 closeApp: settings.keyboard_shortcuts?.close_app || 'Ctrl+Shift+X'
-            }
+            },
+            customWords: settings.custom_words || [],
+            wordCorrectionThreshold: settings.word_correction_threshold ?? 0.18,
+            wordCorrectionEnabled: settings.word_correction_enabled ?? true,
+            prompts: settings.prompts || {}
         };
         
         // Load values into sections
@@ -343,6 +348,7 @@ async function saveSettings() {
             language: transcriptionValues.language,
             rewrite_provider: rewriteValues.rewriteProvider,
             rewrite_mode: rewriteValues.rewriteMode,
+            custom_rewrite_prompt: rewriteValues.customRewritePrompt,
             insertion_mode: generalValues.insertionMode,
             text_formatted: generalValues.formatted,
             voice_commands_enabled: generalValues.voiceCommandsEnabled,
@@ -365,7 +371,10 @@ async function saveSettings() {
                 toggle_settings: shortcutValues.keyboardShortcuts.toggleSettings,
                 toggle_debug: shortcutValues.keyboardShortcuts.toggleDebug,
                 close_app: shortcutValues.keyboardShortcuts.closeApp
-            }
+            },
+            custom_words: transcriptionValues.customWords || [],
+            word_correction_threshold: transcriptionValues.wordCorrectionThreshold ?? 0.18,
+            word_correction_enabled: transcriptionValues.wordCorrectionEnabled ?? true
         };
         
         await invoke('save_settings', { settings });
