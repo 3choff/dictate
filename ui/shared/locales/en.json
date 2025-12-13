@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "API Key"
+    },
+    "sidebar": {
+        "general": "Customize",
+        "transcription": "Transcription",
+        "rewrite": "Rewrite",
+        "shortcuts": "Shortcuts",
+        "ui": "Interface",
+        "about": "About"
+    },
+    "general": {
+        "title": "Customize",
+        "insertionMode": "Insertion Mode",
+        "typing": "Typing (Simulated)",
+        "clipboard": "Clipboard (Paste)",
+        "textFormatted": "Text formatted",
+        "voiceCommands": "Voice commands",
+        "audioCues": "Audio feedback",
+        "pushToTalk": "Push-to-Talk",
+        "input": "Input",
+        "output": "Output",
+        "pttWarning": "Push-to-Talk is only supported with batch providers (Groq, Gemini, Mistral, SambaNova, Fireworks)",
+        "tooltips": {
+            "insertionMode": "Select the insertion mode of the transcribed text",
+            "textFormatted": "Apply punctuation and capitalization to transcribed text",
+            "voiceCommands": "Enable voice commands during recording",
+            "audioCues": "Play audio cues when recordings start and stop",
+            "pushToTalk": "Hold keys shortcut to record, release to stop"
+        }
+    },
+    "interface": {
+        "title": "Interface",
+        "appearance": "Appearance",
+        "behavior": "Behavior",
+        "darkMode": "Dark mode",
+        "startHidden": "Start hidden",
+        "closeToTray": "Close to tray",
+        "autostart": "Launch on startup",
+        "language": "Language",
+        "tooltips": {
+            "darkMode": "Switch between dark and light color scheme",
+            "startHidden": "Launch application to system tray without opening window",
+            "closeToTray": "Minimize to system tray instead of exiting when closing window",
+            "autostart": "Automatically start Dictate when you log in to Windows",
+            "language": "Change the application interface language"
+        }
+    },
+    "transcription": {
+        "title": "Transcription",
+        "language": "Language",
+        "model": "Model",
+        "wordCorrection": "Word Correction",
+        "threshold": "Threshold",
+        "customWords": "Custom Words",
+        "customWordsPlaceholder": "Add a custom word...",
+        "addButton": "Add",
+        "noCustomWords": "No custom words added yet",
+        "languages": {
+             "multilingual": "Multilingual",
+             "en": "English",
+             "it": "Italian",
+             "es": "Spanish",
+             "fr": "French",
+             "de": "German",
+             "pt": "Portuguese",
+             "ja": "Japanese",
+             "nl": "Dutch",
+             "zh": "Chinese",
+             "ru": "Russian"
+        },
+        "apiKeys": {
+             "placeholder": "Enter your API key"
+        },
+        "tooltips": {
+             "threshold": "Lower = stricter matching, Higher = more lenient"
+        }
+    },
+    "rewrite": {
+        "title": "Rewrite",
+        "model": "Model",
+        "provider": "Model",
+        "mode": "Mode",
+        "promptPlaceholder": "Enter explanation of how to rewrite the text...",
+        "modes": {
+            "grammar_correction": "Grammar Correction",
+            "structured": "Structured",
+            "professional": "Professional",
+            "polite": "Polite",
+            "casual": "Casual",
+            "custom": "Custom"
+        },
+        "apiKeys": {
+            "placeholder": "Enter your API key"
+        }
+    },
+    "shortcuts": {
+        "title": "Shortcuts",
+        "toggleRecording": "Toggle Recording",
+        "rewrite": "Text Rewrite",
+        "toggleView": "Toggle View",
+        "toggleSettings": "Toggle Settings",
+        "toggleDebug": "Toggle Debug",
+        "closeApp": "Close App",
+        "tooltips": {
+            "toggleRecording": "Start and stop dictation",
+            "rewrite": "Rewrite selected text (grammar, tone, style)",
+            "toggleView": "Switch between compact and expanded mode",
+            "toggleSettings": "Open or close settings window",
+            "toggleDebug": "Open or close developer tools",
+            "closeApp": "Exit Dictate application"
+        }
+    },
+    "update": {
+        "available": "Update available",
+        "uptodate": "Up to date"
+    },
+    "main": {
+        "starting": "Starting...",
+        "recording": "Recording...",
+        "processing": "Processing...",
+        "rewriting": "Rewriting...",
+        "micAccessDenied": "Microphone access denied",
+        "apiError": "API Error: Check settings",
+        "pressToRecord": "Press to record"
+    },
+    "about": {
+        "title": "About",
+        "version": "Version",
+        "checkForUpdates": "Check for updates",
+        "sourceCode": "Source Code",
+        "donate": "Donate",
+        "reportIssue": "Report an issue",
+        "help": "Help"
+    },
+    "footer": {
+        "donate": "Donate"
+    }
+}

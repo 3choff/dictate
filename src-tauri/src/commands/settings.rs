@@ -34,8 +34,10 @@ pub struct Settings {
     pub rewrite_mode: String,
     #[serde(default = "default_insertion_mode")]
     pub insertion_mode: String,
-    #[serde(default = "default_language")]
-    pub language: String,
+    #[serde(default = "default_transcription_language")]
+    pub transcription_language: String,
+    #[serde(default = "default_app_language")]
+    pub app_language: String,
     #[serde(default = "default_text_formatted")]
     pub text_formatted: bool,
     #[serde(default = "default_voice_commands_enabled")]
@@ -62,6 +64,8 @@ pub struct Settings {
     pub word_correction_enabled: bool,
     #[serde(default)]
     pub custom_rewrite_prompt: String,
+    #[serde(default = "default_close_to_tray")]
+    pub close_to_tray: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -90,9 +94,12 @@ fn default_insertion_mode() -> String {
     "typing".to_string()
 }
 
-fn default_language() -> String {
-    // 'multilingual' means provider should auto-detect (omit language param)
+fn default_transcription_language() -> String {
     "multilingual".to_string()
+}
+
+fn default_app_language() -> String {
+    "en".to_string()
 }
 
 fn default_text_formatted() -> bool {
@@ -230,7 +237,8 @@ impl Default for Settings {
             rewrite_provider: default_rewrite_provider(),
             rewrite_mode: default_rewrite_mode(),
             insertion_mode: default_insertion_mode(),
-            language: default_language(),
+            transcription_language: default_transcription_language(),
+            app_language: default_app_language(),
             text_formatted: default_text_formatted(),
             voice_commands_enabled: default_voice_commands_enabled(),
             audio_cues_enabled: default_audio_cues_enabled(),
@@ -244,8 +252,13 @@ impl Default for Settings {
             word_correction_threshold: default_word_correction_threshold(),
             word_correction_enabled: default_word_correction_enabled(),
             custom_rewrite_prompt: String::new(),
+            close_to_tray: default_close_to_tray(),
         }
     }
+}
+
+fn default_close_to_tray() -> bool {
+    true
 }
 
 fn get_settings_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -314,7 +327,7 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Settings window size (sized for tallest section to avoid scrollbars)
     const SETTINGS_WIDTH: f64 = 450.0;
-    const SETTINGS_HEIGHT: f64 = 650.0;
+    const SETTINGS_HEIGHT: f64 = 600.0;
     const GAP: f64 = 10.0;
     
     // If settings window already exists, toggle visibility without destroying it

@@ -908,7 +908,7 @@ textarea {
 .prompt-textarea {
     width: 100%;
     box-sizing: border-box;
-    min-height: 150px;
+    min-height: 250px;
     /* flex: 1; */
     margin-top: 8px;
     padding: 10px;

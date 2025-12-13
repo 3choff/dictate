@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "Chave API"
+    },
+    "sidebar": {
+        "general": "Personalizar",
+        "transcription": "Transcrição",
+        "rewrite": "Reescrever",
+        "shortcuts": "Atalhos",
+        "ui": "Interface",
+        "about": "Sobre"
+    },
+    "general": {
+        "title": "Personalizar",
+        "insertionMode": "Modo de inserção",
+        "typing": "Digitação (simulada)",
+        "clipboard": "Área de transferência (colar)",
+        "textFormatted": "Texto formatado",
+        "voiceCommands": "Comandos de voz",
+        "audioCues": "Feedback de áudio",
+        "pushToTalk": "Push-to-Talk",
+        "input": "Entrada",
+        "output": "Saída",
+        "pttWarning": "Push-to-Talk só é compatível com provedores em lote (Groq, Gemini, Mistral, SambaNova, Fireworks)",
+        "tooltips": {
+            "insertionMode": "Selecione o modo de inserção do texto transcrito",
+            "textFormatted": "Aplicar pontuação e maiúsculas ao texto transcrito",
+            "voiceCommands": "Habilitar comandos de voz durante a gravação",
+            "audioCues": "Reproduzir sons ao iniciar e parar a gravação",
+            "pushToTalk": "Segure o atalho para gravar, solte para parar"
+        }
+    },
+    "interface": {
+        "title": "Interface",
+        "appearance": "Aparência",
+        "behavior": "Comportamento",
+        "darkMode": "Modo escuro",
+        "startHidden": "Iniciar oculto",
+        "closeToTray": "Fechar na bandeja",
+        "autostart": "Iniciar com o sistema",
+        "language": "Idioma",
+        "tooltips": {
+            "darkMode": "Alternar entre esquemas de cores claro e escuro",
+            "startHidden": "Iniciar o aplicativo na bandeja do sistema sem abrir janela",
+            "closeToTray": "Minimizar para a bandeja do sistema em vez de sair",
+            "autostart": "Iniciar Dictate automaticamente ao fazer login no Windows",
+            "language": "Alterar o idioma da interface do aplicativo"
+        }
+    },
+    "transcription": {
+        "title": "Transcrição",
+        "language": "Idioma",
+        "model": "Modelo",
+        "wordCorrection": "Correção de palavras",
+        "threshold": "Limite",
+        "customWords": "Palavras personalizadas",
+        "customWordsPlaceholder": "Adicionar uma palavra...",
+        "addButton": "Adicionar",
+        "noCustomWords": "Nenhuma palavra personalizada adicionada",
+        "languages": {
+            "multilingual": "Multilíngue",
+            "en": "Inglês",
+            "it": "Italiano",
+            "es": "Espanhol",
+            "fr": "Francês",
+            "de": "Alemão",
+            "pt": "Português",
+            "ja": "Japonês",
+            "nl": "Holandês",
+            "zh": "Chinês",
+            "ru": "Russo"
+        },
+        "apiKeys": {
+            "placeholder": "Digite sua chave API"
+        },
+        "tooltips": {
+            "threshold": "Menor = correspondência mais estrita, Maior = mais tolerante"
+        }
+    },
+    "rewrite": {
+        "title": "Reescrever",
+        "model": "Modelo",
+        "provider": "Modelo",
+        "mode": "Modo",
+        "promptPlaceholder": "Digite explicação de como reescrever o texto...",
+        "modes": {
+            "grammar_correction": "Correção gramatical",
+            "structured": "Estruturado",
+            "professional": "Profissional",
+            "polite": "Educado",
+            "casual": "Casual",
+            "custom": "Personalizado"
+        },
+        "apiKeys": {
+            "placeholder": "Digite sua chave API"
+        }
+    },
+    "shortcuts": {
+        "title": "Atalhos",
+        "toggleRecording": "Alternar gravação",
+        "rewrite": "Reescrever texto",
+        "toggleView": "Alternar visualização",
+        "toggleSettings": "Alternar configurações",
+        "toggleDebug": "Alternar depuração",
+        "closeApp": "Fechar aplicativo",
+        "tooltips": {
+            "toggleRecording": "Iniciar e parar ditado",
+            "rewrite": "Reescrever texto selecionado",
+            "toggleView": "Alternar entre modo compacto e expandido",
+            "toggleSettings": "Abrir ou fechar configurações",
+            "toggleDebug": "Abrir ou fechar ferramentas de desenvolvimento",
+            "closeApp": "Sair do aplicativo Dictate"
+        }
+    },
+    "update": {
+        "available": "Atualização disponível",
+        "uptodate": "Atualizado"
+    },
+    "main": {
+        "starting": "Iniciando...",
+        "recording": "Gravando...",
+        "processing": "Processando...",
+        "rewriting": "Reescrevendo...",
+        "micAccessDenied": "Acesso ao microfone negado",
+        "apiError": "Erro de API: Verifique as configurações",
+        "pressToRecord": "Pressione para gravar"
+    },
+    "about": {
+        "title": "Sobre",
+        "version": "Versão",
+        "checkForUpdates": "Verificar atualizações",
+        "sourceCode": "Código fonte",
+        "donate": "Doar",
+        "reportIssue": "Reportar um problema",
+        "help": "Ajuda"
+    },
+    "footer": {
+        "donate": "Doar"
+    }
+}

@@ -122,7 +122,7 @@ pub async fn transcribe_audio_segment(
         if !text_to_insert.is_empty() {
             match insertion_mode.as_str() {
                 "typing" => {
-                    services::direct_typing::inject_text_native(&text_to_insert)
+                    services::direct_typing::inject_text_native(&text_to_insert, &app)
                         .map_err(|e| format!("Failed to insert text: {}", e))?;
                 }
                 "clipboard" | _ => {
@@ -136,7 +136,7 @@ pub async fn transcribe_audio_segment(
         if !formatted.is_empty() {
             match insertion_mode.as_str() {
                 "typing" => {
-                    services::direct_typing::inject_text_native(&formatted)
+                    services::direct_typing::inject_text_native(&formatted, &app)
                         .map_err(|e| format!("Failed to insert text: {}", e))?;
                 }
                 "clipboard" | _ => {
@@ -183,16 +183,16 @@ fn normalize_whisper_transcript(text: &str) -> String {
 async fn execute_command_action(action: &CommandAction, app: &AppHandle) -> Result<(), String> {
     match action {
         CommandAction::KeyPress(key) => {
-            services::direct_typing::send_key_native(key)
+            services::direct_typing::send_key_native(key, app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::KeyCombo(modifier, key) => {
-            services::direct_typing::send_key_combo_native(modifier, key)
+            services::direct_typing::send_key_combo_native(modifier, key, app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::DeleteLastWord => {
             // Send Ctrl+Backspace to delete last word
-            services::direct_typing::send_key_combo_native("control", "backspace")
+            services::direct_typing::send_key_combo_native("control", "backspace", app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::Rewrite => {
@@ -200,7 +200,7 @@ async fn execute_command_action(action: &CommandAction, app: &AppHandle) -> Resu
             if let Some(window) = app.get_webview_window("main") {
                 // Wait briefly for focus to settle, then select all and trigger rewrite
                 tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-                let _ = crate::commands::text_injection::select_all_text().await;
+                let _ = crate::commands::text_injection::select_all_text(app.clone()).await;
                 tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
                 // Then trigger rewrite shortcut
                 let _ = window.emit("sparkle-trigger", ());

@@ -8,14 +8,14 @@ pub async fn insert_text(
     app_handle: AppHandle,
 ) -> Result<(), String> {
     match insertion_mode.as_str() {
-        "typing" => direct_typing::inject_text_native(&text),
+        "typing" => direct_typing::inject_text_native(&text, &app_handle),
         "clipboard" | _ => clipboard_paste::insert_text_via_clipboard(&text, &app_handle),
     }
 }
 
 #[tauri::command]
-pub async fn select_all_text() -> Result<(), String> {
-    direct_typing::send_key_combo_native("control", "a")
+pub async fn select_all_text(app_handle: AppHandle) -> Result<(), String> {
+    direct_typing::send_key_combo_native("control", "a", &app_handle)
         .map_err(|e| format!("Failed to send Ctrl+A: {}", e))
 }
 

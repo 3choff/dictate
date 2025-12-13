@@ -1,3 +1,5 @@
+import { i18n } from '../../shared/i18n.js';
+
 /**
  * Custom Words List component for managing word corrections
  */
@@ -28,13 +30,13 @@ export class CustomWordsList {
         input.type = 'text';
         input.id = this.id;
         input.className = 'custom-words-input';
-        input.placeholder = 'Add a custom word...';
+        input.placeholder = i18n.t('transcription.customWordsPlaceholder');
         inputRow.appendChild(input);
 
         const addButton = document.createElement('button');
         addButton.type = 'button';
         addButton.className = 'custom-words-add-btn';
-        addButton.textContent = 'Add';
+        addButton.textContent = i18n.t('transcription.addButton');
         addButton.addEventListener('click', () => this.addWord());
         inputRow.appendChild(addButton);
 
@@ -90,7 +92,7 @@ export class CustomWordsList {
         if (this.words.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'custom-words-empty';
-            emptyMsg.textContent = 'No custom words added yet';
+            emptyMsg.textContent = i18n.t('transcription.noCustomWords');
             listEl.appendChild(emptyMsg);
             return;
         }

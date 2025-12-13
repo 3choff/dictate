@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "APIキー"
+    },
+    "sidebar": {
+        "general": "カスタマイズ",
+        "transcription": "文字起こし",
+        "rewrite": "書き換え",
+        "shortcuts": "ショートカット",
+        "ui": "インターフェース",
+        "about": "このアプリについて"
+    },
+    "general": {
+        "title": "カスタマイズ",
+        "insertionMode": "挿入モード",
+        "typing": "タイピング（シミュレート）",
+        "clipboard": "クリップボード（貼り付け）",
+        "textFormatted": "テキストフォーマット",
+        "voiceCommands": "音声コマンド",
+        "audioCues": "音声フィードバック",
+        "pushToTalk": "プッシュトゥトーク",
+        "input": "入力",
+        "output": "出力",
+        "pttWarning": "プッシュトゥトークはバッチプロバイダー（Groq、Gemini、Mistral、SambaNova、Fireworks）でのみサポートされています",
+        "tooltips": {
+            "insertionMode": "文字起こしテキストの挿入モードを選択",
+            "textFormatted": "文字起こしテキストに句読点と大文字を適用",
+            "voiceCommands": "録音中に音声コマンドを有効にする",
+            "audioCues": "録音の開始と停止時に音を再生",
+            "pushToTalk": "ショートカットを押し続けて録音、離して停止"
+        }
+    },
+    "interface": {
+        "title": "インターフェース",
+        "appearance": "外観",
+        "behavior": "動作",
+        "darkMode": "ダークモード",
+        "startHidden": "非表示で起動",
+        "closeToTray": "トレイに閉じる",
+        "autostart": "システム起動時に開始",
+        "language": "言語",
+        "tooltips": {
+            "darkMode": "ライトとダークの配色を切り替え",
+            "startHidden": "ウィンドウを開かずにシステムトレイでアプリを起動",
+            "closeToTray": "閉じる時に終了せずシステムトレイに最小化",
+            "autostart": "Windows起動時にDictateを自動起動",
+            "language": "アプリケーションのインターフェース言語を変更"
+        }
+    },
+    "transcription": {
+        "title": "文字起こし",
+        "language": "言語",
+        "model": "モデル",
+        "wordCorrection": "単語修正",
+        "threshold": "しきい値",
+        "customWords": "カスタム単語",
+        "customWordsPlaceholder": "単語を追加...",
+        "addButton": "追加",
+        "noCustomWords": "カスタム単語はまだありません",
+        "languages": {
+            "multilingual": "多言語",
+            "en": "英語",
+            "it": "イタリア語",
+            "es": "スペイン語",
+            "fr": "フランス語",
+            "de": "ドイツ語",
+            "pt": "ポルトガル語",
+            "ja": "日本語",
+            "nl": "オランダ語",
+            "zh": "中国語",
+            "ru": "ロシア語"
+        },
+        "apiKeys": {
+            "placeholder": "APIキーを入力"
+        },
+        "tooltips": {
+            "threshold": "低い = 厳密な一致、高い = 寛容"
+        }
+    },
+    "rewrite": {
+        "title": "書き換え",
+        "model": "モデル",
+        "provider": "モデル",
+        "mode": "モード",
+        "promptPlaceholder": "テキストの書き換え方法を入力...",
+        "modes": {
+            "grammar_correction": "文法修正",
+            "structured": "構造化",
+            "professional": "プロフェッショナル",
+            "polite": "丁寧",
+            "casual": "カジュアル",
+            "custom": "カスタム"
+        },
+        "apiKeys": {
+            "placeholder": "APIキーを入力"
+        }
+    },
+    "shortcuts": {
+        "title": "ショートカット",
+        "toggleRecording": "録音を切り替え",
+        "rewrite": "テキストを書き換え",
+        "toggleView": "表示を切り替え",
+        "toggleSettings": "設定を切り替え",
+        "toggleDebug": "デバッグを切り替え",
+        "closeApp": "アプリを閉じる",
+        "tooltips": {
+            "toggleRecording": "ディクテーションの開始と停止",
+            "rewrite": "選択したテキストを書き換え",
+            "toggleView": "コンパクトと拡張モードを切り替え",
+            "toggleSettings": "設定を開く/閉じる",
+            "toggleDebug": "開発ツールを開く/閉じる",
+            "closeApp": "Dictateを終了"
+        }
+    },
+    "update": {
+        "available": "アップデートあり",
+        "uptodate": "最新版です"
+    },
+    "main": {
+        "starting": "起動中...",
+        "recording": "録音中...",
+        "processing": "処理中...",
+        "rewriting": "書き換え中...",
+        "micAccessDenied": "マイクへのアクセスが拒否されました",
+        "apiError": "APIエラー：設定を確認してください",
+        "pressToRecord": "押して録音"
+    },
+    "about": {
+        "title": "このアプリについて",
+        "version": "バージョン",
+        "checkForUpdates": "アップデートを確認",
+        "sourceCode": "ソースコード",
+        "donate": "寄付",
+        "reportIssue": "問題を報告",
+        "help": "ヘルプ"
+    },
+    "footer": {
+        "donate": "寄付"
+    }
+}

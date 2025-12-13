@@ -6,6 +6,7 @@ import { createProvider } from './providers/provider-factory.js';
 import { RecordingSession } from './recording-session.js';
 import { Tooltip } from '../shared/tooltip.js';
 import { PRESET_PROMPTS } from '../shared/prompts.js';
+import { i18n } from '../shared/i18n.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -265,6 +266,9 @@ async function loadSettings() {
     isLoadingSettings = true;
     try {
         const settings = await invoke('get_settings');
+        // Initialize i18n
+        await i18n.init(settings.app_language);
+
         GROQ_API_KEY = settings.groq_api_key || '';
         SAMBANOVA_API_KEY = settings.sambanova_api_key || '';
         FIREWORKS_API_KEY = settings.fireworks_api_key || '';
@@ -274,7 +278,7 @@ async function loadSettings() {
         CARTESIA_API_KEY = settings.cartesia_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
-        LANGUAGE = (settings.language || 'multilingual');
+        LANGUAGE = (settings.transcription_language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
         VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
         AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
@@ -332,9 +336,9 @@ const handleCloseClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     try {
-        await invoke('exit_app');
+        await getCurrentWindow().close();
     } catch (error) {
-        console.error('Failed to exit app:', error);
+        console.error('Failed to close window:', error);
     }
 };
 
@@ -367,14 +371,14 @@ micButton.addEventListener('pointerdown', (e) => {
         isRecording = true;
         micButton.classList.add('recording');
         visualizerContainer?.classList.add('active');
-        status.textContent = 'Starting...';
+        status.textContent = i18n.t('main.starting');
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
             visualizerContainer?.classList.remove('active');
-            status.textContent = 'Microphone access denied';
+            status.textContent = i18n.t('main.micAccessDenied');
         });
     } else {
         // Play stop cue
@@ -404,14 +408,14 @@ micButton.addEventListener('click', (e) => {
         isRecording = true;
         micButton.classList.add('recording');
         visualizerContainer?.classList.add('active');
-        status.textContent = 'Starting...';
+        status.textContent = i18n.t('main.starting');
         // Start asynchronously and revert if it fails
         startRecording().catch((err) => {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
             visualizerContainer?.classList.remove('active');
-            status.textContent = 'Microphone access denied';
+            status.textContent = i18n.t('main.micAccessDenied');
         });
     } else {
         // Play stop cue
@@ -437,7 +441,7 @@ listen('start-recording', async () => {
         isRecording = true;
         micButton.classList.add('recording');
         visualizerContainer?.classList.add('active');
-        status.textContent = 'Recording...';
+        status.textContent = i18n.t('main.recording');
         try {
             await startRecording();
         } catch (err) {
@@ -445,7 +449,7 @@ listen('start-recording', async () => {
             isRecording = false;
             micButton.classList.remove('recording');
             visualizerContainer?.classList.remove('active');
-            status.textContent = 'Microphone access denied';
+            status.textContent = i18n.t('main.micAccessDenied');
         }
     }
 });
@@ -541,7 +545,7 @@ async function toggleRecording() {
         isRecording = true;
         micButton.classList.add('recording');
         visualizerContainer?.classList.add('active');
-        status.textContent = 'Starting...';
+        status.textContent = i18n.t('main.starting');
         try {
             await startRecording();
         } catch (err) {
@@ -549,7 +553,7 @@ async function toggleRecording() {
             isRecording = false;
             micButton.classList.remove('recording');
             visualizerContainer?.classList.remove('active');
-            status.textContent = 'Microphone access denied';
+            status.textContent = i18n.t('main.micAccessDenied');
         }
     } else {
         // Play stop cue (may be blocked if not a user gesture)
@@ -621,7 +625,7 @@ async function startRecording() {
         }
         
         // UI was already set by the caller for immediate feedback
-        status.textContent = 'Recording...';
+        status.textContent = i18n.t('main.recording');
     } catch (error) {
         console.error('Error starting recording:', error);
         currentSession = null;
@@ -687,7 +691,7 @@ async function stopRecording() {
     isRecording = false;
     micButton.classList.remove('recording');
     visualizerContainer?.classList.remove('active');
-    status.textContent = 'Press to record';
+    status.textContent = i18n.t('main.pressToRecord');
 
     // Stop recording session (handles all cleanup)
     if (currentSession) {

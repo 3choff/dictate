@@ -3,25 +3,28 @@ import { PasswordField } from '../components/password-field.js';
 import { SliderField } from '../components/slider-field.js';
 import { CustomWordsList } from '../components/custom-words-list.js';
 import { ToggleSwitch } from '../components/toggle-switch.js';
+import { i18n } from '../../shared/i18n.js';
 
 /**
  * Transcription settings section
  */
 export class TranscriptionSection {
     constructor() {
-        this.languageField = new SelectField('language-select', 'Language', [
-            { value: 'multilingual', label: 'Multilingual' },
-            { value: 'en', label: 'English' },
-            { value: 'it', label: 'Italian' },
-            { value: 'es', label: 'Spanish' },
-            { value: 'fr', label: 'French' },
-            { value: 'de', label: 'German' },
-            { value: 'pt', label: 'Portuguese' },
-            { value: 'ja', label: 'Japanese' },
-            { value: 'nl', label: 'Dutch' }
+        this.languageField = new SelectField('language-select', i18n.t('transcription.language'), [
+            { value: 'multilingual', label: i18n.t('transcription.languages.multilingual') },
+            { value: 'en', label: i18n.t('transcription.languages.en') },
+            { value: 'it', label: i18n.t('transcription.languages.it') },
+            { value: 'es', label: i18n.t('transcription.languages.es') },
+            { value: 'fr', label: i18n.t('transcription.languages.fr') },
+            { value: 'de', label: i18n.t('transcription.languages.de') },
+            { value: 'pt', label: i18n.t('transcription.languages.pt') },
+            { value: 'ja', label: i18n.t('transcription.languages.ja') },
+            { value: 'nl', label: i18n.t('transcription.languages.nl') },
+            { value: 'zh', label: i18n.t('transcription.languages.zh') },
+            { value: 'ru', label: i18n.t('transcription.languages.ru') }
         ]);
 
-        this.providerField = new SelectField('api-service', 'Model', [
+        this.providerField = new SelectField('api-service', i18n.t('transcription.model'), [
             { value: 'deepgram', label: 'Deepgram Nova 3 (Real-time)' },
             { value: 'cartesia', label: 'Cartesia Ink Whisper (Real-time)' },
             { value: 'groq', label: 'Groq Whisper' },
@@ -31,15 +34,17 @@ export class TranscriptionSection {
             { value: 'mistral', label: 'Mistral Voxtral' }
         ]);
 
-        // API key fields for each provider
+        // API key fields
+        const placeholder = i18n.t('transcription.apiKeys.placeholder');
+        const apiKeyLabel = i18n.t('apiKey.label');
         this.apiKeyFields = {
-            groq: new PasswordField('groqApiKey', 'Groq API Key', 'Enter your Groq API key'),
-            deepgram: new PasswordField('deepgramApiKey', 'Deepgram API Key', 'Enter your Deepgram API key'),
-            cartesia: new PasswordField('cartesiaApiKey', 'Cartesia API Key', 'Enter your Cartesia API key'),
-            gemini: new PasswordField('geminiApiKey', 'Gemini API Key', 'Enter your Gemini API key'),
-            mistral: new PasswordField('mistralApiKey', 'Mistral API Key', 'Enter your Mistral API key'),
-            sambanova: new PasswordField('sambanovaApiKey', 'SambaNova API Key', 'Enter your SambaNova API key'),
-            fireworks: new PasswordField('fireworksApiKey', 'Fireworks API Key', 'Enter your Fireworks API key')
+            groq: new PasswordField('groqApiKey', `Groq ${apiKeyLabel}`, placeholder),
+            deepgram: new PasswordField('deepgramApiKey', `Deepgram ${apiKeyLabel}`, placeholder),
+            cartesia: new PasswordField('cartesiaApiKey', `Cartesia ${apiKeyLabel}`, placeholder),
+            gemini: new PasswordField('geminiApiKey', `Gemini ${apiKeyLabel}`, placeholder),
+            mistral: new PasswordField('mistralApiKey', `Mistral ${apiKeyLabel}`, placeholder),
+            sambanova: new PasswordField('sambanovaApiKey', `SambaNova ${apiKeyLabel}`, placeholder),
+            fireworks: new PasswordField('fireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder)
         };
 
         // Word correction components
@@ -47,14 +52,15 @@ export class TranscriptionSection {
         
         this.wordCorrectionThreshold = new SliderField(
             'word-correction-threshold',
-            'Threshold',
+            i18n.t('transcription.threshold'),
             0.05, // min
             0.50, // max
             0.01, // step
-            0.18  // default
+            0.18, // default
+            'transcription.tooltips.threshold' // tooltip key
         );
 
-        this.customWordsList = new CustomWordsList('custom-words', 'Custom Words');
+        this.customWordsList = new CustomWordsList('custom-words', i18n.t('transcription.customWords'));
     }
 
     render() {
@@ -63,17 +69,11 @@ export class TranscriptionSection {
         section.id = 'transcription-section';
         
         const title = document.createElement('h2');
-        title.textContent = 'Transcription';
+        title.textContent = i18n.t('transcription.title');
         title.className = 'section-title';
         section.appendChild(title);
         
-        const description = document.createElement('p');
-        // description.textContent = 'Configure transcription model and language settings.';
-        // description.className = 'section-description';
-        // section.appendChild(description);
-        
         section.appendChild(this.languageField.render());
-
         section.appendChild(this.providerField.render());
         
         // Add all API key fields (initially hidden)
@@ -87,7 +87,6 @@ export class TranscriptionSection {
         // Word Correction section
         const wordCorrectionGroup = document.createElement('div');
         wordCorrectionGroup.className = 'settings-group';
-        // wordCorrectionGroup.style.marginTop = '20px';
 
         // Header with label and toggle
         const groupHeader = document.createElement('div');
@@ -99,8 +98,8 @@ export class TranscriptionSection {
 
         const wordCorrectionLabel = document.createElement('div');
         wordCorrectionLabel.className = 'settings-group-label';
-        wordCorrectionLabel.textContent = 'Word Correction';
-        wordCorrectionLabel.style.marginBottom = '0'; // Override default margin
+        wordCorrectionLabel.textContent = i18n.t('transcription.wordCorrection');
+        wordCorrectionLabel.style.marginBottom = '0';
         
         groupHeader.appendChild(wordCorrectionLabel);
         groupHeader.appendChild(this.wordCorrectionToggle.render());
@@ -128,7 +127,6 @@ export class TranscriptionSection {
         // Set up change listener after DOM insertion
         this.providerField.onChange((value) => {
             this.updateApiKeyVisibility(value);
-            // Update PTT warning when provider changes
             if (this.generalSection && this.generalSection.updatePttWarning) {
                 this.generalSection.updatePttWarning();
             }
@@ -153,7 +151,6 @@ export class TranscriptionSection {
     }
 
     updateApiKeyVisibility(provider) {
-        // Hide all API key fields
         Object.entries(this.apiKeyFields).forEach(([p, field]) => {
             const fieldEl = document.querySelector(`#${field.id}-group`);
             if (fieldEl) {
@@ -161,7 +158,6 @@ export class TranscriptionSection {
             }
         });
         
-        // Show the relevant API key field
         const relevantField = this.apiKeyFields[provider];
         if (relevantField) {
             const fieldEl = document.querySelector(`#${relevantField.id}-group`);
@@ -172,15 +168,6 @@ export class TranscriptionSection {
     }
 
     loadValues(settings) {
-        console.log('[Transcription] Loading values:', {
-            provider: settings.provider,
-            language: settings.language,
-            customWords: settings.customWords,
-            wordCorrectionThreshold: settings.wordCorrectionThreshold,
-            wordCorrectionEnabled: settings.wordCorrectionEnabled,
-            apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!settings[p + 'ApiKey'] }))
-        });
-        
         if (settings.provider) {
             this.providerField.setValue(settings.provider);
             this.updateApiKeyVisibility(settings.provider);
@@ -189,7 +176,6 @@ export class TranscriptionSection {
             this.languageField.setValue(settings.language);
         }
         
-        // Load all API keys
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             const key = provider + 'ApiKey';
             if (settings[key]) {
@@ -197,7 +183,6 @@ export class TranscriptionSection {
             }
         });
 
-        // Load word correction settings
         if (settings.wordCorrectionThreshold !== undefined) {
             this.wordCorrectionThreshold.setValue(settings.wordCorrectionThreshold);
         }
@@ -206,7 +191,6 @@ export class TranscriptionSection {
         }
         if (settings.wordCorrectionEnabled !== undefined) {
             this.wordCorrectionToggle.setValue(settings.wordCorrectionEnabled);
-            // We need to wait for DOM to be ready to update state visually
             requestAnimationFrame(() => {
                 this.updateWordCorrectionState(settings.wordCorrectionEnabled);
             });
@@ -222,18 +206,8 @@ export class TranscriptionSection {
             wordCorrectionEnabled: this.wordCorrectionToggle.getValue()
         };
         
-        // Get all API key values
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             values[provider + 'ApiKey'] = field.getValue();
-        });
-        
-        console.log('[Transcription] getValues:', {
-            provider: values.provider,
-            language: values.language,
-            customWords: values.customWords,
-            wordCorrectionThreshold: values.wordCorrectionThreshold,
-            wordCorrectionEnabled: values.wordCorrectionEnabled,
-            apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!values[p + 'ApiKey'], length: values[p + 'ApiKey']?.length }))
         });
         
         return values;

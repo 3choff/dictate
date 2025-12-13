@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "API密钥"
+    },
+    "sidebar": {
+        "general": "自定义",
+        "transcription": "转录",
+        "rewrite": "重写",
+        "shortcuts": "快捷键",
+        "ui": "界面",
+        "about": "关于"
+    },
+    "general": {
+        "title": "自定义",
+        "insertionMode": "插入模式",
+        "typing": "打字（模拟）",
+        "clipboard": "剪贴板（粘贴）",
+        "textFormatted": "格式化文本",
+        "voiceCommands": "语音命令",
+        "audioCues": "音频反馈",
+        "pushToTalk": "按住说话",
+        "input": "输入",
+        "output": "输出",
+        "pttWarning": "按住说话仅支持批量提供商（Groq、Gemini、Mistral、SambaNova、Fireworks）",
+        "tooltips": {
+            "insertionMode": "选择转录文本的插入模式",
+            "textFormatted": "对转录文本应用标点和大写",
+            "voiceCommands": "录音时启用语音命令",
+            "audioCues": "开始和停止录音时播放声音",
+            "pushToTalk": "按住快捷键录音，松开停止"
+        }
+    },
+    "interface": {
+        "title": "界面",
+        "appearance": "外观",
+        "behavior": "行为",
+        "darkMode": "深色模式",
+        "startHidden": "隐藏启动",
+        "closeToTray": "关闭到托盘",
+        "autostart": "开机启动",
+        "language": "语言",
+        "tooltips": {
+            "darkMode": "在浅色和深色配色方案之间切换",
+            "startHidden": "启动应用程序到系统托盘而不打开窗口",
+            "closeToTray": "关闭时最小化到系统托盘而不是退出",
+            "autostart": "登录Windows时自动启动Dictate",
+            "language": "更改应用程序界面语言"
+        }
+    },
+    "transcription": {
+        "title": "转录",
+        "language": "语言",
+        "model": "模型",
+        "wordCorrection": "词语校正",
+        "threshold": "阈值",
+        "customWords": "自定义词汇",
+        "customWordsPlaceholder": "添加自定义词汇...",
+        "addButton": "添加",
+        "noCustomWords": "暂无自定义词汇",
+        "languages": {
+            "multilingual": "多语言",
+            "en": "英语",
+            "it": "意大利语",
+            "es": "西班牙语",
+            "fr": "法语",
+            "de": "德语",
+            "pt": "葡萄牙语",
+            "ja": "日语",
+            "nl": "荷兰语",
+            "zh": "中文",
+            "ru": "俄语"
+        },
+        "apiKeys": {
+            "placeholder": "输入您的API密钥"
+        },
+        "tooltips": {
+            "threshold": "越低 = 匹配越严格，越高 = 越宽松"
+        }
+    },
+    "rewrite": {
+        "title": "重写",
+        "model": "模型",
+        "provider": "模型",
+        "mode": "模式",
+        "promptPlaceholder": "输入如何重写文本的说明...",
+        "modes": {
+            "grammar_correction": "语法校正",
+            "structured": "结构化",
+            "professional": "专业",
+            "polite": "礼貌",
+            "casual": "随意",
+            "custom": "自定义"
+        },
+        "apiKeys": {
+            "placeholder": "输入您的API密钥"
+        }
+    },
+    "shortcuts": {
+        "title": "快捷键",
+        "toggleRecording": "切换录音",
+        "rewrite": "重写文本",
+        "toggleView": "切换视图",
+        "toggleSettings": "切换设置",
+        "toggleDebug": "切换调试",
+        "closeApp": "关闭应用",
+        "tooltips": {
+            "toggleRecording": "开始和停止听写",
+            "rewrite": "重写选中的文本",
+            "toggleView": "在紧凑和展开模式之间切换",
+            "toggleSettings": "打开或关闭设置",
+            "toggleDebug": "打开或关闭开发工具",
+            "closeApp": "退出Dictate应用"
+        }
+    },
+    "update": {
+        "available": "有可用更新",
+        "uptodate": "已是最新"
+    },
+    "main": {
+        "starting": "启动中...",
+        "recording": "录音中...",
+        "processing": "处理中...",
+        "rewriting": "重写中...",
+        "micAccessDenied": "麦克风访问被拒绝",
+        "apiError": "API错误：检查设置",
+        "pressToRecord": "按下开始录音"
+    },
+    "about": {
+        "title": "关于",
+        "version": "版本",
+        "checkForUpdates": "检查更新",
+        "sourceCode": "源代码",
+        "donate": "捐赠",
+        "reportIssue": "报告问题",
+        "help": "帮助"
+    },
+    "footer": {
+        "donate": "捐赠"
+    }
+}

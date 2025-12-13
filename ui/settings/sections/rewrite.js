@@ -1,6 +1,7 @@
 import { SelectField } from '../components/select-field.js';
 import { PasswordField } from '../components/password-field.js';
 import { PRESET_PROMPTS } from '../../shared/prompts.js';
+import { i18n } from '../../shared/i18n.js';
 
 /**
  * Text Rewrite settings section
@@ -8,7 +9,7 @@ import { PRESET_PROMPTS } from '../../shared/prompts.js';
 export class RewriteSection {
     constructor() {
         // Provider selection dropdown
-        this.rewriteProviderField = new SelectField('rewrite-provider', 'Model', [
+        this.rewriteProviderField = new SelectField('rewrite-provider', i18n.t('rewrite.model'), [
             { value: 'groq', label: 'Groq GPT-OSS-120B' },
             { value: 'fireworks', label: 'Fireworks GPT-OSS-20B' },
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
@@ -16,23 +17,24 @@ export class RewriteSection {
             { value: 'mistral', label: 'Mistral Small' }
         ]);
 
-        // API key fields for rewrite providers (use unique IDs to avoid conflicts)
+        const placeholder = i18n.t('rewrite.apiKeys.placeholder');
+        const apiKeyLabel = i18n.t('apiKey.label');
         this.apiKeyFields = {
-            groq: new PasswordField('rewriteGroqApiKey', 'Groq API Key', 'Enter your Groq API key'),
-            fireworks: new PasswordField('rewriteFireworksApiKey', 'Fireworks API Key', 'Enter your Fireworks API key'),
-            sambanova: new PasswordField('rewriteSambanovaApiKey', 'SambaNova API Key', 'Enter your SambaNova API key'),
-            gemini: new PasswordField('rewriteGeminiApiKey', 'Gemini API Key', 'Enter your Gemini API key'),
-            mistral: new PasswordField('rewriteMistralApiKey', 'Mistral API Key', 'Enter your Mistral API key')
+            groq: new PasswordField('rewriteGroqApiKey', `Groq ${apiKeyLabel}`, placeholder),
+            fireworks: new PasswordField('rewriteFireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder),
+            sambanova: new PasswordField('rewriteSambanovaApiKey', `SambaNova ${apiKeyLabel}`, placeholder),
+            gemini: new PasswordField('rewriteGeminiApiKey', `Gemini ${apiKeyLabel}`, placeholder),
+            mistral: new PasswordField('rewriteMistralApiKey', `Mistral ${apiKeyLabel}`, placeholder)
         };
 
         // Rewrite mode dropdown
-        this.rewriteModeField = new SelectField('rewrite-mode', 'Mode', [
-            { value: 'grammar_correction', label: 'Grammar Correction' },
-            { value: 'structured', label: 'Structured' },
-            { value: 'professional', label: 'Professional' },
-            { value: 'polite', label: 'Polite' },
-            { value: 'casual', label: 'Casual' },
-            { value: 'custom', label: 'Custom' }
+        this.rewriteModeField = new SelectField('rewrite-mode', i18n.t('rewrite.mode'), [
+            { value: 'grammar_correction', label: i18n.t('rewrite.modes.grammar_correction') },
+            { value: 'structured', label: i18n.t('rewrite.modes.structured') },
+            { value: 'professional', label: i18n.t('rewrite.modes.professional') },
+            { value: 'polite', label: i18n.t('rewrite.modes.polite') },
+            { value: 'casual', label: i18n.t('rewrite.modes.casual') },
+            { value: 'custom', label: i18n.t('rewrite.modes.custom') }
         ]);
     }
 
@@ -42,14 +44,12 @@ export class RewriteSection {
         section.id = 'rewrite-section';
         
         const title = document.createElement('h2');
-        title.textContent = 'Rewrite';
+        title.textContent = i18n.t('rewrite.title');
         title.className = 'section-title';
         section.appendChild(title);
         
-        // Add provider dropdown
         section.appendChild(this.rewriteProviderField.render());
         
-        // Add all API key fields (initially hidden)
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             const fieldEl = field.render();
             fieldEl.style.display = 'none';
@@ -58,25 +58,21 @@ export class RewriteSection {
             section.appendChild(fieldEl);
         });
 
-        // Add rewrite mode dropdown
         const modeFieldEl = this.rewriteModeField.render();
         modeFieldEl.style.display = 'flex';
         modeFieldEl.style.flexDirection = 'column';
         section.appendChild(modeFieldEl);
 
-        // Prompt edit area
         this.promptTextarea = document.createElement('textarea');
         this.promptTextarea.className = 'prompt-textarea';
-        this.promptTextarea.placeholder = 'Enter explanation of how to rewrite the text...';
+        this.promptTextarea.placeholder = i18n.t('rewrite.promptPlaceholder');
         
-        // Append textarea inside the mode field container
         modeFieldEl.appendChild(this.promptTextarea);
         
         return section;
     }
 
     initialize() {
-        // Set up change listener after DOM insertion
         this.rewriteProviderField.onChange((value) => {
             this.updateApiKeyVisibility(value);
         });
@@ -85,14 +81,11 @@ export class RewriteSection {
             this.handleModeChange(value);
         });
 
-        // Add input listener to textarea
         if (this.promptTextarea) {
             this.promptTextarea.addEventListener('input', () => {
-                // If user edits text and we're not in custom mode, switch to custom
                 const currentMode = this.rewriteModeField.getValue();
                 
                 if (currentMode !== 'custom') {
-                    // Check if text actually differs from preset
                     const presetText = PRESET_PROMPTS[currentMode];
                     
                     if (this.promptTextarea.value !== presetText) {
@@ -105,12 +98,10 @@ export class RewriteSection {
 
     handleModeChange(mode) {
         if (mode === 'custom') {
-            // If switching to custom manually, keep current text or load default if empty
             if (!this.promptTextarea.value.trim()) {
-                // this.promptTextarea.value = ''; // Keep empty or set default?
+                // Keep empty
             }
         } else {
-            // Switch to preset text
             const presetText = PRESET_PROMPTS[mode];
             if (presetText) {
                 this.promptTextarea.value = presetText;
@@ -119,12 +110,10 @@ export class RewriteSection {
     }
 
     updateApiKeyVisibility(provider) {
-        // Hide all API key fields for rewrite
         document.querySelectorAll('.rewrite-api-key').forEach(el => {
             el.style.display = 'none';
         });
         
-        // Show the relevant API key field
         const relevantField = this.apiKeyFields[provider];
         if (relevantField) {
             const fieldEl = document.querySelector(`#${relevantField.id}-group.rewrite-api-key`);
@@ -135,23 +124,13 @@ export class RewriteSection {
     }
 
     loadValues(settings) {
-        console.log('[Rewrite] Loading values:', {
-            rewriteMode: settings.rewriteMode,
-            rewriteProvider: settings.rewriteProvider,
-            customRewritePrompt: settings.customRewritePrompt,
-            apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!settings[p + 'ApiKey'] }))
-        });
-        
-        // Load settings to internal state
         this.customRewritePrompt = settings.customRewritePrompt || '';
 
-        // Load provider selection
         if (settings.rewriteProvider) {
             this.rewriteProviderField.setValue(settings.rewriteProvider);
             this.updateApiKeyVisibility(settings.rewriteProvider);
         }
 
-        // Load mode and prompt text
         if (settings.rewriteMode) {
             this.rewriteModeField.setValue(settings.rewriteMode);
             
@@ -162,7 +141,6 @@ export class RewriteSection {
             }
         }
         
-        // Load all API keys from backend
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             const key = provider + 'ApiKey';
             if (settings[key]) {
@@ -178,16 +156,8 @@ export class RewriteSection {
             customRewritePrompt: this.promptTextarea.value
         };
         
-        // Get all API key values
         Object.entries(this.apiKeyFields).forEach(([provider, field]) => {
             values[provider + 'ApiKey'] = field.getValue();
-        });
-        
-        console.log('[Rewrite] getValues:', {
-            rewriteMode: values.rewriteMode,
-            rewriteProvider: values.rewriteProvider,
-            customRewritePrompt: values.customRewritePrompt,
-            apiKeys: Object.keys(this.apiKeyFields).map(p => ({ provider: p, hasKey: !!values[p + 'ApiKey'], length: values[p + 'ApiKey']?.length }))
         });
         
         return values;

@@ -91,7 +91,7 @@ pub fn register_shortcuts(app: &AppHandle) {
                         // Wait a bit for all modifiers from the hotkey to be released
                         sleep(Duration::from_millis(200)).await;
                         // Select all using the same command we expose to the frontend
-                        let _ = commands::text_injection::select_all_text().await;
+                        let _ = commands::text_injection::select_all_text(window_clone.app_handle().clone()).await;
                         sleep(Duration::from_millis(150)).await;
                         let _ = window_clone.emit("sparkle-trigger", ());
                     });
@@ -128,6 +128,13 @@ pub fn register_shortcuts(app: &AppHandle) {
     }
 }
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
+use enigo::{Enigo, Settings as EnigoSettings};
+
+struct QuitState(AtomicBool);
+pub struct EnigoState(pub Mutex<Enigo>);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -140,6 +147,8 @@ pub fn run() {
         ))
         .manage(StreamingState::default())
         .manage(commands::settings::ReleaseState::default())
+        .manage(QuitState(AtomicBool::new(false)))
+        .manage(EnigoState(Mutex::new(Enigo::new(&EnigoSettings::default()).expect("Failed to init Enigo"))))
         .setup(|app| {
             // Initialize VAD session manager
             let vad_manager = vad::VadSessionManager::new(app.handle().clone());
@@ -148,19 +157,52 @@ pub fn run() {
             // Register global shortcuts from settings
             register_shortcuts(app.handle());
 
+            // Load settings for language
+            let settings = commands::settings::get_settings_sync(app.handle()).unwrap_or_default();
+            let lang = settings.app_language.as_str();
+            
+            let (quit_label, settings_label, show_label) = match lang {
+                "it" => ("Esci", "Impostazioni", "Mostra/Nascondi"),
+                "es" => ("Salir", "Configuración", "Mostrar/Ocultar"),
+                "fr" => ("Quitter", "Paramètres", "Afficher/Masquer"),
+                "de" => ("Beenden", "Einstellungen", "Anzeigen/Verbergen"),
+                "pt" => ("Sair", "Configurações", "Mostrar/Ocultar"),
+                "zh" => ("退出", "设置", "显示/隐藏"),
+                "ja" => ("終了", "設定", "表示/非表示"),
+                "ru" => ("Выход", "Настройки", "Показать/Скрыть"),
+                _ => ("Quit", "Settings", "Show/Hide"),
+            };
+
             // Initialize System Tray
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Show/Hide", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", quit_label, true, None::<&str>)?;
+            let settings_i = MenuItem::with_id(app, "settings", settings_label, true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", show_label, true, None::<&str>)?;
             let separator = tauri::menu::PredefinedMenuItem::separator(app)?;
             let menu = Menu::with_items(app, &[&show_i, &settings_i, &separator, &quit_i])?;
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
+                .tooltip("Dictate")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => app.exit(0),
+                    "quit" => {
+                        let state = app.state::<QuitState>();
+                        state.0.store(true, Ordering::Relaxed);
+                        if let Some(w) = app.get_webview_window("main") {
+                            let _ = w.close();
+                        }
+                        if let Some(w) = app.get_webview_window("settings") {
+                            let _ = w.close();
+                        }
+                        
+                        // Force exit after delay to ensure app closes even if windows don't trigger it
+                        let app_clone = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            sleep(Duration::from_millis(500)).await;
+                            app_clone.exit(0);
+                        });
+                    },
                     "show" => {
                         if let Some(window) = app.get_webview_window("main") {
                             if window.is_visible().unwrap_or(false) {
@@ -290,8 +332,29 @@ pub fn run() {
                             let _ = tx.try_send((position.x, position.y));
                         }
                         tauri::WindowEvent::CloseRequested { api, .. } => {
-                            api.prevent_close();
-                            let _ = window_ref.hide();
+                            let app_handle = window_ref.app_handle();
+                            
+                            // Check global quit state
+                            let quit_state = app_handle.state::<QuitState>();
+                            if quit_state.0.load(Ordering::Relaxed) {
+                                return; // Allow close
+                            }
+                            
+                            let settings_result = commands::settings::get_settings_sync(app_handle);
+                            
+                            match settings_result {
+                                Ok(settings) => {
+                                    if settings.close_to_tray {
+                                        api.prevent_close();
+                                        let _ = window_ref.hide();
+                                    }
+                                }
+                                Err(_) => {
+                                    // Default to safe behavior (hide) if settings fail
+                                    api.prevent_close();
+                                    let _ = window_ref.hide();
+                                }
+                            }
                         }
                         _ => {}
                     }

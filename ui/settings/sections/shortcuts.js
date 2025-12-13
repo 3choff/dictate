@@ -1,4 +1,5 @@
 import { ShortcutInput } from '../components/shortcut-input.js';
+import { i18n } from '../../shared/i18n.js';
 
 /**
  * Keyboard Shortcuts settings section
@@ -9,44 +10,44 @@ export class ShortcutsSection {
         
         this.toggleRecordingInput = new ShortcutInput(
             'shortcut-toggle-recording',
-            'Toggle Recording',
+            i18n.t('shortcuts.toggleRecording'),
             'Ctrl+Shift+D',
-            'Start and stop dictation'
+            i18n.t('shortcuts.tooltips.toggleRecording')
         );
         
         this.rewriteInput = new ShortcutInput(
             'shortcut-rewrite',
-            'Text Rewrite',
+            i18n.t('shortcuts.rewrite'),
             'Ctrl+Shift+R',
-            'Rewrite selected text (grammar, tone, style)'
+            i18n.t('shortcuts.tooltips.rewrite')
         );
         
         this.toggleViewInput = new ShortcutInput(
             'shortcut-toggle-view',
-            'Toggle View',
+            i18n.t('shortcuts.toggleView'),
             'Ctrl+Shift+V',
-            'Switch between compact and expanded mode'
+            i18n.t('shortcuts.tooltips.toggleView')
         );
         
         this.toggleSettingsInput = new ShortcutInput(
             'shortcut-toggle-settings',
-            'Toggle Settings',
+            i18n.t('shortcuts.toggleSettings'),
             'Ctrl+Shift+S',
-            'Open or close settings window'
+            i18n.t('shortcuts.tooltips.toggleSettings')
         );
         
         this.toggleDebugInput = new ShortcutInput(
             'shortcut-toggle-debug',
-            'Toggle Debug',
+            i18n.t('shortcuts.toggleDebug'),
             'Ctrl+Shift+L',
-            'Open or close developer tools'
+            i18n.t('shortcuts.tooltips.toggleDebug')
         );
         
         this.closeAppInput = new ShortcutInput(
             'shortcut-close-app',
-            'Close App',
+            i18n.t('shortcuts.closeApp'),
             'Ctrl+Shift+X',
-            'Exit Dictate application'
+            i18n.t('shortcuts.tooltips.closeApp')
         );
     }
 
@@ -56,17 +57,10 @@ export class ShortcutsSection {
         section.id = 'shortcuts-section';
         
         const title = document.createElement('h2');
-        title.textContent = 'Shortcuts';
+        title.textContent = i18n.t('shortcuts.title');
         title.className = 'section-title';
         section.appendChild(title);
         
-        const description = document.createElement('p');
-        description.className = 'section-description';
-        description.textContent = 'Customize global keyboard shortcuts.';
-        section.appendChild(description);
-
-        
-        // Add all shortcut inputs
         section.appendChild(this.toggleRecordingInput.render());
         section.appendChild(this.rewriteInput.render());
         section.appendChild(this.toggleViewInput.render());

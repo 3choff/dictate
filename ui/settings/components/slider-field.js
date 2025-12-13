@@ -1,16 +1,18 @@
 import { Tooltip } from '../../shared/tooltip.js';
+import { i18n } from '../../shared/i18n.js';
 
 /**
  * Slider Field component for numeric range values
  */
 export class SliderField {
-    constructor(id, label, min = 0, max = 1, step = 0.01, defaultValue = 0.18) {
+    constructor(id, label, min = 0, max = 1, step = 0.01, defaultValue = 0.18, tooltipKey = null) {
         this.id = id;
         this.label = label;
         this.min = min;
         this.max = max;
         this.step = step;
         this.defaultValue = defaultValue;
+        this.tooltipKey = tooltipKey;
         this.onChangeCallback = null;
     }
 
@@ -28,9 +30,12 @@ export class SliderField {
         labelEl.textContent = this.label;
         
         
-        // Attach tooltip
-        const tooltip = new Tooltip('Lower = stricter matching, Higher = more lenient', 'top');
-        tooltip.attachTo(labelEl);
+        // Attach tooltip if key provided
+        if (this.tooltipKey) {
+            const tooltipText = i18n.t(this.tooltipKey);
+            const tooltip = new Tooltip(tooltipText, 'top');
+            tooltip.attachTo(labelEl);
+        }
         
         labelRow.appendChild(labelEl);
         container.appendChild(labelRow);

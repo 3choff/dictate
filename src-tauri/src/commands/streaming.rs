@@ -274,7 +274,7 @@ pub async fn stop_streaming_transcription(
 // Helper function to insert transcript text
 async fn insert_transcript_text(text: &str, insertion_mode: &str, app_handle: &AppHandle) -> Result<(), String> {
     if insertion_mode == "typing" {
-        services::direct_typing::inject_text_native(text)
+        services::direct_typing::inject_text_native(text, app_handle)
             .map_err(|e| e.to_string())
     } else {
         services::clipboard_paste::insert_text_via_clipboard(text, app_handle)
@@ -312,23 +312,23 @@ fn apply_word_correction_sync(text: &str, custom_words: &[String], threshold: f6
 async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandle) -> Result<(), String> {
     match action {
         CommandAction::KeyPress(key) => {
-            services::direct_typing::send_key_native(key)
+            services::direct_typing::send_key_native(key, app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::KeyCombo(modifier, key) => {
-            services::direct_typing::send_key_combo_native(modifier, key)
+            services::direct_typing::send_key_combo_native(modifier, key, app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::DeleteLastWord => {
             // Send Ctrl+Backspace to delete last word
-            services::direct_typing::send_key_combo_native("control", "backspace")
+            services::direct_typing::send_key_combo_native("control", "backspace", app)
                 .map_err(|e| e.to_string())
         }
         CommandAction::Rewrite => {
             // Emit event to trigger text rewrite
             if let Some(window) = app.get_webview_window("main") {
                 tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-                let _ = crate::commands::text_injection::select_all_text().await;
+                let _ = crate::commands::text_injection::select_all_text(app.clone()).await;
                 tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
                 let _ = window.emit("sparkle-trigger", ());
             } else {

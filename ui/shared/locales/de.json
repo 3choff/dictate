@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "API-Schlüssel"
+    },
+    "sidebar": {
+        "general": "Anpassen",
+        "transcription": "Transkription",
+        "rewrite": "Umschreiben",
+        "shortcuts": "Tastenkürzel",
+        "ui": "Oberfläche",
+        "about": "Über"
+    },
+    "general": {
+        "title": "Anpassen",
+        "insertionMode": "Einfügemodus",
+        "typing": "Tippen (simuliert)",
+        "clipboard": "Zwischenablage (einfügen)",
+        "textFormatted": "Text formatiert",
+        "voiceCommands": "Sprachbefehle",
+        "audioCues": "Audio-Feedback",
+        "pushToTalk": "Push-to-Talk",
+        "input": "Eingabe",
+        "output": "Ausgabe",
+        "pttWarning": "Push-to-Talk wird nur mit Batch-Anbietern unterstützt (Groq, Gemini, Mistral, SambaNova, Fireworks)",
+        "tooltips": {
+            "insertionMode": "Einfügemodus für transkribierten Text wählen",
+            "textFormatted": "Interpunktion und Großschreibung anwenden",
+            "voiceCommands": "Sprachbefehle während der Aufnahme aktivieren",
+            "audioCues": "Töne beim Start und Stopp abspielen",
+            "pushToTalk": "Tastenkürzel gedrückt halten zum Aufnehmen"
+        }
+    },
+    "interface": {
+        "title": "Oberfläche",
+        "appearance": "Erscheinung",
+        "behavior": "Verhalten",
+        "darkMode": "Dunkelmodus",
+        "startHidden": "Versteckt starten",
+        "closeToTray": "In Taskleiste minimieren",
+        "autostart": "Beim Systemstart starten",
+        "language": "Sprache",
+        "tooltips": {
+            "darkMode": "Zwischen hellem und dunklem Farbschema wechseln",
+            "startHidden": "Anwendung in der Taskleiste ohne Fenster starten",
+            "closeToTray": "In die Taskleiste minimieren statt beenden",
+            "autostart": "Dictate automatisch bei Windows-Anmeldung starten",
+            "language": "Sprache der Benutzeroberfläche ändern"
+        }
+    },
+    "transcription": {
+        "title": "Transkription",
+        "language": "Sprache",
+        "model": "Modell",
+        "wordCorrection": "Wortkorrektur",
+        "threshold": "Schwellenwert",
+        "customWords": "Benutzerdefinierte Wörter",
+        "customWordsPlaceholder": "Wort hinzufügen...",
+        "addButton": "Hinzufügen",
+        "noCustomWords": "Keine benutzerdefinierten Wörter hinzugefügt",
+        "languages": {
+            "multilingual": "Mehrsprachig",
+            "en": "Englisch",
+            "it": "Italienisch",
+            "es": "Spanisch",
+            "fr": "Französisch",
+            "de": "Deutsch",
+            "pt": "Portugiesisch",
+            "ja": "Japanisch",
+            "nl": "Niederländisch",
+            "zh": "Chinesisch",
+            "ru": "Russisch"
+        },
+        "apiKeys": {
+            "placeholder": "API-Schlüssel eingeben"
+        },
+        "tooltips": {
+            "threshold": "Niedriger = strengere Übereinstimmung, Höher = toleranter"
+        }
+    },
+    "rewrite": {
+        "title": "Umschreiben",
+        "model": "Modell",
+        "provider": "Modell",
+        "mode": "Modus",
+        "promptPlaceholder": "Erklärung eingeben, wie der Text umgeschrieben werden soll...",
+        "modes": {
+            "grammar_correction": "Grammatikkorrektur",
+            "structured": "Strukturiert",
+            "professional": "Professionell",
+            "polite": "Höflich",
+            "casual": "Locker",
+            "custom": "Benutzerdefiniert"
+        },
+        "apiKeys": {
+            "placeholder": "API-Schlüssel eingeben"
+        }
+    },
+    "shortcuts": {
+        "title": "Tastenkürzel",
+        "toggleRecording": "Aufnahme umschalten",
+        "rewrite": "Text umschreiben",
+        "toggleView": "Ansicht umschalten",
+        "toggleSettings": "Einstellungen umschalten",
+        "toggleDebug": "Debug umschalten",
+        "closeApp": "Anwendung schließen",
+        "tooltips": {
+            "toggleRecording": "Diktat starten und stoppen",
+            "rewrite": "Ausgewählten Text umschreiben",
+            "toggleView": "Zwischen kompakt und erweitert wechseln",
+            "toggleSettings": "Einstellungen öffnen oder schließen",
+            "toggleDebug": "Entwicklertools öffnen oder schließen",
+            "closeApp": "Dictate beenden"
+        }
+    },
+    "update": {
+        "available": "Update verfügbar",
+        "uptodate": "Aktuell"
+    },
+    "main": {
+        "starting": "Starten...",
+        "recording": "Aufnahme...",
+        "processing": "Verarbeitung...",
+        "rewriting": "Umschreiben...",
+        "micAccessDenied": "Mikrofonzugriff verweigert",
+        "apiError": "API-Fehler: Einstellungen prüfen",
+        "pressToRecord": "Zum Aufnehmen drücken"
+    },
+    "about": {
+        "title": "Über",
+        "version": "Version",
+        "checkForUpdates": "Nach Updates suchen",
+        "sourceCode": "Quellcode",
+        "donate": "Spenden",
+        "reportIssue": "Problem melden",
+        "help": "Hilfe"
+    },
+    "footer": {
+        "donate": "Spenden"
+    }
+}

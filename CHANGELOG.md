@@ -1,3 +1,45 @@
+## [1.12.0] - 2025-12-13
+
+### ✨ Highlights
+- **Full Internationalization (i18n)**: Complete UI localization supporting 9 languages
+- **Interface Settings Section**: New dedicated section for appearance and behavior settings
+- **Close to Tray**: Minimize to system tray instead of exiting when closing the window
+
+### Added
+- **Multi-Language Support**:
+  - Complete translation of all UI elements including Settings, Main window, and System Tray
+  - Supported languages: English, Italian, Spanish, French, German, Portuguese, Chinese, Japanese, Russian
+  - Language selection in Settings → Interface
+  - Dynamic UI updates when switching languages (requires restart for tray menu)
+
+- **Interface Settings Section**:
+  - New dedicated section for UI-related settings (previously in Customize)
+  - Appearance settings: Dark mode, Language selection
+  - Behavior settings: Start hidden, Close to tray, Launch on startup
+
+- **Close to Tray**:
+  - New toggle in Settings → Interface → Behavior
+  - When enabled, closing the main window minimizes to system tray instead of quitting
+  - Use tray menu "Quit" to fully exit the application
+
+### Improved
+- **Clipboard & Text Insertion**:
+  - Enhanced Enigo keyboard simulation for better compatibility
+  - Improved clipboard paste reliability with proper delay handling
+  - Better error handling for text insertion failures
+
+- **Rewrite Prompts**:
+  - Added language preservation instructions to all preset prompts
+  - LLM now maintains the original language of dictated text when rewriting
+  - Prevents unwanted translation when app language differs from speech language
+
+### Changed
+- Reorganized Settings layout: UI settings moved from "Customize" to new "Interface" section
+- Separated app language (UI) from transcription language (speech recognition)
+- Improved component reuse with standardized SelectField for all dropdowns
+
+---
+
 ## [1.11.0] - 2025-12-12
 
 ### ✨ Highlights

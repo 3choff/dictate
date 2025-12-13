@@ -1,18 +1,18 @@
-use enigo::{Enigo, Key, Keyboard, Settings};
+use enigo::{Key, Keyboard};
 use std::thread;
 use std::time::Duration;
+use tauri::{AppHandle, Manager};
+use crate::EnigoState;
 
 /// Inject text using simulated keyboard typing
-/// Uses system input methods when possible, otherwise simulates keystrokes
-pub fn inject_text_native(text: &str) -> Result<(), String> {
+/// Uses shared Enigo instance for performance
+pub fn inject_text_native(text: &str, app_handle: &AppHandle) -> Result<(), String> {
     // Small delay to ensure the target window is ready
     thread::sleep(Duration::from_millis(50));
     
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
     
-    // Send the entire text in one call - faster and more reliable
-    // Enigo will use system input methods when available
     enigo
         .text(text)
         .map_err(|e| format!("Failed to send text directly: {}", e))?;
@@ -22,9 +22,9 @@ pub fn inject_text_native(text: &str) -> Result<(), String> {
 
 /// Inject text with a newline at the end
 #[allow(dead_code)]
-pub fn inject_text_with_enter(text: &str) -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+pub fn inject_text_with_enter(text: &str, app_handle: &AppHandle) -> Result<(), String> {
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
     
     enigo.text(text)
         .map_err(|e| format!("Failed to send text: {}", e))?;
@@ -37,9 +37,10 @@ pub fn inject_text_with_enter(text: &str) -> Result<(), String> {
 
 /// Simulate pressing Enter key
 #[allow(dead_code)]
-pub fn press_enter() -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+pub fn press_enter(app_handle: &AppHandle) -> Result<(), String> {
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
+
     enigo.key(Key::Return, enigo::Direction::Click)
         .map_err(|e| format!("Failed to press Enter: {}", e))?;
     Ok(())
@@ -47,9 +48,9 @@ pub fn press_enter() -> Result<(), String> {
 
 /// Simulate pressing a specific key combination
 #[allow(dead_code)]
-pub fn press_key_combination(keys: Vec<Key>) -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+pub fn press_key_combination(keys: Vec<Key>, app_handle: &AppHandle) -> Result<(), String> {
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
     
     // Press all keys down
     for key in &keys {
@@ -69,9 +70,9 @@ pub fn press_key_combination(keys: Vec<Key>) -> Result<(), String> {
 }
 
 /// Send a single key press (for voice commands)
-pub fn send_key_native(key_name: &str) -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+pub fn send_key_native(key_name: &str, app_handle: &AppHandle) -> Result<(), String> {
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
     
     let key = match key_name.to_lowercase().as_str() {
         "enter" | "return" => Key::Return,
@@ -89,9 +90,9 @@ pub fn send_key_native(key_name: &str) -> Result<(), String> {
 }
 
 /// Send a key combination (modifier + key) for voice commands
-pub fn send_key_combo_native(modifier: &str, key_name: &str) -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+pub fn send_key_combo_native(modifier: &str, key_name: &str, app_handle: &AppHandle) -> Result<(), String> {
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
     
     // Map modifier string to Key
     let mod_key = match modifier.to_lowercase().as_str() {

@@ -1,12 +1,13 @@
-use enigo::{Enigo, Key, Keyboard, Settings};
+use enigo::{Enigo, Key, Keyboard};
 use std::thread;
 use std::time::Duration;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_clipboard_manager::ClipboardExt;
+use crate::EnigoState;
 
 /// Sends a paste command (Cmd+V or Ctrl+V) using platform-specific virtual key codes.
-/// This ensures the paste works regardless of keyboard layout (e.g., Russian, AZERTY, DVORAK).
-fn send_paste() -> Result<(), String> {
+/// Uses the provided Enigo instance.
+fn send_paste(enigo: &mut Enigo) -> Result<(), String> {
     // Platform-specific key definitions
     #[cfg(target_os = "macos")]
     let (modifier_key, v_key_code) = (Key::Meta, Key::Other(9));
@@ -14,9 +15,6 @@ fn send_paste() -> Result<(), String> {
     let (modifier_key, v_key_code) = (Key::Control, Key::Other(0x56)); // VK_V
     #[cfg(target_os = "linux")]
     let (modifier_key, v_key_code) = (Key::Control, Key::Unicode('v'));
-
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
 
     // Press modifier + V
     enigo
@@ -58,15 +56,16 @@ pub fn insert_text_via_clipboard(text: &str, app_handle: &AppHandle) -> Result<(
     // Small delay to ensure the clipboard content has been written
     thread::sleep(Duration::from_millis(50));
 
-    send_paste()?;
+    // Use shared Enigo instance
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
+
+    send_paste(&mut enigo)?;
 
     thread::sleep(Duration::from_millis(50));
     
     // If text had trailing space, type it explicitly to ensure it appears in all apps
     if has_trailing_space {
-        let mut enigo = Enigo::new(&Settings::default())
-            .map_err(|e| format!("Failed to initialize Enigo for space: {}", e))?;
-        
         enigo
             .key(Key::Space, enigo::Direction::Click)
             .map_err(|e| format!("Failed to type space: {}", e))?;
@@ -89,10 +88,14 @@ pub fn copy_selected_text(app_handle: &AppHandle) -> Result<String, String> {
     #[cfg(target_os = "linux")]
     let (modifier_key, c_key_code) = (Key::Control, Key::Unicode('c'));
 
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
 
-    // Press modifier + C
+    // BACKUP: Read current clipboard content
+    let clipboard = app_handle.clipboard();
+    let backup_content = clipboard.read_text().unwrap_or_default();
+
+    // EXECUTE: Press modifier + C
     enigo
         .key(modifier_key, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press modifier key: {}", e))?;
@@ -100,20 +103,24 @@ pub fn copy_selected_text(app_handle: &AppHandle) -> Result<String, String> {
         .key(c_key_code, enigo::Direction::Click)
         .map_err(|e| format!("Failed to click C key: {}", e))?;
 
-    thread::sleep(Duration::from_millis(100));
+    thread::sleep(Duration::from_millis(50));
 
     enigo
         .key(modifier_key, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release modifier key: {}", e))?;
 
-    // Wait for clipboard to be populated
-    thread::sleep(Duration::from_millis(100));
+    // Wait for clipboard to be populated (Copy can be slow depending on app)
+    thread::sleep(Duration::from_millis(150));
 
-    // Get clipboard content using Tauri plugin
-    let clipboard = app_handle.clipboard();
-    let text = clipboard
+    // READ: Get the selected text
+    let selected_text = clipboard
         .read_text()
         .map_err(|e| format!("Failed to read clipboard: {}", e))?;
 
-    Ok(text)
+    // RESTORE: Write back the original content
+    clipboard
+        .write_text(&backup_content)
+        .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+
+    Ok(selected_text)
 }

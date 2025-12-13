@@ -1,3 +1,5 @@
+import { i18n } from '../../shared/i18n.js';
+
 export class AboutSection {
     render() {
         const section = document.createElement('div');
@@ -5,19 +7,14 @@ export class AboutSection {
         section.id = 'about-section';
 
         const title = document.createElement('h2');
-        title.textContent = 'About';
+        title.textContent = i18n.t('about.title');
         title.className = 'section-title';
         section.appendChild(title);
 
-        const description = document.createElement('p');
-        // description.textContent = 'Project information and support links.';
-        // description.className = 'section-description';
-        // section.appendChild(description);
-
-        section.appendChild(this.createInfoRow('Version', this.createVersionValue()));
-        section.appendChild(this.createButtonRow('Source code', 'about-source-code', 'GitHub', this.getGithubIcon()))
-        section.appendChild(this.createButtonRow('Report issue', 'about-help', 'Help', this.getHelpIcon()));
-        section.appendChild(this.createButtonRow('Support development', 'about-donate', 'Donate', this.getDonateIcon()));
+        section.appendChild(this.createInfoRow(i18n.t('about.version'), this.createVersionValue()));
+        section.appendChild(this.createButtonRow(i18n.t('about.sourceCode'), 'about-source-code', 'GitHub', this.getGithubIcon()))
+        section.appendChild(this.createButtonRow(i18n.t('about.reportIssue'), 'about-help', 'Help', this.getHelpIcon()));
+        section.appendChild(this.createButtonRow(i18n.t('about.donate'), 'about-donate', i18n.t('footer.donate'), this.getDonateIcon()));
 
         return section;
     }
@@ -60,7 +57,7 @@ export class AboutSection {
         const notice = document.createElement('span');
         notice.id = 'about-update-notice';
         notice.className = 'update-notice';
-        notice.textContent = 'Update available';
+        notice.textContent = i18n.t('update.available');
         container.appendChild(notice);
 
         const value = document.createElement('span');
@@ -68,8 +65,6 @@ export class AboutSection {
         value.className = 'about-value';
         value.textContent = '—';
         container.appendChild(value);
-
-
 
         return container;
     }

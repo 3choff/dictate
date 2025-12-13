@@ -1,0 +1,140 @@
+{
+    "apiKey": {
+        "label": "Chiave API"
+    },
+    "sidebar": {
+        "general": "Personalizza",
+        "transcription": "Trascrizione",
+        "rewrite": "Riscrivi",
+        "shortcuts": "Scorciatoie",
+        "ui": "Interfaccia",
+        "about": "Info"
+    },
+    "general": {
+        "title": "Personalizza",
+        "insertionMode": "Modalità Inserimento",
+        "typing": "Digitazione (Simulata)",
+        "clipboard": "Appunti (Incolla)",
+        "textFormatted": "Formatta testo",
+        "voiceCommands": "Comandi vocali",
+        "audioCues": "Feedback audio",
+        "pushToTalk": "Push-to-Talk",
+        "input": "Input",
+        "output": "Output",
+        "pttWarning": "Push-to-Talk è supportato solo con provider batch (Groq, Gemini, Mistral, SambaNova, Fireworks)",
+        "tooltips": {
+            "insertionMode": "Seleziona la modalità di inserimento del testo trascritto",
+            "textFormatted": "Applica punteggiatura e maiuscole al testo trascritto",
+            "voiceCommands": "Abilita i comandi vocali durante la registrazione",
+            "audioCues": "Riproduci suoni all'avvio e all'arresto della registrazione",
+            "pushToTalk": "Tieni premuto la scorciatoia per registrare, rilascia per fermare"
+        }
+    },
+    "interface": {
+        "title": "Interfaccia",
+        "appearance": "Aspetto",
+        "behavior": "Comportamento",
+        "darkMode": "Modalità scura",
+        "startHidden": "Avvia nascosto",
+        "closeToTray": "Chiudi nel vassoio",
+        "autostart": "Avvia all'accensione",
+        "language": "Lingua",
+        "tooltips": {
+            "darkMode": "Passa dallo schema colori chiaro a quello scuro",
+            "startHidden": "Avvia l'applicazione nel vassoio di sistema senza aprire la finestra",
+            "closeToTray": "Minimizza nel vassoio di sistema invece di uscire quando si chiude la finestra",
+            "autostart": "Avvia automaticamente Dictate quando accedi a Windows",
+            "language": "Cambia la lingua dell'interfaccia dell'applicazione"
+        }
+    },
+    "transcription": {
+        "title": "Trascrizione",
+        "language": "Lingua",
+        "model": "Modello",
+        "wordCorrection": "Correzione Parole",
+        "threshold": "Soglia",
+        "customWords": "Parole Personalizzate",
+        "customWordsPlaceholder": "Aggiungi una parola...",
+        "addButton": "Aggiungi",
+        "noCustomWords": "Nessuna parola personalizzata aggiunta",
+        "languages": {
+             "multilingual": "Multilingua",
+             "en": "Inglese",
+             "it": "Italiano",
+             "es": "Spagnolo",
+             "fr": "Francese",
+             "de": "Tedesco",
+             "pt": "Portoghese",
+             "ja": "Giapponese",
+             "nl": "Olandese",
+             "zh": "Cinese",
+             "ru": "Russo"
+        },
+        "apiKeys": {
+             "placeholder": "Inserisci la tua chiave API"
+        },
+        "tooltips": {
+             "threshold": "Più basso = corrispondenza più rigorosa, Più alto = più tollerante"
+        }
+    },
+    "rewrite": {
+        "title": "Riscrivi",
+        "provider": "Modello",
+        "model": "Modello",
+        "mode": "Modalità",
+        "promptPlaceholder": "Inserisci spiegazione su come riscrivere il testo...",
+        "modes": {
+            "grammar_correction": "Correzione Grammaticale",
+            "structured": "Strutturato",
+            "professional": "Professionale",
+            "polite": "Gentile",
+            "casual": "Informale",
+            "custom": "Personalizzato"
+        },
+        "apiKeys": {
+            "placeholder": "Inserisci la tua chiave API"
+        }
+    },
+    "shortcuts": {
+        "title": "Scorciatoie",
+        "toggleRecording": "Attiva/Disattiva Registrazione",
+        "rewrite": "Riscrivi Selezione",
+        "toggleView": "Cambia Vista",
+        "toggleSettings": "Apri/Chiudi Impostazioni",
+        "toggleDebug": "Attiva Debug",
+        "closeApp": "Chiudi Applicazione",
+        "tooltips": {
+            "toggleRecording": "Avvia e ferma la dettatura",
+            "rewrite": "Riscrivi il testo selezionato (grammatica, tono, stile)",
+            "toggleView": "Passa dalla modalità compatta a quella estesa",
+            "toggleSettings": "Apri o chiudi la finestra delle impostazioni",
+            "toggleDebug": "Apri o chiudi gli strumenti per sviluppatori",
+            "closeApp": "Esci dall'applicazione Dictate"
+        }
+    },
+    "update": {
+        "available": "Aggiornamento disponibile",
+        "uptodate": "Aggiornato"
+    },
+    "main": {
+        "starting": "Avvio...",
+        "recording": "Registrazione...",
+        "processing": "Elaborazione...",
+        "rewriting": "Riscittura...",
+        "micAccessDenied": "Accesso microfono negato",
+        "apiError": "Errore API: Controlla impostazioni",
+        "pressToRecord": "Premi per registrare"
+    },
+    "about": {
+        "title": "Info",
+        "version": "Versione",
+        "checkForUpdates": "Controlla aggiornamenti",
+        "sourceCode": "Codice Sorgente",
+        "donate": "Dona",
+        "reportIssue": "Segnala un problema",
+        "help": "Aiuto"
+    },
+    "footer": {
+        "donate": "Dona"
+    }
+}
