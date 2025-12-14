@@ -214,6 +214,8 @@ function setupEventListeners() {
     
     document.addEventListener('change', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+            // Compact mode toggle is handled separately by its own command
+            if (e.target.id === 'compact-mode-enabled') return;
             debouncedSave();
         }
     });
@@ -248,6 +250,7 @@ async function loadSettings(loadedSettings) {
             startHidden: settings.start_hidden || false,
             closeToTray: settings.close_to_tray !== false,
             autostartEnabled: settings.autostart_enabled || false,
+            compactMode: settings.compact_mode || false,
             groqApiKey: settings.groq_api_key || '',
             deepgramApiKey: settings.deepgram_api_key || '',
             cartesiaApiKey: settings.cartesia_api_key || '',
@@ -526,4 +529,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings(settings);
     initializeCustomSelects();
     await checkForUpdates();
+    
+    // Listen for toggle-view events (from keyboard shortcut) to sync compact mode toggle
+    const { listen } = window.__TAURI__?.event || {};
+    if (listen && sections.ui) {
+        listen('toggle-view', async () => {
+            // Small delay to ensure main window has saved the setting
+            await new Promise(r => setTimeout(r, 100));
+            // Fetch the new compact mode state and update toggle
+            try {
+                const newSettings = await invoke('get_settings');
+                sections.ui.compactModeToggle.setValue(newSettings.compact_mode || false);
+            } catch (e) {
+                console.error('Failed to sync compact mode toggle:', e);
+            }
+        });
+    }
 });

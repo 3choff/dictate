@@ -318,7 +318,14 @@ async fn save_settings_internal(app: &AppHandle, settings: Settings, emit_event:
 }
 
 #[tauri::command]
-pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), String> {
+pub async fn save_settings(app: AppHandle, mut settings: Settings) -> Result<(), String> {
+    // Preserve internal state that shouldn't be overwritten by frontend saves
+    // (compact_mode is toggled via toggle_compact_mode, window position is auto-saved)
+    if let Ok(existing) = get_settings(app.clone()).await {
+        settings.compact_mode = existing.compact_mode;
+        settings.main_window_position = existing.main_window_position;
+    }
+    
     // Public API always emits event (used by settings window)
     save_settings_internal(&app, settings, true).await
 }
@@ -326,7 +333,7 @@ pub async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), Str
 #[tauri::command]
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
     // Settings window size (sized for tallest section to avoid scrollbars)
-    const SETTINGS_WIDTH: f64 = 450.0;
+    const SETTINGS_WIDTH: f64 = 430.0;
     const SETTINGS_HEIGHT: f64 = 600.0;
     const GAP: f64 = 10.0;
     
@@ -631,12 +638,21 @@ pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), St
         })).map_err(|e| e.to_string())?;
     }
     
-    // Save compact mode preference without emitting event (UI already updated)
+    // Save compact mode preference without emitting event (UI is handled by main.js toggleCompactMode)
     settings.compact_mode = enabled;
     save_settings_internal(&app, settings, false).await?;
     
     // println!("[COMPACT] Toggle complete, saved settings");
     
+    Ok(())
+}
+
+/// Emit toggle-view event to main window (used by settings toggle)
+#[tauri::command]
+pub async fn emit_toggle_view(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        window.emit("toggle-view", ()).map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 

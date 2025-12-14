@@ -8,7 +8,7 @@
 ### Added
 - **Multi-Language Support**:
   - Complete translation of all UI elements including Settings, Main window, and System Tray
-  - Supported languages: English, Italian, Spanish, French, German, Portuguese, Chinese, Japanese, Russian
+  - Supported languages: English, Italian, Spanish, French, German, Dutch, Portuguese, Chinese, Japanese, Russian
   - Language selection in Settings → Interface
   - Dynamic UI updates when switching languages (requires restart for tray menu)
 

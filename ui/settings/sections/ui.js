@@ -9,6 +9,7 @@ import { i18n } from '../../shared/i18n.js';
 export class UISection {
     constructor() {
         this.darkModeToggle = new ToggleSwitch('dark-mode-enabled', i18n.t('interface.darkMode'));
+        this.compactModeToggle = new ToggleSwitch('compact-mode-enabled', i18n.t('interface.compactMode'));
         this.startHiddenToggle = new ToggleSwitch('start-hidden', i18n.t('interface.startHidden'));
         this.closeToTrayToggle = new ToggleSwitch('close-to-tray', i18n.t('interface.closeToTray'));
         this.autostartToggle = new ToggleSwitch('autostart-enabled', i18n.t('interface.autostart'));
@@ -19,6 +20,7 @@ export class UISection {
             { value: 'es', label: 'Español' },
             { value: 'fr', label: 'Français' },
             { value: 'de', label: 'Deutsch' },
+            { value: 'nl', label: 'Nederlands' },
             { value: 'pt', label: 'Português' },
             { value: 'zh', label: '中文' },
             { value: 'ja', label: '日本語' },
@@ -49,6 +51,7 @@ export class UISection {
         appearanceBody.className = 'settings-group-body';
         appearanceBody.appendChild(this.languageField.render());
         appearanceBody.appendChild(this.darkModeToggle.render());
+        appearanceBody.appendChild(this.compactModeToggle.render());
         appearanceGroup.appendChild(appearanceBody);
         section.appendChild(appearanceGroup);
         
@@ -64,8 +67,8 @@ export class UISection {
         const behaviorBody = document.createElement('div');
         behaviorBody.className = 'settings-group-body';
         behaviorBody.appendChild(this.startHiddenToggle.render());
-        behaviorBody.appendChild(this.closeToTrayToggle.render());
         behaviorBody.appendChild(this.autostartToggle.render());
+        behaviorBody.appendChild(this.closeToTrayToggle.render());
         behaviorGroup.appendChild(behaviorBody);
         section.appendChild(behaviorGroup);
         
@@ -119,6 +122,19 @@ export class UISection {
                 this.handleAutostartToggle(e.target.checked);
             });
         }
+        
+        // Add tooltip and handler for compact mode toggle
+        const compactModeToggleElement = document.getElementById('compact-mode-enabled');
+        if (compactModeToggleElement) {
+            const labelElement = compactModeToggleElement.closest('.toggle-row')?.querySelector('.toggle-label');
+            if (labelElement) {
+                new Tooltip(i18n.t('interface.tooltips.compactMode'), 'top').attachTo(labelElement);
+            }
+            
+            compactModeToggleElement.addEventListener('change', (e) => {
+                this.handleCompactModeToggle(e.target.checked);
+            });
+        }
     }
     
     addTooltip(id, text) {
@@ -145,9 +161,13 @@ export class UISection {
         if (settings.appLanguage !== undefined) {
             this.languageField.setValue(settings.appLanguage);
         }
+        if (settings.compactMode !== undefined) {
+            this.compactModeToggle.setValue(settings.compactMode);
+        }
     }
 
     getValues() {
+        // Note: compactMode is NOT included here - it's handled by toggle_compact_mode command
         return {
             darkModeEnabled: this.darkModeToggle.getValue(),
             startHidden: this.startHiddenToggle.getValue(),
@@ -171,6 +191,18 @@ export class UISection {
                 .catch((error) => {
                     console.error('Failed to set autostart:', error);
                     this.autostartToggle.setValue(!enabled);
+                });
+        }
+    }
+    
+    handleCompactModeToggle(enabled) {
+        // Emit the same toggle-view event that the keyboard shortcut uses
+        // This ensures consistent behavior and proper sync
+        if (window.__TAURI__?.core?.invoke) {
+            window.__TAURI__.core.invoke('emit_toggle_view')
+                .catch((error) => {
+                    console.error('Failed to emit toggle view:', error);
+                    this.compactModeToggle.setValue(!enabled);
                 });
         }
     }

@@ -1,0 +1,142 @@
+{
+    "apiKey": {
+        "label": "API-sleutel"
+    },
+    "sidebar": {
+        "general": "Aanpassen",
+        "transcription": "Transcriptie",
+        "rewrite": "Herschrijven",
+        "shortcuts": "Sneltoetsen",
+        "ui": "Interface",
+        "about": "Over"
+    },
+    "general": {
+        "title": "Aanpassen",
+        "insertionMode": "Invoegmodus",
+        "typing": "Typen (gesimuleerd)",
+        "clipboard": "Klembord (plakken)",
+        "textFormatted": "Geformatteerde tekst",
+        "voiceCommands": "Spraakopdrachten",
+        "audioCues": "Audiofeedback",
+        "pushToTalk": "Push-to-Talk",
+        "input": "Invoer",
+        "output": "Uitvoer",
+        "pttWarning": "Push-to-Talk wordt alleen ondersteund met batch-providers (Groq, Gemini, Mistral, SambaNova, Fireworks)",
+        "tooltips": {
+            "insertionMode": "Selecteer de invoegmodus voor getranscribeerde tekst",
+            "textFormatted": "Interpunctie en hoofdletters toepassen op getranscribeerde tekst",
+            "voiceCommands": "Spraakopdrachten inschakelen tijdens opname",
+            "audioCues": "Geluiden afspelen bij starten en stoppen van opname",
+            "pushToTalk": "Houd sneltoets ingedrukt om op te nemen, laat los om te stoppen"
+        }
+    },
+    "interface": {
+        "title": "Interface",
+        "appearance": "Uiterlijk",
+        "behavior": "Gedrag",
+        "darkMode": "Donkere modus",
+        "compactMode": "Compacte weergave",
+        "startHidden": "Verborgen starten",
+        "closeToTray": "Sluiten naar systeemvak",
+        "autostart": "Starten bij opstarten",
+        "language": "Taal",
+        "tooltips": {
+            "darkMode": "Schakelen tussen licht en donker kleurenschema",
+            "compactMode": "Schakel naar compacte horizontale pil-layout",
+            "startHidden": "Applicatie starten in systeemvak zonder venster te openen",
+            "closeToTray": "Minimaliseren naar systeemvak in plaats van afsluiten",
+            "autostart": "Dictate automatisch starten bij Windows-aanmelding",
+            "language": "Wijzig de taal van de applicatie-interface"
+        }
+    },
+    "transcription": {
+        "title": "Transcriptie",
+        "language": "Taal",
+        "model": "Model",
+        "wordCorrection": "Woordcorrectie",
+        "threshold": "Drempel",
+        "customWords": "Aangepaste woorden",
+        "customWordsPlaceholder": "Voeg een woord toe...",
+        "addButton": "Toevoegen",
+        "noCustomWords": "Geen aangepaste woorden toegevoegd",
+        "languages": {
+            "multilingual": "Meertalig",
+            "en": "Engels",
+            "it": "Italiaans",
+            "es": "Spaans",
+            "fr": "Frans",
+            "de": "Duits",
+            "pt": "Portugees",
+            "ja": "Japans",
+            "nl": "Nederlands",
+            "zh": "Chinees",
+            "ru": "Russisch"
+        },
+        "apiKeys": {
+            "placeholder": "Voer uw API-sleutel in"
+        },
+        "tooltips": {
+            "threshold": "Lager = striktere overeenkomst, Hoger = toleranter"
+        }
+    },
+    "rewrite": {
+        "title": "Herschrijven",
+        "model": "Model",
+        "provider": "Model",
+        "mode": "Modus",
+        "promptPlaceholder": "Voer uitleg in over hoe tekst te herschrijven...",
+        "modes": {
+            "grammar_correction": "Grammaticacorrectie",
+            "structured": "Gestructureerd",
+            "professional": "Professioneel",
+            "polite": "Beleefd",
+            "casual": "Informeel",
+            "custom": "Aangepast"
+        },
+        "apiKeys": {
+            "placeholder": "Voer uw API-sleutel in"
+        }
+    },
+    "shortcuts": {
+        "title": "Sneltoetsen",
+        "toggleRecording": "Opname wisselen",
+        "rewrite": "Tekst herschrijven",
+        "toggleView": "Weergave wisselen",
+        "toggleSettings": "Instellingen wisselen",
+        "toggleDebug": "Debug wisselen",
+        "closeApp": "App sluiten",
+        "tooltips": {
+            "toggleRecording": "Dictatie starten en stoppen",
+            "rewrite": "Geselecteerde tekst herschrijven",
+            "toggleView": "Schakelen tussen compacte en uitgebreide modus",
+            "toggleSettings": "Instellingen openen of sluiten",
+            "toggleDebug": "Ontwikkelaarstools openen of sluiten",
+            "closeApp": "Dictate afsluiten"
+        }
+    },
+    "update": {
+        "available": "Update beschikbaar",
+        "uptodate": "Up-to-date"
+    },
+    "main": {
+        "starting": "Starten...",
+        "recording": "Opnemen...",
+        "processing": "Verwerken...",
+        "rewriting": "Herschrijven...",
+        "micAccessDenied": "Microfoontoegang geweigerd",
+        "apiError": "API-fout: Controleer instellingen",
+        "pressToRecord": "Druk om op te nemen"
+    },
+    "about": {
+        "title": "Over",
+        "version": "Versie",
+        "checkForUpdates": "Controleren op updates",
+        "sourceCode": "Broncode",
+        "donate": "Doneren",
+        "reportIssue": "Probleem melden",
+        "help": "Help"
+    },
+    "footer": {
+        "donate": "Doneren"
+    }
+}

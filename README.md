@@ -53,7 +53,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Close to Tray:** Option to minimize to system tray instead of exiting when closing the window. Configurable in Settings → Interface.
 *   **Start Hidden:** Option to launch the app hidden to system tray without showing the main window.
 *   **Launch on Startup:** Automatically start Dictate when you log in to Windows. Configurable in Settings → Interface.
-*   **Multi-Language Interface:** Full UI localization supporting 9 languages: English, Italian, Spanish, French, German, Portuguese, Chinese, Japanese, and Russian. Change the interface language in Settings → Interface.
+*   **Multi-Language Interface:** Full UI localization supporting 10 languages: English, Italian, Spanish, French, German, Dutch, Portuguese, Chinese, Japanese, and Russian. Change the interface language in Settings → Interface.
 
 ## Installation
 

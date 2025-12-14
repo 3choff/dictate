@@ -288,9 +288,12 @@ async function loadSettings() {
         
         console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} rewriteMode=${REWRITE_MODE} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
-        // Restore compact mode state
-        if (settings.compact_mode) {
+        // Restore/sync compact mode state (without animation when loading from settings)
+        const isCurrentlyCompact = document.body.classList.contains('compact-mode');
+        if (settings.compact_mode && !isCurrentlyCompact) {
             document.body.classList.add('compact-mode');
+        } else if (!settings.compact_mode && isCurrentlyCompact) {
+            document.body.classList.remove('compact-mode');
         }
         
         // Apply theme
