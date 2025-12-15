@@ -1,0 +1,55 @@
+html, body {
+    background: transparent;
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.menu {
+    width: 120px;
+    padding: 2px;
+    background-color: var(--primary-bg);
+    border: 1px solid var(--divider-color);
+    border-radius: 12px;
+    box-shadow: inset -1px 0px 2px 0px var(--shadow-light);
+    backdrop-filter: blur(12px);
+    box-sizing: border-box;
+}
+
+.menu-item {
+    width: 100%;
+    padding: 5px;
+    border: 0;
+    background: transparent;
+    color: var(--text-color);
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.2;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: var(--button-hover-bg);
+}
+
+.menu-item:active {
+    background-color: var(--button-bg);
+}
+
+.menu-item:focus {
+    outline: none;
+}
+
+.menu-separator {
+    height: 1px;
+    background-color: var(--divider-color);
+    margin: 2px;
+}
+
+.menu-item.danger:hover {
+    background-color: var(--active-bg);
+    color: var(--active-text);
+}

@@ -68,6 +68,20 @@ pub struct Settings {
     pub close_to_tray: bool,
 }
 
+#[derive(Clone, Copy)]
+pub struct TrayMenuAnchor {
+    pub anchor_x: f64,
+    pub anchor_y_top: f64,
+    pub anchor_y_bottom: f64,
+    pub work_left: i32,
+    pub work_top: i32,
+    pub work_right: i32,
+    pub work_bottom: i32,
+}
+
+pub struct TrayMenuAnchorState(pub Mutex<Option<TrayMenuAnchor>>);
+pub struct TrayMenuSizeState(pub Mutex<Option<(f64, f64)>>);
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WindowPosition {
     pub x: i32,
@@ -332,6 +346,10 @@ pub async fn save_settings(app: AppHandle, mut settings: Settings) -> Result<(),
 
 #[tauri::command]
 pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
+    if let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") {
+        let _ = tray_menu_wnd.hide();
+    }
+
     // Settings window size (sized for tallest section to avoid scrollbars)
     const SETTINGS_WIDTH: f64 = 430.0;
     const SETTINGS_HEIGHT: f64 = 600.0;
@@ -520,21 +538,34 @@ fn calculate_settings_position(
     (fallback_x, fallback_y)
 }
 
+use crate::QuitState;
+
 #[tauri::command]
-pub async fn exit_app(app: AppHandle) {
-    // Give pending saves time to complete (75ms debounce + buffer)
-    tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+pub async fn exit_app(app: AppHandle, quit_state: tauri::State<'_, QuitState>) -> Result<(), String> {
+    // Hide tray menu first
+    if let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") {
+        let _ = tray_menu_wnd.hide();
+    }
+
+    // Set global quit state so close handlers allow the close
+    quit_state.0.store(true, std::sync::atomic::Ordering::Relaxed);
     
     // Close all windows gracefully
-    if let Some(main_window) = app.get_webview_window("main") {
-        let _ = main_window.close();
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.close();
     }
-    if let Some(settings_window) = app.get_webview_window("settings") {
-        let _ = settings_window.close();
+    if let Some(w) = app.get_webview_window("settings") {
+        let _ = w.close();
     }
     
-    // Exit the app (Tauri handles cleanup)
-    app.exit(0);
+    // Force exit after delay to ensure app closes even if windows don't trigger it
+    let app_clone = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        app_clone.exit(0);
+    });
+    
+    Ok(())
 }
 
 #[tauri::command]
@@ -740,15 +771,119 @@ pub async fn reregister_shortcuts(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn apply_theme(app: AppHandle, theme: String) -> Result<(), String> {
-    // Apply theme to main window
+    let script = format!(
+        "document.documentElement.setAttribute('data-theme', '{}');",
+        theme
+    );
+
     if let Some(main_window) = app.get_webview_window("main") {
-        let script = format!(
-            "document.documentElement.setAttribute('data-theme', '{}');",
-            theme
-        );
         let _ = main_window.eval(&script);
     }
-    
+
+    if let Some(settings_window) = app.get_webview_window("settings") {
+        let _ = settings_window.eval(&script);
+    }
+
+    if let Some(tray_menu_window) = app.get_webview_window("tray_menu") {
+        let _ = tray_menu_window.eval(&script);
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn tray_menu_ready(_app: AppHandle) -> Result<(), String> {
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_tray_menu_size(
+    app: AppHandle,
+    anchor_state: State<'_, TrayMenuAnchorState>,
+    size_state: State<'_, TrayMenuSizeState>,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") else {
+        return Ok(());
+    };
+
+    {
+        let mut size_guard = size_state.0.lock().map_err(|_| "TrayMenuSizeState lock poisoned")?;
+        *size_guard = Some((width, height));
+    }
+
+    let scale = tray_menu_wnd.scale_factor().map_err(|e| e.to_string())?;
+    let menu_w_px = width * scale;
+    let menu_h_px = height * scale;
+    let gap_px = 2.0 * scale;
+
+    tray_menu_wnd
+        .set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }))
+        .map_err(|e| e.to_string())?;
+
+    let anchor_opt = {
+        let guard = anchor_state.0.lock().map_err(|_| "TrayMenuAnchorState lock poisoned")?;
+        *guard
+    };
+
+    let Some(anchor) = anchor_opt else {
+        return Ok(());
+    };
+
+    let min_x = anchor.work_left as f64;
+    let min_y = anchor.work_top as f64;
+    let max_x = (anchor.work_right as f64) - menu_w_px;
+    let max_y = (anchor.work_bottom as f64) - menu_h_px;
+
+    let clamp = |value: f64, min: f64, max: f64| -> f64 {
+        if max < min {
+            return min;
+        }
+        value.max(min).min(max)
+    };
+
+    let mut x = anchor.anchor_x - (menu_w_px / 2.0);
+    x = clamp(x, min_x, max_x);
+
+    let y_below = anchor.anchor_y_bottom + gap_px;
+    let y_above = anchor.anchor_y_top - menu_h_px - gap_px;
+
+    let mut y = if y_below + menu_h_px <= anchor.work_bottom as f64 {
+        y_below
+    } else if y_above >= min_y {
+        y_above
+    } else {
+        clamp(anchor.anchor_y_top, min_y, max_y)
+    };
+
+    y = clamp(y, min_y, max_y);
+
+    tray_menu_wnd
+        .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: x as i32,
+            y: y as i32,
+        }))
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn toggle_main_window(app: AppHandle) -> Result<(), String> {
+    if let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") {
+        let _ = tray_menu_wnd.hide();
+    }
+
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.hide();
+        } else {
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }
+
     Ok(())
 }
 

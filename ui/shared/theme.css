@@ -72,6 +72,10 @@
     --warning-text: #ffc107;
     --warning-border: rgba(255, 193, 7, 0.3);
 
+    /* Active Colors */
+    --active-bg: rgba(0, 169, 255, 0.1);
+    --active-text: #00a9ff;
+
     /* Icon specific properties */
     --sparkle-stroke-width: 0.2;
     --sparkle-fill: #e8eaed;

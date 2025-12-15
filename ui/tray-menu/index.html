@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tray Menu</title>
+    <link rel="stylesheet" href="../shared/theme.css">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="menu" role="menu" aria-label="Tray menu">
+        <button class="menu-item" id="tray-action-toggle" type="button" role="menuitem">Show/Hide</button>
+        <button class="menu-item" id="tray-action-settings" type="button" role="menuitem">Settings</button>
+        <div class="menu-separator" role="separator"></div>
+        <button class="menu-item danger" id="tray-action-quit" type="button" role="menuitem">Quit</button>
+    </div>
+
+    <script type="module" src="./tray-menu.js"></script>
+</body>
+</html>
