@@ -7,7 +7,7 @@ Dictate is a high-performance desktop dictation application for Windows built wi
 If Dictate improves your workflow, please consider supporting ongoing AI memberships and inference costs via 
 [**Ko-fi**](https://ko-fi.com/3choff)           [![Support via Ko-fi](./assets/ko-fi/kofi_symbol.svg)](https://ko-fi.com/3choff)
 
-**Version:** 1.12.0
+**Version:** 1.13.0
 **All changes are documented in the `CHANGELOG.md` file.**
 
 > **Note:** The legacy Electron-based version (v0.6.7) is available in the `electron-legacy` branch.
@@ -48,7 +48,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     * Non‑streaming providers (Groq, Gemini, Mistral): when unchecked, the app normalizes transcript (lowercase + removes punctuation). When checked, transcript is preserved.
     * Streaming provider (Deepgram): toggles the `smart_format` request parameter to match the setting.
 *   **Flexible Text Insertion:** Choose between native Windows SendKeys or clipboard-based insertion for compatibility.
-*   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "press rewrite") and system shortcuts entirely through voice, with an in-app toggle to enable or disable them. Commands now apply consistently to both streaming and non-streaming providers.
+*   **Voice Commands:** Execute rich text manipulation actions (e.g., "press enter", "backspace", "delete that", "select all", "press rewrite") and system shortcuts entirely through voice in **10 supported languages**. Commands are fully localized and apply consistently to both streaming and batch providers.
 *   **System Tray Integration:** The app runs in the system tray with quick access to Show/Hide, Settings, and Quit.
 *   **Close to Tray:** Option to minimize to system tray instead of exiting when closing the window. Configurable in Settings → Interface.
 *   **Start Hidden:** Option to launch the app hidden to system tray without showing the main window.
@@ -125,7 +125,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 
 ### Voice Commands
 
-Dictate supports several voice commands for hands-free text manipulation. The full list of available commands is defined in `src-tauri/src/voice_commands.rs` and applies consistently across all providers (streaming and batch). Here are a few examples:
+Dictate supports rich voice commands for hands-free text manipulation, now available in **10 languages** (English, Italian, Spanish, French, German, Dutch, Portuguese, Chinese, Japanese, Russian). The active command set automatically matches your selected **Transcription Language**. The full list of available commands is defined in `src-tauri/src/voice_commands/` and applies consistently across all providers. Here are a few examples (English):
 
 *   **Punctuation:** "period" (.), "comma" (,), "question mark" (?)
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"

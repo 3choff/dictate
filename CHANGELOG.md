@@ -1,3 +1,39 @@
+## [1.13.0] - 2025-12-16
+
+### ✨ Highlights
+- **Multi-Language Voice Commands**: Native voice control support for 9 new languages
+- **Custom System Tray**: Completely re-engineered tray menu for instant, native-like performance
+
+### Added
+- **Multi-Language Voice Commands**:
+  - Modular system supporting: Italian, Spanish, French, German, Dutch, Portuguese, Chinese, Russian, Japanese
+  - Language-specific command prefixes (e.g., "premi", "press") to prevent accidental triggers
+  - Seamless integration with existing transcription flow
+- **Compact View Toggle**:
+  - New toggle in Settings → Interface → Appearance
+  - Synchronized state with global shortcut (`Ctrl+Shift+V`)
+
+### Improved
+- **System Tray Experience**:
+  - Pre-created hidden window ensures instant menu appearance on first click
+  - Robust window positioning logic clamps menu within screen bounds
+  - Refactored exit flow to match native application behavior
+- **Settings Synchronization**:
+  - Toggle switches now properly reflect external state changes (like shortcuts)
+
+### Fixed
+- **Transcription Formatting**:
+  - Fixed missing trailing space in batch transcription when voice commands are disabled
+- **Settings Persistence**:
+  - Fixed issue where saving settings could overwrite compact mode or window position
+- **UI Styling**:
+  - Fixed sidebar and section border visibility issues in Light theme
+- **Stability**:
+  - Resolved borrow checker errors in streaming transcription handlers
+  - Cleaned up unused legacy code in voice command system
+
+---
+
 ## [1.12.0] - 2025-12-13
 
 ### ✨ Highlights
