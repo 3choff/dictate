@@ -521,7 +521,7 @@ pub fn run() {
                             // Check global quit state
                             let quit_state = app_handle.state::<QuitState>();
                             if quit_state.0.load(Ordering::Relaxed) {
-                                return; // Allow close
+                                return;
                             }
                             
                             let settings_result = commands::settings::get_settings_sync(app_handle);

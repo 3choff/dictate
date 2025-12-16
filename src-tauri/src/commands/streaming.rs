@@ -45,6 +45,9 @@ pub async fn start_streaming_transcription(
     match provider.as_str() {
         "deepgram" => {
             // Start Deepgram streaming
+            // Clone language for voice commands before passing ownership to start_streaming
+            let voice_lang = language.clone();
+            
             let (audio_tx, mut transcript_rx) = providers::deepgram::start_streaming(
                 api_key,
                 language,
@@ -66,6 +69,7 @@ pub async fn start_streaming_transcription(
             let sessions_clone = state.sessions.clone();
             
             let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
+            // voice_lang is already cloned above
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
                     // Apply word correction if custom words are configured
@@ -82,7 +86,7 @@ pub async fn start_streaming_transcription(
                     
                     // Process voice commands if enabled
                     if voice_cmds_enabled {
-                        let voice_commands = VoiceCommands::new();
+                        let voice_commands = VoiceCommands::new_with_language(&voice_lang);
                         let processed = process_voice_commands(&corrected_transcript, &voice_commands);
                         
                         // Execute command actions
@@ -129,6 +133,13 @@ pub async fn start_streaming_transcription(
         }
         "cartesia" => {
             // Start Cartesia streaming
+            // Clone language for voice commands before cart_language takes ownership
+            let voice_lang = if language == "multi" || language.is_empty() {
+                "en".to_string()
+            } else {
+                language.clone()
+            };
+            
             // Cartesia uses raw language code (omit for multilingual)
             let cart_language = if language == "multi" || language.is_empty() {
                 None
@@ -179,7 +190,7 @@ pub async fn start_streaming_transcription(
                     
                     // Process voice commands if enabled
                     if voice_cmds_enabled {
-                        let voice_commands = VoiceCommands::new();
+                        let voice_commands = VoiceCommands::new_with_language(&voice_lang);
                         let processed = process_voice_commands(&corrected_transcript, &voice_commands);
                         
                         // Execute command actions

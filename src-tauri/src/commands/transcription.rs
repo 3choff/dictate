@@ -96,7 +96,8 @@ pub async fn transcribe_audio_segment(
     // Process voice commands if enabled
     let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
     if voice_cmds_enabled {
-        let voice_commands = VoiceCommands::new();
+        let lang = language.as_deref().unwrap_or("en");
+        let voice_commands = VoiceCommands::new_with_language(lang);
         let processed = process_voice_commands(&formatted, &voice_commands);
         
         // Execute command actions first
@@ -134,13 +135,15 @@ pub async fn transcribe_audio_segment(
     } else {
         // No voice commands - insert text directly
         if !formatted.is_empty() {
+            // Append trailing space as expected for dictation
+            let text_to_insert = format!("{} ", formatted);
             match insertion_mode.as_str() {
                 "typing" => {
-                    services::direct_typing::inject_text_native(&formatted, &app)
+                    services::direct_typing::inject_text_native(&text_to_insert, &app)
                         .map_err(|e| format!("Failed to insert text: {}", e))?;
                 }
                 "clipboard" | _ => {
-                    services::clipboard_paste::insert_text_via_clipboard(&formatted, &app)
+                    services::clipboard_paste::insert_text_via_clipboard(&text_to_insert, &app)
                         .map_err(|e| format!("Failed to insert text: {}", e))?;
                 }
             }
