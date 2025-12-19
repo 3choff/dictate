@@ -1,3 +1,27 @@
+/* Regular (400) */
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../assets/fonts/GoogleSansFlex_24pt-Regular.ttf') format('truetype');
+}
+
+/* Medium (500) */
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 500;
+    src: url('../assets/fonts/GoogleSansFlex_24pt-Medium.ttf') format('truetype');
+}
+
+/* Bold (700) */
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: url('../assets/fonts/GoogleSansFlex_24pt-Bold.ttf') format('truetype');
+}
+
 /**
  * Centralized Theme System
  * Supports dark (default) and light modes
@@ -8,8 +32,10 @@
 :root,
 :root[data-theme="dark"] {
     /* Backgrounds */
+    --font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --primary-bg: #161616cc;
-    --secondary-bg: #3c3c3c;
+    --secondary-bg: #303030;
+    /* --secondary-bg: #1e1f20; */
     --tertiary-bg: #2a2a2a;
 
     /* Text Colors */
@@ -25,7 +51,8 @@
     --handle-color: #5f6368a9;
 
     /* Accent Colors (Blue) */
-    --accent-color: #00a9ff;
+    /* --accent-color: #00a9ff; */
+    --accent-color: #2da1ff;
     --accent-hover: #0087cc;
     --accent-glow: #00a9f880;
     --accent-glow-strong: #00a9f84d;
@@ -47,7 +74,7 @@
 
     /* Buttons */
     --button-bg: #3c3c3c;
-    --button-hover-bg: #4a4a4a;
+    --button-hover-bg: rgba(74, 74, 74, 0.30);
     --button-text: #ffffff;
 
     /* Toggles */
@@ -95,7 +122,7 @@
 :root[data-theme="light"] {
     /* Backgrounds */
     --primary-bg: #f5f5f7e6;
-    --secondary-bg: #ffffff;
+    --secondary-bg: #f9fbfe;
     --tertiary-bg: #e8e8ed;
 
     /* Text Colors */
@@ -134,7 +161,7 @@
 
     /* Buttons */
     --button-bg: #e8e8ed;
-    --button-hover-bg: #d2d2d7;
+    --button-hover-bg: rgba(74, 74, 74, 0.10);
     --button-text: #1d1d1f;
 
     /* Toggles */
@@ -187,5 +214,6 @@ input,
 select,
 textarea,
 button {
+    font-family: var(--font-family);
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

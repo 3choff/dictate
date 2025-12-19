@@ -4,7 +4,7 @@ html,
 body {
     background: transparent;
     color: var(--text-color);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-family);
     margin: 0;
     -webkit-app-region: no-drag;
     overflow: hidden;
@@ -64,6 +64,7 @@ textarea {
     cursor: pointer;
     -webkit-app-region: no-drag;
     z-index: 10;
+    display: flex;
 }
 
 .close-button svg {
@@ -124,15 +125,18 @@ textarea {
 }
 
 .form-group select,
-.form-group input {
+.form-group input,
+.settings-dropdown {
     width: 100%;
     padding: 8px;
     background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: none;
+    border-radius: 7px;
     color: var(--text-color);
     font-size: 14px;
     box-sizing: border-box;
+    position: relative;
+    z-index: 1;
 }
 
 /* Highlight selected option inside dropdown with accent color */
@@ -144,9 +148,9 @@ textarea {
 }
 
 .form-group select:focus,
-.form-group input:focus {
+.form-group input:focus,
+.settings-dropdown:focus {
     outline: none;
-    border-color: var(--accent-color);
 }
 
 /* Toggle row styling */
@@ -238,6 +242,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 .eye-toggle:hover svg path {
@@ -248,17 +253,17 @@ textarea {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: transparent;
-    border: 1px solid var(--border-color);
+    background: var(--secondary-bg);
+    border: none;
     color: var(--label-color);
     padding: 6px 10px;
-    border-radius: 8px;
+    border-radius: 7px;
     cursor: pointer;
-    margin-left: auto;
+    position: relative;
+    z-index: 1;
 }
 
 .help-link:hover {
-    border-color: var(--accent-color);
     color: var(--text-color);
 }
 
@@ -322,7 +327,6 @@ textarea {
 }
 
 .about-button {
-    margin-left: auto;
     width: 90px;
     height: 35px;
     text-align: center;
@@ -345,12 +349,14 @@ textarea {
     justify-content: space-between;
     padding: 8px;
     background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    /* border: 1px solid var(--border-color); */
+    border: none;
+    border-radius: 7px;
     color: var(--text-color);
     font-size: 14px;
     cursor: pointer;
     box-sizing: border-box;
+    z-index: 1;
 }
 
 .custom-select-trigger:hover {
@@ -376,10 +382,10 @@ textarea {
     background-color: var(--secondary-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    /* This is where you get the rounded corners for the list */
     margin-top: 4px;
     overflow: hidden;
-    z-index: 1000;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .custom-options.open {
@@ -481,7 +487,7 @@ textarea {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 20px 30px 10px 30px;
+    padding: 20px 20px 10px 20px;
 }
 
 #content-container {
@@ -503,8 +509,8 @@ textarea {
 
 .section-title {
     font-size: 22px;
-    font-weight: 600;
-    padding-bottom: 8px;
+    font-weight: 500;
+    padding-bottom: 2px;
     margin: 0 0 4px 0;
     color: var(--text-color);
     border-bottom: 1px solid var(--divider-color);
@@ -601,7 +607,7 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: anchor-center;
-    gap: 16px;
+    gap: 6px;
     margin-bottom: 6px;
     /* padding: 12px;
     background: rgba(255, 255, 255, 0.03); */
@@ -634,34 +640,31 @@ textarea {
     gap: 8px;
 }
 
+.shortcut-input-container .focus-gradient-border {
+    display: flex;
+    align-items: center;
+}
+
 .shortcut-input {
-    width: 180px;
-    padding: 8px 32px 8px 12px;
+    width: 100px;
+    padding: 8px 12px;
+    padding-right: 36px !important;
     background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: 8px;
     color: var(--text-color);
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', monospace;
     transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .shortcut-input:focus {
     outline: none;
-    border-color: var(--accent-color);
-    background-color: rgba(60, 60, 60, 0.8);
-}
-
-.shortcut-input.shortcut-capturing {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.2);
 }
 
 .shortcut-restore-btn {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
     width: 24px;
     height: 24px;
     padding: 4px;
@@ -674,6 +677,13 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* position: relative; */
+    z-index: 1;
+    /* flex-shrink: 0; */
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .shortcut-restore-btn:hover {
@@ -721,7 +731,7 @@ textarea {
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', monospace;
     color: var(--accent-color);
-    background: var(--active-bg);
+    /* background: var(--active-bg); */
     padding: 2px 8px;
     border-radius: 4px;
 }
@@ -790,27 +800,36 @@ textarea {
 
 .custom-words-input-row {
     display: flex;
+    align-items: flex-end;
     gap: 8px;
     margin-bottom: 12px;
 }
 
-.custom-words-input {
+.custom-words-input-row .focus-gradient-border {
     flex: 1;
-    padding: 8px 12px;
+}
+
+.custom-words-input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
     background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: none;
+    border-radius: 7px;
     color: var(--text-color);
     font-size: 14px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
 }
 
 .custom-words-input:focus {
     outline: none;
-    border-color: var(--accent-color);
 }
 
 .custom-words-add-btn {
-    padding: 8px 16px;
+    height: 36px;
+    padding: 0 16px;
     background: var(--accent-color);
     color: white;
     border: none;
@@ -819,11 +838,14 @@ textarea {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .custom-words-add-btn:hover {
     background: #0093e8;
-    transform: translateY(-1px);
+    /* transform: translateY(-1px); */
 }
 
 .custom-words-list {
@@ -871,8 +893,8 @@ textarea {
     align-items: center;
     gap: 6px;
     padding: 4px 8px 4px 12px;
-    background: var(--accent-glow-strong);
-    border: 1px solid var(--accent-glow);
+    /* background: var(--accent-glow-strong); */
+    border: 1px solid var(--accent-color);
     border-radius: 16px;
     font-size: 13px;
     color: var(--text-color);
@@ -903,32 +925,102 @@ textarea {
 }
 
 .custom-words-remove-btn:hover {
-    background: rgba(255, 100, 100, 0.6);
+    background: rgba(255, 22, 22, 0.80);
     color: #fff;
 }
 
-/* Prompt Textarea Restyling */
+/* Focus Gradient Border Wrapper */
+.focus-gradient-border {
+    --blue-ramp-1: #44a2ff;
+    --blue-ramp-2: #2da1ff;
+    --blue-ramp-3: #007af4;
+    --blue-ramp-4: #005cbf;
+    --blue-ramp-5: #003d80;
+    --border-off-color: #444746;
+    --shine-color: #ffffff;
+    position: relative;
+    isolation: isolate;
+    background-clip: padding-box;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background-color: var(--secondary-bg);
+    margin-top: 2px;
+}
+
+.focus-gradient-border:has(.prompt-textarea) {
+    margin-top: 8px;
+}
+
+.focus-gradient-border::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    z-index: 0;
+    background: linear-gradient(-25deg,
+            var(--blue-ramp-5) 0%,
+            var(--blue-ramp-4) 5%,
+            var(--blue-ramp-3) 15%,
+            var(--blue-ramp-2) 35%,
+            var(--blue-ramp-1) 50%,
+            var(--shine-color) 55%,
+            var(--shine-color) 60%,
+            var(--border-off-color) 45%,
+            var(--border-off-color) 100%);
+    background-size: 400% 200%;
+    background-position: 0% 0%;
+    opacity: 1;
+    transition: background-position 0.3s ease-out;
+    pointer-events: none;
+}
+
+/* .focus-gradient-border::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    z-index: 0;
+    background: linear-gradient(-25deg,
+            var(--blue-ramp-5) 0%,
+            var(--blue-ramp-4) 5%,
+            var(--blue-ramp-3) 15%,
+            var(--blue-ramp-2) 25%,
+            var(--blue-ramp-1) 30%,
+            var(--shine-color) 35%,
+            var(--shine-color) 40%,
+            var(--border-off-color) 45%,
+            var(--border-off-color) 100%);
+    background-size: 400% 200%;
+    background-position: 0% 0%;
+    opacity: 1;
+    transition: background-position 0.3s ease-out;
+    pointer-events: none;
+} */
+
+.focus-gradient-border:focus-within::after,
+.focus-gradient-border.active::after,
+.focus-gradient-border:hover::after {
+    background-position: 100% 100%;
+}
+
+/* Prompt Textarea (inside gradient border wrapper) */
 .prompt-textarea {
     width: 100%;
     box-sizing: border-box;
     min-height: 250px;
-    /* flex: 1; */
-    margin-top: 8px;
     padding: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    border: none;
     background-color: var(--secondary-bg);
     color: var(--text-color);
     font-family: inherit;
     font-size: 13px;
     line-height: 1.4;
-    resize: vertical;
+    resize: none;
     outline: none;
-    transition: border-color 0.2s;
-}
-
-.prompt-textarea:focus {
-    border-color: var(--accent-color);
+    display: block;
+    position: relative;
+    z-index: 1;
 }
 
 
@@ -949,4 +1041,14 @@ textarea {
 
 .prompt-textarea::-webkit-scrollbar-thumb:hover {
     background-color: var(--label-color);
+}
+
+.footer-donate-wrapper {
+    margin-left: auto;
+    margin-top: 0;
+}
+
+.about-row-button .focus-gradient-border {
+    margin-left: auto;
+    margin-top: 0;
 }

@@ -16,6 +16,10 @@ export class SelectField {
         labelEl.htmlFor = this.id;
         labelEl.textContent = this.label;
         
+        // Gradient border wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'focus-gradient-border';
+
         const select = document.createElement('select');
         select.id = this.id;
         select.className = 'custom-select';
@@ -27,8 +31,9 @@ export class SelectField {
             select.appendChild(option);
         });
         
+        wrapper.appendChild(select);
         container.appendChild(labelEl);
-        container.appendChild(select);
+        container.appendChild(wrapper);
         
         return container;
     }

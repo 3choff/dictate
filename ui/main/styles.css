@@ -1,9 +1,10 @@
 /* Theme colors now defined in ../shared/theme.css */
 
-html, body {
+html,
+body {
     background: transparent;
     color: var(--text-color);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-family);
     margin: 0;
     height: 100vh;
     -webkit-app-region: no-drag;
@@ -13,7 +14,7 @@ html, body {
 body.transitioning {
     transform-origin: top center;
     will-change: transform, opacity;
-    transition: transform 0.14s cubic-bezier(.2,.8,.2,1), opacity 0.14s cubic-bezier(.2,.8,.2,1);
+    transition: transform 0.14s cubic-bezier(.2, .8, .2, 1), opacity 0.14s cubic-bezier(.2, .8, .2, 1);
 }
 
 body.transitioning.compact-enter {
@@ -38,8 +39,10 @@ body.transitioning.compact-exit {
     overflow: hidden;
     transform: scale(1);
     opacity: 1;
-    -webkit-app-region: drag;  /* Make entire container draggable by default */
-    position: relative;  /* For absolute positioning of visualizer */
+    -webkit-app-region: drag;
+    /* Make entire container draggable by default */
+    position: relative;
+    /* For absolute positioning of visualizer */
 }
 
 .top-bar {
@@ -70,9 +73,11 @@ body.transitioning.compact-exit {
 
 .close-button {
     cursor: pointer;
-    -webkit-app-region: no-drag;  /* Buttons are not draggable */
+    -webkit-app-region: no-drag;
+    /* Buttons are not draggable */
     z-index: 10;
     transition: opacity 0.2s ease;
+    display: flex;
 }
 
 .close-button svg {
@@ -88,7 +93,8 @@ body.transitioning.compact-exit {
 /* Audio visualizer - hidden by default in normal mode */
 .audio-visualizer {
     display: none;
-    align-items: flex-end;  /* Bars expand upward from bottom */
+    align-items: flex-end;
+    /* Bars expand upward from bottom */
     justify-content: center;
     gap: 6px;
     position: absolute;
@@ -96,12 +102,13 @@ body.transitioning.compact-exit {
     left: 50%;
     transform: translateX(-50%);
     height: 24px;
-    width: 120px;  /* Ensure space for all 9 bars */
+    width: 120px;
+    /* Ensure space for all 9 bars */
     padding: 0 12px;
 }
 
 /* Show visualizer only when recording in normal mode */
-.mic-button.recording ~ .audio-visualizer {
+.mic-button.recording~.audio-visualizer {
     display: flex;
 }
 
@@ -123,7 +130,8 @@ body.transitioning.compact-exit {
     /* Keep main-content draggable - only exclude buttons */
 }
 
-.icon-button, .mic-button {
+.icon-button,
+.mic-button {
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -138,7 +146,8 @@ body.transitioning.compact-exit {
     height: 24px;
     border-radius: 50%;
     background-color: transparent;
-    box-sizing: border-box; /* allow padding without changing overall size */
+    box-sizing: border-box;
+    /* allow padding without changing overall size */
 }
 
 .mic-button {
@@ -181,7 +190,9 @@ body.transitioning.compact-exit {
     height: 24px;
 }
 
-.icon-button.pressed, .sparkle-icon.pressed, .settings-icon.pressed {
+.icon-button.pressed,
+.sparkle-icon.pressed,
+.settings-icon.pressed {
     transform: scale(0.96);
     opacity: 0.9;
 }
@@ -191,12 +202,14 @@ body.transitioning.compact-exit {
     animation: pulse 2s infinite;
     box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
     background-color: var(--active-mic-bg);
-    padding: 2px; /* add margin between SVG and button edges when active */
+    padding: 2px;
+    /* add margin between SVG and button edges when active */
 }
-.sparkle-icon svg { 
+
+.sparkle-icon svg {
     transition: width 80ms ease, height 80ms ease;
     width: 26px;
-    height: 26px; 
+    height: 26px;
 }
 
 .sparkle-icon svg path {
@@ -213,7 +226,11 @@ body.transitioning.compact-exit {
     fill: var(--sparkle-fill);
 }
 
-.sparkle-icon.loading svg { width: 20px; height: 20px; }
+.sparkle-icon.loading svg {
+    width: 20px;
+    height: 20px;
+}
+
 .sparkle-icon.loading svg path {
     fill: var(--active-mic-icon);
 }
@@ -223,9 +240,11 @@ body.transitioning.compact-exit {
     0% {
         box-shadow: 0 0 0 0 var(--pulse-color);
     }
+
     70% {
         box-shadow: 0 0 0 10px var(--pulse-end-color);
     }
+
     100% {
         box-shadow: 0 0 0 0 var(--pulse-end-color);
     }
@@ -246,15 +265,19 @@ body.transitioning.compact-exit {
 
 /* Compact mode: horizontal pill layout */
 body.compact-mode .container {
-    border-radius: 30px;  /* Full pill shape */
-    flex-direction: row;  /* Horizontal layout */
+    border-radius: 30px;
+    /* Full pill shape */
+    flex-direction: row;
+    /* Horizontal layout */
     align-items: center;
     padding: 6px 10px;
-    -webkit-app-region: drag;  /* Entire pill is draggable */
+    -webkit-app-region: drag;
+    /* Entire pill is draggable */
 }
 
 body.compact-mode .top-bar {
-    display: none;  /* Hide top bar completely in compact mode */
+    display: none;
+    /* Hide top bar completely in compact mode */
 }
 
 /* Hide normal close button in compact mode */
@@ -274,14 +297,16 @@ body.compact-mode .main-content {
 
 body.compact-mode .settings-icon,
 body.compact-mode .sparkle-icon {
-    display: none;  /* Hide side buttons */
+    display: none;
+    /* Hide side buttons */
 }
 
 body.compact-mode .mic-button {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-    order: 1;  /* Mic button first */
+    order: 1;
+    /* Mic button first */
     /* box-shadow: 0 0 0 2px var(--accent-glow); */
     box-shadow: 0 0 0 0px var(--accent-glow);
     transition: box-shadow 0.2s ease;
@@ -309,14 +334,16 @@ body.compact-mode .close-button-compact {
     /* box-shadow: 0 0 0 2px var(--accent-glow); */
     transition: box-shadow 0.2s ease;
     flex-shrink: 0;
-    -webkit-app-region: no-drag;  /* Close button is clickable, not draggable */
-    order: 3;  /* Close button last (after dots) */
+    -webkit-app-region: no-drag;
+    /* Close button is clickable, not draggable */
+    order: 3;
+    /* Close button last (after dots) */
 }
 
 body.compact-mode .close-button-compact:hover {
     /* box-shadow: 0 0 0 2px #f0f0f080, 0 0 10px 4px #f0f0f84d; */
     box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
-    
+
 }
 
 body.compact-mode .close-button-compact svg {
@@ -330,15 +357,18 @@ body.compact-mode .close-button-compact svg path {
 
 /* Audio visualizer in compact mode - inline with buttons, always visible */
 body.compact-mode .audio-visualizer {
-    display: flex !important;  /* Always show in compact mode */
-    align-items: center;  /* Bars expand from center in compact mode */
+    display: flex !important;
+    /* Always show in compact mode */
+    align-items: center;
+    /* Bars expand from center in compact mode */
     position: static;
     transform: none;
     gap: 4px;
     flex: 1;
     min-width: 90px;
     height: 20px;
-    order: 2;  /* Between mic and close button */
+    order: 2;
+    /* Between mic and close button */
     margin: 0 8px;
     padding: 0;
 }

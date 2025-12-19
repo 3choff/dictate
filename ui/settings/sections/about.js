@@ -34,6 +34,9 @@ export class AboutSection {
     }
 
     createButtonRow(labelText, buttonId, buttonText, iconSvg) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'focus-gradient-border';
+        
         const button = document.createElement('button');
         button.id = buttonId;
         button.type = 'button';
@@ -44,7 +47,8 @@ export class AboutSection {
             button.textContent = buttonText;
         }
 
-        const row = this.createInfoRow(labelText, button);
+        wrapper.appendChild(button);
+        const row = this.createInfoRow(labelText, wrapper);
         row.classList.add('about-row-button');
 
         return row;

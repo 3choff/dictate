@@ -19,7 +19,7 @@ export class Dropdown {
         container.appendChild(label);
 
         const wrapper = document.createElement('div');
-        wrapper.className = 'select-wrapper';
+        wrapper.className = 'focus-gradient-border';
 
         const select = document.createElement('select');
         select.id = this.id;

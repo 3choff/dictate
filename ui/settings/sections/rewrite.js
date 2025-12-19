@@ -63,11 +63,16 @@ export class RewriteSection {
         modeFieldEl.style.flexDirection = 'column';
         section.appendChild(modeFieldEl);
 
+        // Create wrapper for gradient border animation
+        const textareaWrapper = document.createElement('div');
+        textareaWrapper.className = 'focus-gradient-border';
+
         this.promptTextarea = document.createElement('textarea');
         this.promptTextarea.className = 'prompt-textarea';
         this.promptTextarea.placeholder = i18n.t('rewrite.promptPlaceholder');
         
-        modeFieldEl.appendChild(this.promptTextarea);
+        textareaWrapper.appendChild(this.promptTextarea);
+        modeFieldEl.appendChild(textareaWrapper);
         
         return section;
     }

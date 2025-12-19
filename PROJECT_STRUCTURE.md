@@ -100,26 +100,30 @@ Voice Activity Detection using Silero VAD model for intelligent speech segmentat
 - Complete utterances preserved
 - ~30% code reduction from old RMS approach
 
-### 5. Voice Commands Module (`voice_commands.rs`)
-Voice command processing system at root level.
+### 5. Voice Commands Module (`voice_commands/`)
+Voice command processing system organized by language.
+
+**Structure:**
+- `mod.rs` - Main module with `VoiceCommands` struct and `new_with_language()` factory
+- `en.rs` - English command definitions
+- `it.rs`, `es.rs`, `fr.rs`, `de.rs`, `nl.rs`, `pt.rs`, `zh.rs`, `ja.rs`, `ru.rs` - Language-specific modules
 
 **Features:**
-- Regex-based command pattern matching
-- 40+ command definitions (punctuation, keys, combinations)
-- Command action types: KeyPress, KeyCombo, InsertText, DeleteLastWord, Rewrite, PauseDictation
-- Works with both streaming and batch providers
-- Configurable via settings toggle
+- **Multi-language support**: 10 languages (English, Italian, Spanish, French, German, Dutch, Portuguese, Chinese, Japanese, Russian)
+- **Factory pattern**: `new_with_language(lang)` loads correct command set
+- **Regex-based matching**: Flexible pattern recognition for each language
+- **Unified Action System**: Same `CommandAction` types for all languages
+- **Consistent API**: Works with both streaming and batch providers
 
 **Key structures:**
-- `VoiceCommands` - Collection of all command mappings (HashMap)
-- `CommandAction` - Enum of possible command actions (KeyPress, KeyCombo, InsertText, DeleteLastWord, Rewrite, PauseDictation)
-- `ProcessedText` - Result containing processed text and actions
-- `process_voice_commands()` - Main processing function using regex pattern matching
+- `VoiceCommands` - Struct containing language-specific command HashMap
+- `CommandAction` - Enum of actions (KeyPress, KeyCombo, InsertText, DeleteLastWord, Rewrite, PauseDictation)
+- `process_voice_commands()` - Main processing function using regex
 
-**Notable commands:**
-- "press rewrite" - Triggers text rewrite (selects all + applies rewrite shortcut)
-- "delete that" / "remove that" - Deletes last word (Ctrl+Backspace)
-- "pause voice typing" / "stop dictation" - Pauses recording
+**Notable commands (English examples):**
+- "press rewrite" - Triggers text rewrite
+- "delete that" - Deletes last word
+- "pause voice typing" - Pauses recording
 
 ## Frontend Structure (`ui/`)
 
@@ -205,7 +209,7 @@ Recording session orchestration and state management.
 
 ##
 
-### Window Folders (`main/`, `settings/`)
+### Window Folders (`main/`, `settings/`, `tray-menu/`)
 Each window has its own folder with complete isolation:
 
 **main/** - Primary dictation window
@@ -215,11 +219,17 @@ Each window has its own folder with complete isolation:
 - Audio assets: `beep.mp3`, `clack.mp3`
 
 **settings/** - Settings configuration window
-- `index.html` - Settings form with tabbed interface (Transcription, Rewrite, General, Shortcuts, About)
-- `settings.js` - Settings load/save logic with auto-save debouncing
-- `styles.css` - Settings window styling
-- `sections/` - Modular section components for each settings tab
-- `components/` - Reusable UI components (password fields, toggles, shortcuts)
+- `index.html` - Settings form with tabbed interface
+- `settings.js` - Settings logic and section management
+- `styles.css` - Settings styling
+- `sections/` - Modular section components
+- `components/` - Reusable UI components
+- `locales/` - (in `ui/shared/locales/`) JSON translation files (en.json, it.json, etc.)
+
+**tray-menu/** - Custom system tray menu window
+- `index.html` - Menu list UI
+- `styles.css` - Native-like menu styling (clamped to screen, hover effects)
+- (Logic handled via inline script or simple JS)
 
 **Benefits:**
 - Clear separation of concerns

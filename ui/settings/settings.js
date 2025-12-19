@@ -414,9 +414,11 @@ function cmpSemver(a, b) {
     return 0;
 }
 
+// Global registry for all custom dropdowns
+const customDropdowns = [];
+
 function createCustomSelect(selectElement) {
-    // ... same as before ...
-     const selectWrapper = document.createElement('div');
+    const selectWrapper = document.createElement('div');
     selectWrapper.className = 'custom-select-wrapper';
 
     const trigger = document.createElement('div');
@@ -424,7 +426,6 @@ function createCustomSelect(selectElement) {
     trigger.innerHTML = `<span></span><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon-sm"><path d="M12.1338 5.94433C12.3919 5.77382 12.7434 5.80202 12.9707 6.02929C13.1979 6.25656 13.2261 6.60807 13.0556 6.8662L12.9707 6.9707L8.47067 11.4706C8.21097 11.7303 7.78896 11.7303 7.52926 11.4706L3.02926 6.9707L2.9443 6.8662C2.77379 6.60807 2.80199 6.25656 3.02926 6.02929C3.25653 5.80202 3.60804 5.77382 3.86617 5.94433L3.97067 6.02929L7.99996 10.0586L12.0293 6.02929L12.1338 5.94433Z"></path></svg>`;
     selectWrapper.appendChild(trigger);
     
-    // ... rest of custom select implementation ...
     const options = document.createElement('div');
     options.className = 'custom-options';
 
@@ -445,75 +446,124 @@ function createCustomSelect(selectElement) {
     const selectedOption = selectElement.options[selectElement.selectedIndex];
     if (selectedOption) trigger.querySelector('span').textContent = selectedOption.textContent;
 
-    // Event Listeners
-    trigger.addEventListener('click', () => {
-        const isOpen = options.classList.toggle('open');
-        if (isOpen) {
-             const rect = trigger.getBoundingClientRect();
-             const spaceBelow = window.innerHeight - rect.bottom;
-             const spaceAbove = rect.top;
-             const optionsHeight = options.scrollHeight;
-
-             // Use fixed positioning to escape overflow clipping
-             options.style.position = 'fixed';
-             options.style.left = rect.left + 'px';
-             options.style.width = rect.width + 'px';
-             options.style.maxHeight = '';
-             options.style.overflowY = '';
-
-             // If not enough space below, position above
-             if (optionsHeight > spaceBelow - 10 && spaceAbove > spaceBelow) {
-                 options.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
-                 options.style.top = 'auto';
-                 
-                 // Add scrolling if still too tall
-                 if (optionsHeight > spaceAbove - 10) {
-                     options.style.maxHeight = (spaceAbove - 10) + 'px';
-                     options.style.overflowY = 'auto';
-                 }
-             } else {
-                 // Position below
-                 options.style.top = (rect.bottom + 2) + 'px';
-                 options.style.bottom = 'auto';
-                 
-                 // Add scrolling if needed
-                 if (optionsHeight > spaceBelow - 10) {
-                     options.style.maxHeight = (spaceBelow - 10) + 'px';
-                     options.style.overflowY = 'auto';
-                 }
-             }
-        } else {
-            // Reset to absolute positioning when closed
+    // Dropdown instance object
+    const dropdown = {
+        trigger,
+        options,
+        selectWrapper,
+        
+        isOpen() {
+            return options.classList.contains('open');
+        },
+        
+        close() {
+            if (!this.isOpen()) return;
+            
+            options.classList.remove('open');
+            const gradientBorder = selectWrapper.closest('.focus-gradient-border');
+            if (gradientBorder) {
+                gradientBorder.classList.remove('active');
+            }
+            
+            // Move options back to wrapper and reset styles
+            if (options.parentElement === document.body) {
+                selectWrapper.appendChild(options);
+            }
             options.style.position = '';
             options.style.left = '';
             options.style.width = '';
             options.style.top = '';
             options.style.bottom = '';
+            options.style.maxHeight = '';
+            options.style.overflowY = '';
+        },
+        
+        open() {
+            // Close all other dropdowns first
+            customDropdowns.forEach(d => {
+                if (d !== this) d.close();
+            });
+            
+            options.classList.add('open');
+            const gradientBorder = selectWrapper.closest('.focus-gradient-border');
+            if (gradientBorder) {
+                gradientBorder.classList.add('active');
+            }
+
+            const rect = trigger.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            const optionsHeight = options.scrollHeight;
+
+            // Move options to body to escape stacking context
+            document.body.appendChild(options);
+
+            // Use fixed positioning
+            options.style.position = 'fixed';
+            options.style.left = rect.left + 'px';
+            options.style.width = rect.width + 'px';
+
+            // Position above or below based on available space
+            if (optionsHeight > spaceBelow - 10 && spaceAbove > spaceBelow) {
+                options.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
+                options.style.top = 'auto';
+                if (optionsHeight > spaceAbove - 10) {
+                    options.style.maxHeight = (spaceAbove - 10) + 'px';
+                    options.style.overflowY = 'auto';
+                }
+            } else {
+                options.style.top = (rect.bottom + 2) + 'px';
+                options.style.bottom = 'auto';
+                if (optionsHeight > spaceBelow - 10) {
+                    options.style.maxHeight = (spaceBelow - 10) + 'px';
+                    options.style.overflowY = 'auto';
+                }
+            }
+        },
+        
+        toggle() {
+            if (this.isOpen()) {
+                this.close();
+            } else {
+                this.open();
+            }
+        },
+        
+        containsTarget(target) {
+            return trigger.contains(target) || options.contains(target);
         }
+    };
+
+    // Register in global array
+    customDropdowns.push(dropdown);
+
+    // Event Listeners
+    trigger.addEventListener('click', () => {
+        dropdown.toggle();
     });
 
     options.addEventListener('click', (e) => {
         if (e.target.classList.contains('custom-option')) {
             selectElement.value = e.target.dataset.value;
             trigger.querySelector('span').textContent = e.target.textContent;
-            options.classList.remove('open');
+            dropdown.close();
             selectElement.dispatchEvent(new Event('change', { bubbles: true }));
         }
     });
 }
 
-function initializeCustomSelects() {
-    document.querySelectorAll('.custom-select').forEach(createCustomSelect);
-}
-
-window.addEventListener('click', (e) => {
-    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
-        if (!wrapper.contains(e.target)) {
-            const optionsEl = wrapper.querySelector('.custom-options');
-            if (optionsEl) optionsEl.classList.remove('open');
+// Single global document click listener for all dropdowns
+document.addEventListener('click', (e) => {
+    customDropdowns.forEach(dropdown => {
+        if (dropdown.isOpen() && !dropdown.containsTarget(e.target)) {
+            dropdown.close();
         }
     });
 });
+
+function initializeCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach(createCustomSelect);
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {

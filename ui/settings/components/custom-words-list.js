@@ -26,12 +26,18 @@ export class CustomWordsList {
         const inputRow = document.createElement('div');
         inputRow.className = 'custom-words-input-row';
 
+        // Gradient border wrapper for input
+        const wrapper = document.createElement('div');
+        wrapper.className = 'focus-gradient-border';
+
         const input = document.createElement('input');
         input.type = 'text';
         input.id = this.id;
         input.className = 'custom-words-input';
         input.placeholder = i18n.t('transcription.customWordsPlaceholder');
-        inputRow.appendChild(input);
+        
+        wrapper.appendChild(input);
+        inputRow.appendChild(wrapper);
 
         const addButton = document.createElement('button');
         addButton.type = 'button';

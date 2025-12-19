@@ -33,6 +33,10 @@ export class ShortcutInput {
         const inputContainer = document.createElement('div');
         inputContainer.className = 'shortcut-input-container';
         
+        // Gradient border wrapper for the input
+        const wrapper = document.createElement('div');
+        wrapper.className = 'focus-gradient-border';
+
         const input = document.createElement('input');
         input.type = 'text';
         input.id = this.id;
@@ -125,8 +129,9 @@ export class ShortcutInput {
             input.dispatchEvent(new Event('change', { bubbles: true }));
         });
         
-        inputContainer.appendChild(input);
-        inputContainer.appendChild(restoreBtn);
+        wrapper.appendChild(input);
+        wrapper.appendChild(restoreBtn);
+        inputContainer.appendChild(wrapper);
         
         container.appendChild(labelDiv);
         container.appendChild(inputContainer);
