@@ -35,6 +35,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("按下 重做".to_string(), "ctrl+y".to_string());
     commands.insert("按下 剪切".to_string(), "ctrl+x".to_string());
     commands.insert("全选".to_string(), "ctrl+a".to_string());
+    commands.insert("取消选择".to_string(), "right".to_string());
+    commands.insert("不选择".to_string(), "right".to_string());
     commands.insert("按下 空格".to_string(), "space".to_string());
     commands.insert("按下 制表符".to_string(), "tab".to_string());
     commands.insert("删除那个".to_string(), "delete_last_word".to_string());

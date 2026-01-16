@@ -81,7 +81,7 @@ pub fn register_shortcuts(app: &AppHandle) {
         }
     }
 
-    // Text rewrite (select-all, then trigger rewrite) on key release to avoid SHIFT still held
+    // Text rewrite shortcut - frontend handles smart selection
     if let Ok(shortcut) = shortcuts.rewrite.parse::<Shortcut>() {
         if let Err(e) = gs.on_shortcut(shortcut, |app, _shortcut, event| {
             if event.state == ShortcutState::Released {
@@ -90,9 +90,7 @@ pub fn register_shortcuts(app: &AppHandle) {
                     tauri::async_runtime::spawn(async move {
                         // Wait a bit for all modifiers from the hotkey to be released
                         sleep(Duration::from_millis(200)).await;
-                        // Select all using the same command we expose to the frontend
-                        let _ = commands::text_injection::select_all_text(window_clone.app_handle().clone()).await;
-                        sleep(Duration::from_millis(150)).await;
+                        // Emit trigger - frontend performRewrite() handles selection logic
                         let _ = window_clone.emit("sparkle-trigger", ());
                     });
                 }

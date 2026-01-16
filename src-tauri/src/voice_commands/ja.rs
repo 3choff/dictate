@@ -41,6 +41,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("切り取りを押す".to_string(), "ctrl+x".to_string());
     commands.insert("すべて選択".to_string(), "ctrl+a".to_string());
     commands.insert("全選択".to_string(), "ctrl+a".to_string());
+    commands.insert("選択解除".to_string(), "right".to_string());
+    commands.insert("解除".to_string(), "right".to_string());
     commands.insert("スペースを押す".to_string(), "space".to_string());
     commands.insert("タブを押す".to_string(), "tab".to_string());
     commands.insert("それを削除".to_string(), "delete_last_word".to_string());

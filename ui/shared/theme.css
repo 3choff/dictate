@@ -34,7 +34,8 @@
     /* Backgrounds */
     --font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --primary-bg: #161616cc;
-    --secondary-bg: #303030;
+    --secondary-bg: rgba(48, 48, 48, 0.50);
+    --secondary-fullbg: rgba(48, 48, 48, 1);
     /* --secondary-bg: #1e1f20; */
     --tertiary-bg: #2a2a2a;
 
@@ -52,23 +53,30 @@
 
     /* Accent Colors (Blue) */
     /* --accent-color: #00a9ff; */
-    --accent-color: #2da1ff;
-    --accent-hover: #0087cc;
+    /* --accent-color: #2da1ff; */
+    --accent-color: #218af3;
+    /* --accent-hover: #0087cc; */
+    /* --accent-hover: #3186FF; */
+    --accent-hover: #0d7ff0;
     --accent-glow: #00a9f880;
     --accent-glow-strong: #00a9f84d;
 
     /* Pulse Animation */
-    --pulse-color: #00a9ffb3;
-    --pulse-end-color: #00a9ff00;
+    /* --pulse-color: #00a9ffb3;
+    --pulse-end-color: #00a9ff00; */
+    --pulse-color: #2da1ffb3;
+    --pulse-end-color: #2da1ff00;
 
     /* Active States */
-    --active-mic-bg: #00a9ff;
+    /* --active-mic-bg: #00a9ff; */
+    --active-mic-bg: #2da1ff;
     --active-mic-icon: #202124;
 
     /* Input Fields */
     --input-bg: #2a2a2a;
     --input-border: #555555;
-    --input-focus-border: #00a9ff;
+    /* --input-focus-border: #00a9ff; */
+    --input-focus-border: #2da1ff;
     --input-text: #ffffff;
     --input-placeholder: #808080;
 
@@ -101,7 +109,8 @@
 
     /* Active Colors */
     --active-bg: rgba(0, 169, 255, 0.1);
-    --active-text: #00a9ff;
+    /* --active-text: #00a9ff; */
+    --active-text: #2da1ff;
 
     /* Icon specific properties */
     --sparkle-stroke-width: 0.2;
@@ -116,13 +125,17 @@
     --visualizer-active-to: rgb(160, 200, 248);
     /* Light blue when active */
     --visualizer-active-opacity-min: 0.5;
+
+    /* Shimmer Effect */
+    --border-off-color: #444746;
 }
 
 /* Light Theme */
 :root[data-theme="light"] {
     /* Backgrounds */
     --primary-bg: #f5f5f7e6;
-    --secondary-bg: #f9fbfe;
+    --secondary-bg: rgba(249, 251, 254, 0.5);
+    --secondary-fullbg: rgba(249, 251, 254, 1);
     --tertiary-bg: #e8e8ed;
 
     /* Text Colors */
@@ -138,24 +151,31 @@
     --handle-color: #9da4aca9;
 
     /* Accent Colors (Blue) */
-    --accent-color: #00a9ff;
-    --accent-hover: #0087cc;
-    --accent-glow: #00a9f880;
-    --accent-glow-strong: #00a9f84d;
+    /* --accent-color: #00a9ff; */
+    --accent-color: #2da1ff;
+    /* --accent-hover: #0087cc; */
+    --accent-hover: #3186FF;
+    /* --accent-glow: #00a9f880;
+    --accent-glow-strong: #00a9f84d; */
+    --accent-glow: #2da1ff80;
+    --accent-glow-strong: #2da1ff4d;
 
     /* Pulse Animation */
-    --pulse-color: #00a9ffb3;
+    /* --pulse-color: #00a9ffb3; */
+    --pulse-color: #2da1ffb3;
     --pulse-end-color: #007aff00;
 
     /* Active States */
     /* --active-mic-bg: #007aff; */
-    --active-mic-bg: #00a9ff;
+    /* --active-mic-bg: #00a9ff; */
+    --active-mic-bg: #2da1ff;
     --active-mic-icon: #ffffff;
 
     /* Input Fields */
     --input-bg: #ffffff;
     --input-border: #d2d2d7;
-    --input-focus-border: #00a9ff;
+    /* --input-focus-border: #00a9ff; */
+    --input-focus-border: #2da1ff;
     --input-text: #1d1d1f;
     --input-placeholder: #86868b;
 
@@ -197,6 +217,9 @@
     --visualizer-active-from: rgb(160, 200, 248);
     --visualizer-active-to: rgb(0, 169, 255);
     --visualizer-active-opacity-min: 0.6;
+
+    /* Shimmer Effect */
+    --border-off-color: rgba(0, 0, 0, 0.30);
 }
 
 /* Smooth theme transitions */
@@ -216,4 +239,61 @@ textarea,
 button {
     font-family: var(--font-family);
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ===== Shared Focus Gradient Border (Shimmer) ===== */
+.focus-gradient-border {
+    --blue-ramp-1: #44a2ff;
+    --blue-ramp-2: #2da1ff;
+    --blue-ramp-3: #007af4;
+    --blue-ramp-4: #005cbf;
+    --blue-ramp-5: #003d80;
+    --shine-color: #ffffff;
+    position: relative;
+    isolation: isolate;
+    background-clip: padding-box;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.focus-gradient-border.round {
+    border-radius: 50%;
+}
+
+.focus-gradient-border::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    z-index: 0;
+    padding: 1px;
+    /* Defines border thickness */
+    background: linear-gradient(-25deg,
+            var(--blue-ramp-5) 0%,
+            var(--blue-ramp-4) 5%,
+            var(--blue-ramp-3) 15%,
+            var(--blue-ramp-2) 35%,
+            var(--blue-ramp-1) 50%,
+            var(--shine-color) 55%,
+            var(--shine-color) 60%,
+            var(--border-off-color) 45%,
+            var(--border-off-color) 100%);
+    background-size: 400% 200%;
+    background-position: 0% 0%;
+    opacity: 1;
+    transition: background-position 0.3s ease-out;
+    pointer-events: none;
+
+    /* Masking to create a hollow border */
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+
+.focus-gradient-border:focus-within::after,
+.focus-gradient-border.active::after,
+.focus-gradient-border:hover::after {
+    background-position: 100% 100%;
 }

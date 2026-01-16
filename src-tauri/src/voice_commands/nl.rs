@@ -34,6 +34,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("druk op opnieuw".to_string(), "ctrl+y".to_string());
     commands.insert("druk op knippen".to_string(), "ctrl+x".to_string());
     commands.insert("alles selecteren".to_string(), "ctrl+a".to_string());
+    commands.insert("selectie opheffen".to_string(), "right".to_string());
+    commands.insert("niets selecteren".to_string(), "right".to_string());
     commands.insert("druk op spatie".to_string(), "space".to_string());
     commands.insert("druk op tab".to_string(), "tab".to_string());
     commands.insert("verwijder dat".to_string(), "delete_last_word".to_string());

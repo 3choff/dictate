@@ -66,6 +66,7 @@ let VOICE_COMMANDS_ENABLED = true;
 let AUDIO_CUES_ENABLED = true;
 let PUSH_TO_TALK_ENABLED = false;
 let REWRITE_MODE = 'grammar_correction';
+let REWRITE_PROVIDER = 'groq';
 let CUSTOM_REWRITE_PROMPT = '';
 
 // Audio cues (loaded at startup)
@@ -284,6 +285,7 @@ async function loadSettings() {
         AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
         PUSH_TO_TALK_ENABLED = (settings.push_to_talk_enabled === true);  // Default false
         REWRITE_MODE = settings.rewrite_mode || 'grammar_correction';
+        REWRITE_PROVIDER = settings.rewrite_provider || 'groq';
         CUSTOM_REWRITE_PROMPT = settings.custom_rewrite_prompt || '';
         
         console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} rewriteMode=${REWRITE_MODE} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
@@ -477,22 +479,58 @@ listen('toggle-settings', async () => {
 });
 
 async function performRewrite() {
+    let windowAutoShownForRewrite = false;
+    
     try {
-        // Backend will use the selected rewrite provider from settings
-        // Pass Groq key for backward compatibility (backend reads provider's key from settings)
-        if (!GROQ_API_KEY) {
-            console.error('API key not set');
+        // Determine the correct API key based on the selected rewrite provider
+        const rewriteApiKeyMap = {
+            'groq': GROQ_API_KEY,
+            'sambanova': SAMBANOVA_API_KEY,
+            'fireworks': FIREWORKS_API_KEY,
+            'gemini-flash': GEMINI_API_KEY,
+            'gemini-flash-lite': GEMINI_API_KEY,
+            'mistral': MISTRAL_API_KEY
+        };
+        
+        const rewriteApiKey = rewriteApiKeyMap[REWRITE_PROVIDER] || GROQ_API_KEY;
+        
+        if (!rewriteApiKey) {
+            console.error(`API key not set for rewrite provider: ${REWRITE_PROVIDER}`);
             return;
         }
+        
+        // Auto-show window if it was hidden when rewrite started
+        try {
+            const win = getCurrentWindow();
+            const isVisible = await win.isVisible();
+            if (!isVisible) {
+                await win.show();
+                windowAutoShownForRewrite = true;
+            }
+        } catch (e) {
+            console.error('[AUTO-SHOW] Failed to check/show window for rewrite:', e);
+        }
+        
         // Show loading state
         rewriteBtn.classList.add('loading');
-        // Copy selected text using backend (simulates Ctrl+C)
-        const selectedText = await invoke('copy_selected_text');
+        
+        // Smart selection: try to copy selected text first
+        let selectedText = await invoke('copy_selected_text');
+        
+        // If no selection, select all and copy again
         if (!selectedText || !selectedText.trim()) {
-            console.warn('No text selected');
+            await invoke('select_all_text');
+            await new Promise(r => setTimeout(r, 100)); // Brief delay for selection to register
+            selectedText = await invoke('copy_selected_text');
+        }
+        
+        // If still no text, exit gracefully
+        if (!selectedText || !selectedText.trim()) {
+            console.warn('No text available for rewrite');
             rewriteBtn.classList.remove('loading');
             return;
         }
+        
         // Call backend to rewrite text
         // Determine prompt based on loaded settings
         let prompt = '';
@@ -505,7 +543,7 @@ async function performRewrite() {
         const correctedText = await invoke('rewrite_text', {
             text: selectedText,
             prompt: prompt,
-            apiKey: GROQ_API_KEY
+            apiKey: rewriteApiKey
         });
         // Insert corrected text via clipboard regardless of settings
         await invoke('insert_text', { 
@@ -516,6 +554,16 @@ async function performRewrite() {
         console.error('Text rewrite error:', error);
     } finally {
         rewriteBtn.classList.remove('loading');
+        
+        // Auto-hide window if it was auto-shown for this rewrite operation
+        if (windowAutoShownForRewrite) {
+            try {
+                const win = getCurrentWindow();
+                await win.hide();
+            } catch (e) {
+                console.error('[AUTO-HIDE] Failed to hide window after rewrite:', e);
+            }
+        }
     }
 }
 

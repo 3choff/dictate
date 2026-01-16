@@ -484,6 +484,16 @@ function createCustomSelect(selectElement) {
                 if (d !== this) d.close();
             });
             
+            // Mark currently selected option
+            const currentValue = selectElement.value;
+            options.querySelectorAll('.custom-option').forEach(opt => {
+                if (opt.dataset.value === currentValue) {
+                    opt.classList.add('selected');
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+            
             options.classList.add('open');
             const gradientBorder = selectWrapper.closest('.focus-gradient-border');
             if (gradientBorder) {

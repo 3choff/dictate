@@ -37,6 +37,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("нажать вырезать".to_string(), "ctrl+x".to_string());
     commands.insert("выделить всё".to_string(), "ctrl+a".to_string());
     commands.insert("выбрать всё".to_string(), "ctrl+a".to_string());
+    commands.insert("отменить выделение".to_string(), "right".to_string());
+    commands.insert("снять выделение".to_string(), "right".to_string());
     commands.insert("нажать пробел".to_string(), "space".to_string());
     commands.insert("нажать табуляция".to_string(), "tab".to_string());
     commands.insert("удалить это".to_string(), "delete_last_word".to_string());

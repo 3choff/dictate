@@ -81,6 +81,10 @@ pub fn send_key_native(key_name: &str, app_handle: &AppHandle) -> Result<(), Str
         "tab" => Key::Tab,
         "escape" | "esc" => Key::Escape,
         "delete" | "del" => Key::Delete,
+        "right" => Key::RightArrow,
+        "left" => Key::LeftArrow,
+        "up" => Key::UpArrow,
+        "down" => Key::DownArrow,
         _ => return Err(format!("Unknown key: {}", key_name)),
     };
     

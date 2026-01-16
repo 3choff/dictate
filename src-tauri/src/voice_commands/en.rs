@@ -35,6 +35,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("press redo".to_string(), "ctrl+y".to_string());
     commands.insert("press cut".to_string(), "ctrl+x".to_string());
     commands.insert("select all".to_string(), "ctrl+a".to_string());
+    commands.insert("select none".to_string(), "right".to_string());
+    commands.insert("deselect".to_string(), "right".to_string());
     commands.insert("press space".to_string(), "space".to_string());
     commands.insert("press tab".to_string(), "tab".to_string());
     commands.insert("delete that".to_string(), "delete_last_word".to_string());

@@ -199,13 +199,9 @@ async fn execute_command_action(action: &CommandAction, app: &AppHandle) -> Resu
                 .map_err(|e| e.to_string())
         }
         CommandAction::Rewrite => {
-            // Emit event to trigger text rewrite
+            // Emit event to trigger text rewrite - frontend handles smart selection
             if let Some(window) = app.get_webview_window("main") {
-                // Wait briefly for focus to settle, then select all and trigger rewrite
                 tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-                let _ = crate::commands::text_injection::select_all_text(app.clone()).await;
-                tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
-                // Then trigger rewrite shortcut
                 let _ = window.emit("sparkle-trigger", ());
             }
             Ok(())

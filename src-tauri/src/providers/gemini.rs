@@ -176,12 +176,13 @@ struct ChatRequest {
 // Chat Completion API
 // ============================================================================
 
-/// Rewrite text using Gemini Flash Lite
+/// Rewrite text using a specified Gemini model
 /// Used for text rewriting and transformation
 pub async fn rewrite_text(
     text: String,
     prompt: String,
     api_key: String,
+    model: String,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // Validate inputs
     if prompt.trim().is_empty() {
@@ -206,7 +207,8 @@ pub async fn rewrite_text(
     
     // API key goes in URL query param
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model,
         urlencoding::encode(&api_key)
     );
     

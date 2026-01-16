@@ -34,6 +34,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("premi ripeti".to_string(), "ctrl+y".to_string());
     commands.insert("premi taglia".to_string(), "ctrl+x".to_string());
     commands.insert("seleziona tutto".to_string(), "ctrl+a".to_string());
+    commands.insert("deseleziona".to_string(), "right".to_string());
+    commands.insert("seleziona nessuno".to_string(), "right".to_string());
     commands.insert("premi spazio".to_string(), "space".to_string());
     commands.insert("premi tab".to_string(), "tab".to_string());
     commands.insert("elimina".to_string(), "delete_last_word".to_string());

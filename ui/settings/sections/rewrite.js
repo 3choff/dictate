@@ -13,7 +13,8 @@ export class RewriteSection {
             { value: 'groq', label: 'Groq GPT-OSS-120B' },
             { value: 'fireworks', label: 'Fireworks GPT-OSS-20B' },
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
-            { value: 'gemini', label: 'Gemini 2.5 Flash Lite' },
+            { value: 'gemini-flash-lite', label: 'Gemini 2.5 Flash Lite' },
+            { value: 'gemini-flash', label: 'Gemini 3 Flash' },
             { value: 'mistral', label: 'Mistral Small' }
         ]);
 
@@ -119,9 +120,17 @@ export class RewriteSection {
             el.style.display = 'none';
         });
         
-        const relevantField = this.apiKeyFields[provider];
+        // Map model variants to their shared API key field
+        const keyMap = {
+            'gemini-flash': 'gemini',
+            'gemini-flash-lite': 'gemini'
+        };
+        const lookupKey = keyMap[provider] || provider;
+        
+        const relevantField = this.apiKeyFields[lookupKey];
         if (relevantField) {
-            const fieldEl = document.querySelector(`#${relevantField.id}-group.rewrite-api-key`);
+            const fieldId = relevantField.id;
+            const fieldEl = document.querySelector(`#${fieldId}-group.rewrite-api-key`);
             if (fieldEl) {
                 fieldEl.style.display = 'block';
             }

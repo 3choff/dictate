@@ -38,6 +38,8 @@ pub fn commands() -> HashMap<String, String> {
     commands.insert("drücke ausschneiden".to_string(), "ctrl+x".to_string());
     commands.insert("alles auswählen".to_string(), "ctrl+a".to_string());
     commands.insert("alles markieren".to_string(), "ctrl+a".to_string());
+    commands.insert("Auswahl aufheben".to_string(), "right".to_string());
+    commands.insert("nichts auswählen".to_string(), "right".to_string());
     commands.insert("drücke leerzeichen".to_string(), "space".to_string());
     commands.insert("drücke tabulator".to_string(), "tab".to_string());
     commands.insert("das löschen".to_string(), "delete_last_word".to_string());

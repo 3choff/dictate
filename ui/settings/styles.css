@@ -261,6 +261,7 @@ textarea {
     cursor: pointer;
     position: relative;
     z-index: 1;
+    transition: all 0.2s ease, transform 80ms ease;
 }
 
 .help-link:hover {
@@ -294,6 +295,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: 40px;
     margin-bottom: 16px;
     gap: 12px;
 }
@@ -334,6 +336,12 @@ textarea {
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
+    transition: transform 80ms ease;
+}
+
+.about-button:active,
+.help-link:active {
+    transform: scale(0.96);
 }
 
 /* Custom Select Dropdown */
@@ -379,7 +387,7 @@ textarea {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--secondary-bg);
+    background-color: var(--secondary-fullbg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     margin-top: 4px;
@@ -398,9 +406,15 @@ textarea {
     font-size: 14px;
 }
 
+.custom-option.selected {
+    background-color: rgba(45, 161, 255, 0.15);
+    color: var(--accent-color);
+}
+
 .custom-option:hover {
     background-color: var(--accent-color);
-    color: var(--primary-bg);
+    /* color: var(--primary-bg); */
+    color: white;
 }
 
 /* Custom Scrollbar for Dropdown */
@@ -511,7 +525,7 @@ textarea {
     font-size: 22px;
     font-weight: 500;
     padding-bottom: 2px;
-    margin: 0 0 4px 0;
+    margin: 0 0 12px 0;
     color: var(--text-color);
     border-bottom: 1px solid var(--divider-color);
 }
@@ -765,9 +779,9 @@ textarea {
     transition: transform 0.15s ease;
 }
 
-.slider-input::-webkit-slider-thumb:hover {
+/* .slider-input::-webkit-slider-thumb:hover {
     transform: scale(1.1);
-}
+} */
 
 .slider-input::-moz-range-thumb {
     width: 18px;
@@ -844,7 +858,8 @@ textarea {
 }
 
 .custom-words-add-btn:hover {
-    background: #0093e8;
+    background: var(--accent-hover);
+    /* background: #0093e8; */
     /* transform: translateY(-1px); */
 }
 
@@ -929,78 +944,8 @@ textarea {
     color: #fff;
 }
 
-/* Focus Gradient Border Wrapper */
-.focus-gradient-border {
-    --blue-ramp-1: #44a2ff;
-    --blue-ramp-2: #2da1ff;
-    --blue-ramp-3: #007af4;
-    --blue-ramp-4: #005cbf;
-    --blue-ramp-5: #003d80;
-    --border-off-color: #444746;
-    --shine-color: #ffffff;
-    position: relative;
-    isolation: isolate;
-    background-clip: padding-box;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background-color: var(--secondary-bg);
-    margin-top: 2px;
-}
-
 .focus-gradient-border:has(.prompt-textarea) {
     margin-top: 8px;
-}
-
-.focus-gradient-border::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    z-index: 0;
-    background: linear-gradient(-25deg,
-            var(--blue-ramp-5) 0%,
-            var(--blue-ramp-4) 5%,
-            var(--blue-ramp-3) 15%,
-            var(--blue-ramp-2) 35%,
-            var(--blue-ramp-1) 50%,
-            var(--shine-color) 55%,
-            var(--shine-color) 60%,
-            var(--border-off-color) 45%,
-            var(--border-off-color) 100%);
-    background-size: 400% 200%;
-    background-position: 0% 0%;
-    opacity: 1;
-    transition: background-position 0.3s ease-out;
-    pointer-events: none;
-}
-
-/* .focus-gradient-border::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    z-index: 0;
-    background: linear-gradient(-25deg,
-            var(--blue-ramp-5) 0%,
-            var(--blue-ramp-4) 5%,
-            var(--blue-ramp-3) 15%,
-            var(--blue-ramp-2) 25%,
-            var(--blue-ramp-1) 30%,
-            var(--shine-color) 35%,
-            var(--shine-color) 40%,
-            var(--border-off-color) 45%,
-            var(--border-off-color) 100%);
-    background-size: 400% 200%;
-    background-position: 0% 0%;
-    opacity: 1;
-    transition: background-position 0.3s ease-out;
-    pointer-events: none;
-} */
-
-.focus-gradient-border:focus-within::after,
-.focus-gradient-border.active::after,
-.focus-gradient-border:hover::after {
-    background-position: 100% 100%;
 }
 
 /* Prompt Textarea (inside gradient border wrapper) */
@@ -1021,6 +966,13 @@ textarea {
     display: block;
     position: relative;
     z-index: 1;
+}
+
+/* Ensure background is on the inner element for fields that need it */
+.focus-gradient-border select,
+.focus-gradient-border input:not([type="checkbox"]):not([type="radio"]),
+.custom-select-trigger {
+    background-color: var(--secondary-bg);
 }
 
 
