@@ -108,7 +108,7 @@ body.transitioning.compact-exit {
 }
 
 /* Show visualizer only when recording in normal mode */
-.mic-button.recording~.audio-visualizer {
+.audio-visualizer.active {
     display: flex;
 }
 
@@ -146,7 +146,7 @@ body.transitioning.compact-exit {
 }
 
 /* Sparkle button base: circular but transparent when idle */
-.sparkle-icon {
+.icon-button {
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -178,9 +178,9 @@ body.transitioning.compact-exit {
     transition: all 0.2s ease;
 }
 
-.mic-button:hover {
+/* .mic-button:hover {
     background: var(--secondary-bg);
-}
+} */
 
 .mic-button.pressed {
     transform: scale(0.96);
@@ -218,11 +218,15 @@ body.transitioning.compact-exit {
 
 /* Sparkle loading state -> pulsing effect + active mic styling */
 .sparkle-icon.loading {
-    animation: pulse 2s infinite;
-    box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong);
-    background-color: var(--active-mic-bg);
+    animation: pulse 1.5s infinite;
+    /* box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong); */
+    /* background-color: var(--active-mic-bg);
     padding: 2px;
     /* add margin between SVG and button edges when active */
+}
+
+.sparkle-icon {
+    padding: 0;
 }
 
 .sparkle-icon svg {
@@ -250,9 +254,9 @@ body.transitioning.compact-exit {
     height: 20px;
 }
 
-.sparkle-icon.loading svg path {
+/* .sparkle-icon.loading svg path {
     fill: var(--active-mic-icon);
-}
+} */
 
 
 @keyframes pulse {
@@ -270,17 +274,17 @@ body.transitioning.compact-exit {
 }
 
 .mic-button.recording {
-    background-color: var(--active-mic-bg);
-    /* Pulse animation removed for cleaner UI */
+    /* background-color: var(--active-mic-bg); */
+    animation: pulse 1.5s infinite;
 }
 
-.mic-button.recording svg path {
+/* .mic-button.recording svg path {
     fill: var(--active-mic-icon);
 }
 
 .mic-button.recording svg ellipse {
     fill: var(--active-mic-icon);
-}
+} */
 
 body.compact-mode {
     --border-off-color: transparent;
@@ -296,6 +300,7 @@ body.compact-mode .container {
     padding: 6px 10px;
     -webkit-app-region: drag;
     /* Entire pill is draggable */
+    overflow: visible;
 }
 
 body.compact-mode .top-bar {
@@ -336,19 +341,18 @@ body.compact-mode .mic-button-wrapper {
     border-radius: 50% !important;
 }
 
+body.compact-mode .mic-button-wrapper.active {
+    animation: pulse 1.5s infinite !important;
+}
+
 body.compact-mode .mic-button {
     width: 100% !important;
     height: 100% !important;
     background-color: transparent;
-    box-shadow: none !important;
 }
 
 body.compact-mode .mic-button.recording {
-    background-color: var(--active-mic-bg) !important;
-}
-
-body.compact-mode .mic-button:hover {
-    box-shadow: none !important;
+    animation: none;
 }
 
 body.compact-mode .mic-button svg {

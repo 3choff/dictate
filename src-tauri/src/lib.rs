@@ -272,7 +272,7 @@ pub fn run() {
                             }
 
                             let scale = tray_menu_wnd.scale_factor().unwrap_or(1.0);
-                            let gap_px = 2.0 * scale;
+                            let gap_px = 12.0 * scale;
 
                             let (menu_w_px, menu_h_px) = if let Ok(size_guard) =
                                 app.state::<commands::settings::TrayMenuSizeState>().0.lock()
@@ -328,10 +328,10 @@ pub fn run() {
                                 });
                             }
 
-                            let min_x = work_left as f64;
-                            let min_y = work_top as f64;
-                            let max_x = (work_right as f64) - menu_w_px;
-                            let max_y = (work_bottom as f64) - menu_h_px;
+                            let min_x = (work_left as f64) + gap_px;
+                            let min_y = (work_top as f64) + gap_px;
+                            let max_x = (work_right as f64) - menu_w_px - gap_px;
+                            let max_y = (work_bottom as f64) - menu_h_px - gap_px;
 
                             let clamp = |value: f64, min: f64, max: f64| -> f64 {
                                 if max < min {

@@ -40,6 +40,7 @@ const rewriteBtn = document.getElementById('rewriteBtn');
 const closeBtnTop = document.getElementById('close-btn-top');
 const closeBtnCompact = document.getElementById('close-btn-compact');
 const visualizerContainer = document.getElementById('audioVisualizer');
+const micWrapper = document.querySelector('.mic-button-wrapper');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
 // Tooltip for missing API key (shared component)
@@ -595,6 +596,7 @@ async function toggleRecording() {
         // Mirror click behavior
         isRecording = true;
         micButton.classList.add('recording');
+        micWrapper?.classList.add('active');
         visualizerContainer?.classList.add('active');
         status.textContent = i18n.t('main.starting');
         try {
@@ -603,6 +605,7 @@ async function toggleRecording() {
             console.error('Error starting recording:', err);
             isRecording = false;
             micButton.classList.remove('recording');
+            micWrapper?.classList.remove('active');
             visualizerContainer?.classList.remove('active');
             status.textContent = i18n.t('main.micAccessDenied');
         }
@@ -741,6 +744,7 @@ async function stopRecording() {
     // Immediate UI feedback
     isRecording = false;
     micButton.classList.remove('recording');
+    micWrapper?.classList.remove('active');
     visualizerContainer?.classList.remove('active');
     status.textContent = i18n.t('main.pressToRecord');
 

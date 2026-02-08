@@ -415,8 +415,12 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
 
     // Convert logical sizes to physical pixels using monitor scale factor
     let settings_width_px = SETTINGS_WIDTH * scale_factor;
-    let settings_height_px = SETTINGS_HEIGHT * scale_factor;
     let gap_px = GAP * scale_factor;
+    
+    // Cap settings height to available work area (with margin for safety)
+    let available_height = work_height - (40.0 * scale_factor); // Leave margin for taskbar/etc
+    let actual_settings_height = SETTINGS_HEIGHT.min(available_height / scale_factor);
+    let settings_height_px = actual_settings_height * scale_factor;
     
     // Try positions in order of preference: Left, Right, Below, Above
     let position = calculate_settings_position(
@@ -433,7 +437,7 @@ pub async fn open_settings_window(app: AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("../settings/index.html".into())
     )
     .title("Settings")
-    .inner_size(SETTINGS_WIDTH, SETTINGS_HEIGHT)
+    .inner_size(SETTINGS_WIDTH, actual_settings_height)
     .resizable(false)
     .decorations(false)
     .shadow(false)
