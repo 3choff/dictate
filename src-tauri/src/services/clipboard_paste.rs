@@ -128,3 +128,94 @@ pub fn copy_selected_text(app_handle: &AppHandle) -> Result<String, String> {
 
     Ok(selected_text)
 }
+
+/// Sentinel string used to detect whether text is selected.
+/// If clipboard still contains this after Ctrl+C, nothing was selected.
+const REWRITE_SENTINEL: &str = "__DICTATE_REWRITE_SENTINEL_7f3a9b__";
+
+/// Copies selected text, or selects all and copies if nothing is selected.
+/// Uses a sentinel string to reliably detect whether a selection existed.
+pub fn copy_selected_or_all_text(app_handle: &AppHandle) -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    let (modifier_key, c_key_code, a_key_code) = (Key::Meta, Key::Other(8), Key::Other(0));
+    #[cfg(target_os = "windows")]
+    let (modifier_key, c_key_code, a_key_code) = (Key::Control, Key::Other(0x43), Key::Other(0x41));
+    #[cfg(target_os = "linux")]
+    let (modifier_key, c_key_code, a_key_code) = (Key::Control, Key::Unicode('c'), Key::Unicode('a'));
+
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
+
+    let clipboard = app_handle.clipboard();
+
+    // BACKUP: Save current clipboard content
+    let backup_content = clipboard.read_text().unwrap_or_default();
+
+    // SENTINEL: Write unique marker to clipboard
+    clipboard
+        .write_text(REWRITE_SENTINEL)
+        .map_err(|e| format!("Failed to write sentinel: {}", e))?;
+    thread::sleep(Duration::from_millis(20));
+
+    // COPY: Send Ctrl+C to copy any selected text
+    enigo
+        .key(modifier_key, enigo::Direction::Press)
+        .map_err(|e| format!("Failed to press modifier key: {}", e))?;
+    enigo
+        .key(c_key_code, enigo::Direction::Click)
+        .map_err(|e| format!("Failed to click C key: {}", e))?;
+    thread::sleep(Duration::from_millis(50));
+    enigo
+        .key(modifier_key, enigo::Direction::Release)
+        .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+
+    // Wait for clipboard to be populated
+    thread::sleep(Duration::from_millis(150));
+
+    // READ: Check what's in the clipboard
+    let clipboard_content = clipboard.read_text().unwrap_or_default();
+
+    let result_text = if clipboard_content == REWRITE_SENTINEL || clipboard_content.is_empty() {
+        // Sentinel unchanged or clipboard empty (read failed) → nothing was selected → select all, then copy
+        enigo
+            .key(modifier_key, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press modifier for select-all: {}", e))?;
+        enigo
+            .key(a_key_code, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to click A key: {}", e))?;
+        thread::sleep(Duration::from_millis(50));
+        enigo
+            .key(modifier_key, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release modifier after select-all: {}", e))?;
+
+        // Wait for selection to take effect
+        thread::sleep(Duration::from_millis(100));
+
+        // Now copy the selected-all text
+        enigo
+            .key(modifier_key, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press modifier for copy: {}", e))?;
+        enigo
+            .key(c_key_code, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to click C key: {}", e))?;
+        thread::sleep(Duration::from_millis(50));
+        enigo
+            .key(modifier_key, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release modifier after copy: {}", e))?;
+
+        // Wait for clipboard to be populated
+        thread::sleep(Duration::from_millis(150));
+
+        clipboard.read_text().unwrap_or_default()
+    } else {
+        // Clipboard changed to something other than sentinel → text was selected → use it
+        clipboard_content
+    };
+
+    // RESTORE: Write back the original clipboard content
+    clipboard
+        .write_text(&backup_content)
+        .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+
+    Ok(result_text)
+}

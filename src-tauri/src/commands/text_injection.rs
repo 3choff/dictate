@@ -31,3 +31,8 @@ pub async fn clear_clipboard(app_handle: AppHandle) -> Result<(), String> {
         .write_text("")
         .map_err(|e| format!("Failed to clear clipboard: {}", e))
 }
+
+#[tauri::command]
+pub async fn copy_selected_or_all_text(app_handle: AppHandle) -> Result<String, String> {
+    clipboard_paste::copy_selected_or_all_text(&app_handle)
+}

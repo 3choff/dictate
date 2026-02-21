@@ -515,12 +515,13 @@ async function performRewrite() {
         // Show loading state
         rewriteBtn.classList.add('loading');
         
-        // Copy currently selected text
-        const selectedText = await invoke('copy_selected_text');
+        // Copy selected text, or select-all + copy if nothing is selected
+        // Backend uses a sentinel string to detect selection vs no-selection
+        const selectedText = await invoke('copy_selected_or_all_text');
         
-        // If nothing is selected, notify user and exit gracefully
+        // If text area is completely empty, nothing to rewrite
         if (!selectedText || !selectedText.trim()) {
-            console.warn('No text selected for rewrite');
+            console.warn('No text available for rewrite');
             showTemporaryTooltip(rewriteBtn, i18n.t('main.noTextSelected'));
             rewriteBtn.classList.remove('loading');
             return;

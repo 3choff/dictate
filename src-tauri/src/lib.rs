@@ -554,6 +554,7 @@ pub fn run() {
             commands::select_all_text,
             commands::copy_selected_text,
             commands::clear_clipboard,
+            commands::copy_selected_or_all_text,
             commands::rewrite_text,
             commands::get_settings,
             commands::save_settings,
