@@ -125,7 +125,9 @@
         "rewriting": "書き換え中...",
         "micAccessDenied": "マイクへのアクセスが拒否されました",
         "apiError": "APIエラー：設定を確認してください",
-        "pressToRecord": "押して録音"
+        "pressToRecord": "押して録音",
+        "apiKeyMissing": "設定にAPIキーがありません",
+        "noTextSelected": "テキストが選択されていません"
     },
     "about": {
         "title": "このアプリについて",

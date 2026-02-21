@@ -125,7 +125,9 @@
         "rewriting": "Umschreiben...",
         "micAccessDenied": "Mikrofonzugriff verweigert",
         "apiError": "API-Fehler: Einstellungen prüfen",
-        "pressToRecord": "Zum Aufnehmen drücken"
+        "pressToRecord": "Zum Aufnehmen drücken",
+        "apiKeyMissing": "API-Schlüssel fehlt in den Einstellungen",
+        "noTextSelected": "Kein Text ausgewählt"
     },
     "about": {
         "title": "Über",

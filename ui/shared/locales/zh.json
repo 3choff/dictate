@@ -125,7 +125,9 @@
         "rewriting": "重写中...",
         "micAccessDenied": "麦克风访问被拒绝",
         "apiError": "API错误：检查设置",
-        "pressToRecord": "按下开始录音"
+        "pressToRecord": "按下开始录音",
+        "apiKeyMissing": "设置中缺少 API 密钥",
+        "noTextSelected": "未选择文本"
     },
     "about": {
         "title": "关于",

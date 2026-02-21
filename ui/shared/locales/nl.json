@@ -125,7 +125,9 @@
         "rewriting": "Herschrijven...",
         "micAccessDenied": "Microfoontoegang geweigerd",
         "apiError": "API-fout: Controleer instellingen",
-        "pressToRecord": "Druk om op te nemen"
+        "pressToRecord": "Druk om op te nemen",
+        "apiKeyMissing": "Geen API-sleutel in instellingen",
+        "noTextSelected": "Geen tekst geselecteerd"
     },
     "about": {
         "title": "Over",

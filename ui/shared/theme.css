@@ -115,12 +115,13 @@
     /* Icon specific properties */
     --sparkle-stroke-width: 0.2;
     --sparkle-fill: #e8eaed;
-    --sparkle-dot-fill: #8ab4f8;
+    /* --sparkle-dot-fill: #8ab4f8; */
+    --sparkle-dot-fill: #44a2ff;
 
     /* Audio Visualizer */
-    --visualizer-bar-bg: #44566d;
+    --visualizer-bar-bg: #003d80;
     --visualizer-bar-opacity: 0.4;
-    --visualizer-active-from: rgb(0, 169, 255);
+    --visualizer-active-from: rgb(33, 138, 243);
     /* Blue when active */
     --visualizer-active-to: rgb(160, 200, 248);
     /* Light blue when active */
@@ -209,13 +210,14 @@
     /* Icon specific properties */
     --sparkle-stroke-width: 1.0;
     --sparkle-fill: transparent;
-    --sparkle-dot-fill: #6ea5fc;
+    /* --sparkle-dot-fill: #6ea5fc; */
+    --sparkle-dot-fill: #44a2ff;
 
     /* Audio Visualizer */
-    --visualizer-bar-bg: #44566d;
+    --visualizer-bar-bg: rgb(173, 196, 224);
     --visualizer-bar-opacity: 0.6;
     --visualizer-active-from: rgb(160, 200, 248);
-    --visualizer-active-to: rgb(0, 169, 255);
+    --visualizer-active-to: rgb(33, 138, 243);
     --visualizer-active-opacity-min: 0.6;
 
     /* Shimmer Effect */

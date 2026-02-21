@@ -125,7 +125,9 @@
         "rewriting": "Riscittura...",
         "micAccessDenied": "Accesso microfono negato",
         "apiError": "Errore API: Controlla impostazioni",
-        "pressToRecord": "Premi per registrare"
+        "pressToRecord": "Premi per registrare",
+        "apiKeyMissing": "ApiKey mancante nelle impostazioni",
+        "noTextSelected": "Nessun testo selezionato"
     },
     "about": {
         "title": "Info",

@@ -125,7 +125,9 @@
         "rewriting": "Rewriting...",
         "micAccessDenied": "Microphone access denied",
         "apiError": "API Error: Check settings",
-        "pressToRecord": "Press to record"
+        "pressToRecord": "Press to record",
+        "apiKeyMissing": "No API key in settings",
+        "noTextSelected": "No text selected"
     },
     "about": {
         "title": "About",

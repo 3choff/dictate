@@ -43,9 +43,9 @@ const visualizerContainer = document.getElementById('audioVisualizer');
 const micWrapper = document.querySelector('.mic-button-wrapper');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
 
-// Tooltip for missing API key (shared component)
-let apiKeyTooltipInstance = null;
-let apiKeyTooltipTimeout = null;
+// Tooltip for temporary notifications (shared component)
+let temporaryTooltipInstance = null;
+let temporaryTooltipTimeout = null;
 
 // API key and insertion mode will be loaded from settings
 let GROQ_API_KEY = '';
@@ -515,19 +515,13 @@ async function performRewrite() {
         // Show loading state
         rewriteBtn.classList.add('loading');
         
-        // Smart selection: try to copy selected text first
-        let selectedText = await invoke('copy_selected_text');
+        // Copy currently selected text
+        const selectedText = await invoke('copy_selected_text');
         
-        // If no selection, select all and copy again
+        // If nothing is selected, notify user and exit gracefully
         if (!selectedText || !selectedText.trim()) {
-            await invoke('select_all_text');
-            await new Promise(r => setTimeout(r, 100)); // Brief delay for selection to register
-            selectedText = await invoke('copy_selected_text');
-        }
-        
-        // If still no text, exit gracefully
-        if (!selectedText || !selectedText.trim()) {
-            console.warn('No text available for rewrite');
+            console.warn('No text selected for rewrite');
+            showTemporaryTooltip(rewriteBtn, i18n.t('main.noTextSelected'));
             rewriteBtn.classList.remove('loading');
             return;
         }
@@ -638,7 +632,7 @@ async function startRecording() {
         
         const apiKey = apiKeyMap[API_SERVICE];
         if (!apiKey) {
-            showApiKeyMissingTooltip();
+            showTemporaryTooltip(micButton, i18n.t('main.apiKeyMissing'));
             throw new Error(`API key not configured for ${API_SERVICE}`);
         }
         
@@ -687,38 +681,42 @@ async function startRecording() {
     }
 }
 
-// Show tooltip notification for missing API key
-function showApiKeyMissingTooltip() {
-    // Remove existing tooltip visibility if present
-    hideApiKeyTooltip();
+// Show a temporary tooltip notification on an element
+function showTemporaryTooltip(targetElement, message, duration = 3000) {
+    if (!targetElement) return;
 
-    if (!apiKeyTooltipInstance) {
-        apiKeyTooltipInstance = new Tooltip('No API key in settings', 'bottom');
-        apiKeyTooltipInstance.attachTo(micButton);
+    // Remove existing tooltip visibility if present
+    hideTemporaryTooltip();
+
+    if (!temporaryTooltipInstance) {
+        temporaryTooltipInstance = new Tooltip(message, 'bottom');
+        // Create element manually to avoid mouseenter/mouseleave listeners from attachTo
+        const tooltipEl = temporaryTooltipInstance.createTooltipElement();
+        document.body.appendChild(tooltipEl);
     } else {
-        apiKeyTooltipInstance.setText('No API key in settings');
+        temporaryTooltipInstance.setText(message);
     }
 
-    const tooltipEl = document.getElementById(apiKeyTooltipInstance.tooltipId);
+    const tooltipEl = document.getElementById(temporaryTooltipInstance.tooltipId);
     if (tooltipEl) {
-        apiKeyTooltipInstance.show(micButton, tooltipEl);
-        // Auto-hide after 2 seconds
-        apiKeyTooltipTimeout = setTimeout(() => {
-            hideApiKeyTooltip();
-        }, 2000);
+        temporaryTooltipInstance.show(targetElement, tooltipEl);
+        // Auto-hide after specified duration
+        temporaryTooltipTimeout = setTimeout(() => {
+            hideTemporaryTooltip();
+        }, duration);
     }
 }
 
-// Hide API key tooltip
-function hideApiKeyTooltip() {
-    if (apiKeyTooltipTimeout) {
-        clearTimeout(apiKeyTooltipTimeout);
-        apiKeyTooltipTimeout = null;
+// Hide the active temporary tooltip
+function hideTemporaryTooltip() {
+    if (temporaryTooltipTimeout) {
+        clearTimeout(temporaryTooltipTimeout);
+        temporaryTooltipTimeout = null;
     }
-    if (apiKeyTooltipInstance) {
-        const tooltipEl = document.getElementById(apiKeyTooltipInstance.tooltipId);
+    if (temporaryTooltipInstance) {
+        const tooltipEl = document.getElementById(temporaryTooltipInstance.tooltipId);
         if (tooltipEl) {
-            apiKeyTooltipInstance.hide(tooltipEl);
+            temporaryTooltipInstance.hide(tooltipEl);
         }
     }
 }
@@ -738,8 +736,8 @@ function getProviderDisplayName(provider) {
 }
 
 async function stopRecording() {
-    // Hide API key tooltip if showing
-    hideApiKeyTooltip();
+    // Hide temporary tooltip if showing
+    hideTemporaryTooltip();
     
     // Immediate UI feedback
     isRecording = false;

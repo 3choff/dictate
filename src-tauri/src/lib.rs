@@ -553,6 +553,7 @@ pub fn run() {
             commands::insert_text,
             commands::select_all_text,
             commands::copy_selected_text,
+            commands::clear_clipboard,
             commands::rewrite_text,
             commands::get_settings,
             commands::save_settings,

@@ -125,7 +125,9 @@
         "rewriting": "Reescribiendo...",
         "micAccessDenied": "Acceso al micrófono denegado",
         "apiError": "Error de API: Revisa configuración",
-        "pressToRecord": "Presiona para grabar"
+        "pressToRecord": "Presiona para grabar",
+        "apiKeyMissing": "Falta la clave API en la configuración",
+        "noTextSelected": "No hay texto seleccionado"
     },
     "about": {
         "title": "Acerca de",

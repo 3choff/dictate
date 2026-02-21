@@ -95,7 +95,11 @@ pub fn copy_selected_text(app_handle: &AppHandle) -> Result<String, String> {
     let clipboard = app_handle.clipboard();
     let backup_content = clipboard.read_text().unwrap_or_default();
 
-    // EXECUTE: Press modifier + C
+    // EXECUTE: 
+    // Clear clipboard first so we can detect if Ctrl+C actually fails/does nothing
+    let _ = clipboard.write_text("");
+    thread::sleep(Duration::from_millis(20));
+
     enigo
         .key(modifier_key, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press modifier key: {}", e))?;
@@ -115,7 +119,7 @@ pub fn copy_selected_text(app_handle: &AppHandle) -> Result<String, String> {
     // READ: Get the selected text
     let selected_text = clipboard
         .read_text()
-        .map_err(|e| format!("Failed to read clipboard: {}", e))?;
+        .unwrap_or_default();
 
     // RESTORE: Write back the original content
     clipboard

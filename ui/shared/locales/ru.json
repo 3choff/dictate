@@ -125,7 +125,9 @@
         "rewriting": "Переписывание...",
         "micAccessDenied": "Доступ к микрофону запрещён",
         "apiError": "Ошибка API: Проверьте настройки",
-        "pressToRecord": "Нажмите для записи"
+        "pressToRecord": "Нажмите для записи",
+        "apiKeyMissing": "В настройках нет API-ключа",
+        "noTextSelected": "Текст не выбран"
     },
     "about": {
         "title": "О программе",
