@@ -128,7 +128,8 @@
     --visualizer-active-opacity-min: 0.5;
 
     /* Shimmer Effect */
-    --border-off-color: #444746;
+    --border-off-color: #202020;
+    --border-off-color2: #5b5b5b;
 }
 
 /* Light Theme */
@@ -221,12 +222,23 @@
     --visualizer-active-opacity-min: 0.6;
 
     /* Shimmer Effect */
-    --border-off-color: rgba(0, 0, 0, 0.30);
+    /* --border-off-color: rgba(0, 0, 0, 0.30); */
+    /* Shimmer Effect */
+    --border-off-color: #9c9c9c;
+    --border-off-color2: #e6e6e6;
 }
 
 /* Smooth theme transitions */
 :root {
     transition: background-color 0.3s ease, color 0.3s ease;
+
+    /* Shared Shimmer Gradient Colors */
+    --blue-ramp-1: #44a2ff;
+    --blue-ramp-2: #2da1ff;
+    --blue-ramp-3: #007af4;
+    --blue-ramp-4: #005cbf;
+    --blue-ramp-5: #003d80;
+    --shine-color: #ffffff;
 }
 
 body,
@@ -243,14 +255,14 @@ button {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Hide browser-native reveal/clear buttons for password inputs (Webview2/Edge/Windows) */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
 /* ===== Shared Focus Gradient Border (Shimmer) ===== */
 .focus-gradient-border {
-    --blue-ramp-1: #44a2ff;
-    --blue-ramp-2: #2da1ff;
-    --blue-ramp-3: #007af4;
-    --blue-ramp-4: #005cbf;
-    --blue-ramp-5: #003d80;
-    --shine-color: #ffffff;
     position: relative;
     isolation: isolate;
     background-clip: padding-box;
@@ -280,11 +292,11 @@ button {
             var(--shine-color) 55%,
             var(--shine-color) 60%,
             var(--border-off-color) 45%,
-            var(--border-off-color) 100%);
+            var(--border-off-color2) 100%);
     background-size: 400% 200%;
     background-position: 0% 0%;
     opacity: 1;
-    transition: background-position 0.3s ease-out;
+    transition: background-position 0.6s ease-out;
     pointer-events: none;
 
     /* Masking to create a hollow border */

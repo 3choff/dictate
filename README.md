@@ -20,7 +20,8 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Interactive Settings:** Configure API keys, transcription services (Deepgram, Cartesia, Groq, Gemini, Mistral, SambaNova, Fireworks), text rewrite provider and mode (Groq, Gemini, Mistral, SambaNova, Fireworks), transcription language, and text insertion modes through a dedicated settings window.
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, text rewrite, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
-*   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it using your chosen mode and AI provider. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized. **Fully customizable prompts:** Edit the instructions for any mode directly in settings to tailor the AI's behavior to your exact needs.
+*   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it. **Smart Selection Awareness:** If text is selected, it rewrites only that portion; if nothing is selected, it automatically selects all text in the focused area and rewrites the entire content. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized. **Fully customizable prompts:** Edit the instructions for any mode directly in settings to tailor the AI's behavior to your exact needs.
+*   **User Notifications:** A sleek tooltip system provides instant feedback for missing API keys, empty text areas, or selection errors, fully localized in all 10 languages.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Push‑to‑Talk (Batch Providers):** Optional mode that records only while you hold the recording shortcut, then transcribes immediately on release. Enable it in Settings → Customize. Supported with Groq, Gemini, Mistral, SambaNova, and Fireworks. When a streaming provider (Deepgram, Cartesia) is selected, Push‑to‑Talk is disabled and a brief warning explains it’s only available with batch providers.
 *   **Multiple Transcription Services:**
@@ -108,9 +109,19 @@ Right-click anywhere on the main window to quickly toggle between the compact an
    * Groq, Mistral, SambaNova, Fireworks, Gemini: Speak, pause ~1s to emit a segment; text is inserted per segment.
    * Deepgram and Cartesia: Inserts finalized phrases as they arrive in streaming mode.
 
-#### Push‑to‑Talk Mode
-
 If you enable Push‑to‑Talk in Settings → Customize, hold the recording shortcut (`Ctrl+Shift+D` by default) to record; release to stop and transcribe instantly. Push‑to‑Talk is supported with batch providers (Groq, Gemini, Mistral, SambaNova, Fireworks). When a streaming provider (Deepgram or Cartesia) is selected, the app prevents enabling Push‑to‑Talk and shows a short in‑app notice.
+
+### Text Rewriting (Smart Rewrite)
+
+Dictate features a "Smart Rewrite" capability that allows you to quickly refine text in any application:
+
+1. **Select Text (Optional):** Highlight the text you want to rewrite in your document or text field.
+2. **Trigger Rewrite:** Click the **Sparkle** button in Dictate or press `Ctrl+Shift+R`.
+3. **Smart Handling:**
+   - **If text is selected:** ONLY the highlighted text is rewritten and replaced.
+   - **If NO text is selected:** Dictate automatically selects **all text** in the focused window/field and rewrites the entire content.
+4. **AI Transformation:** The text is sent to your selected AI provider (default: Groq), processed according to your chosen mode (e.g., Grammar Correction), and inserted back into the application.
+5. **Feedback:** If the text area is completely empty, a localized tooltip will notify you that there is nothing to rewrite.
 
 ### Settings
 
@@ -131,7 +142,7 @@ Dictate supports rich voice commands for hands-free text manipulation, now avail
 *   **Key Presses:** "press enter", "backspace", "press space", "press tab"
 *   **Control Combinations:** "press control plus c" (Ctrl+C), "press control plus v" (Ctrl+V)
 *   **Text Manipulation:** "delete that" (removes the most recent word), "select all" (Ctrl+A)
-*   **Text Rewrite:** "press rewrite" (selects all text and runs the text rewrite shortcut with current mode)
+*   **Text Rewrite:** "press rewrite" (triggers the smart rewrite logic using your current mode)
 *   **Dictation Controls:** "pause voice typing", "stop dictation", "pause voice mode", etc. (sends Ctrl+Shift+D to pause voice typing)
 
 ### Keyboard Shortcuts
@@ -141,7 +152,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 | Shortcut | Function | Description |
 |----------|----------|-------------|
 | `Ctrl+Shift+D` | **Toggle Recording** | Start or stop dictation. You'll hear a "beep" when recording starts and a "clack" when it stops. |
-| `Ctrl+Shift+R` | **Text Rewrite** | Rewrite selected text using your chosen mode (Grammar Correction, Professional, Polite, Casual, or Structured) and AI provider. Click the sparkle button or use this shortcut, then select text in any application. |
+| `Ctrl+Shift+R` | **Text Rewrite** | Rewrite selected text using your chosen mode and AI provider. **Smart Mode:** If no text is selected, it automatically selects all text in the focused window and rewrites it. |
 | `Ctrl+Shift+V` | **Toggle Compact Mode** | Switch between compact and expanded window layouts. This preference is saved and restored on app launch. |
 | `Ctrl+Shift+S` | **Toggle Settings** | Open or close the settings window. |
 | `Ctrl+Shift+L` | **Toggle DevTools** | Open or close the developer console for debugging (development feature). |

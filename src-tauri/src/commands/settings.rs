@@ -22,6 +22,8 @@ pub struct Settings {
     pub deepgram_api_key: String,
     #[serde(default)]
     pub cartesia_api_key: String,
+    #[serde(default)]
+    pub inception_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
     #[serde(default)]
@@ -245,6 +247,7 @@ impl Default for Settings {
             mistral_api_key: String::new(),
             deepgram_api_key: String::new(),
             cartesia_api_key: String::new(),
+            inception_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
             api_service: default_api_service(),

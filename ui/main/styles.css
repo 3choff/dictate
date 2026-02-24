@@ -45,6 +45,60 @@ body.transitioning.compact-exit {
     /* For absolute positioning of visualizer */
 }
 
+/* Animatable custom property for conic-gradient rotation */
+@property --recording-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+/* Animated inset border for the main container during recording */
+.container::after {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: 100;
+    pointer-events: none;
+    padding: 1.5px;
+    background: conic-gradient(from var(--recording-angle),
+            transparent 0deg,
+            transparent 80deg,
+            var(--blue-ramp-5) 120deg,
+            var(--blue-ramp-4) 160deg,
+            var(--blue-ramp-3) 210deg,
+            var(--blue-ramp-2) 270deg,
+            var(--blue-ramp-1) 350deg,
+            /* var(--shine-color) 350deg, */
+            /* var(--blue-ramp-1) 355deg, */
+            /* var(--blue-ramp-3) 357deg, */
+            /* var(--blue-ramp-5) 359deg, */
+            transparent 360deg);
+    /* Masking to create a hollow inner border */
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+body:has(.mic-button.recording) .container::after {
+    opacity: 1;
+    /* Combine two animations: the continuous rotation and an easing correction */
+    animation: window-recording-shimmer 4s infinite linear;
+}
+
+@keyframes window-recording-shimmer {
+    0% {
+        --recording-angle: 0deg;
+    }
+
+    100% {
+        --recording-angle: 360deg;
+    }
+}
+
 .top-bar {
     position: relative;
     padding: 6px 10px;
@@ -98,7 +152,7 @@ body.transitioning.compact-exit {
     justify-content: center;
     gap: 6px;
     position: absolute;
-    bottom: 0px;
+    bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
     height: 24px;
@@ -181,6 +235,11 @@ body.transitioning.compact-exit {
 /* .mic-button:hover {
     background: var(--secondary-bg);
 } */
+
+/* Faster shimmer transition for the microphone button specifically */
+.mic-button-wrapper.focus-gradient-border::after {
+    transition-duration: 0.4s;
+}
 
 .mic-button.pressed {
     transform: scale(0.96);
@@ -273,10 +332,10 @@ body.transitioning.compact-exit {
     }
 }
 
-.mic-button.recording {
-    /* background-color: var(--active-mic-bg); */
-    animation: pulse 1.5s infinite;
-}
+/* .mic-button.recording { */
+/* background-color: var(--active-mic-bg); */
+/* animation: pulse 1.5s infinite; */
+/* } */
 
 /* .mic-button.recording svg path {
     fill: var(--active-mic-icon);
@@ -341,9 +400,9 @@ body.compact-mode .mic-button-wrapper {
     border-radius: 50% !important;
 }
 
-body.compact-mode .mic-button-wrapper.active {
+/* body.compact-mode .mic-button-wrapper.active {
     animation: pulse 1.5s infinite !important;
-}
+} */
 
 body.compact-mode .mic-button {
     width: 100% !important;

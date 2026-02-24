@@ -55,6 +55,7 @@ let GEMINI_API_KEY = '';
 let MISTRAL_API_KEY = '';
 let DEEPGRAM_API_KEY = '';
 let CARTESIA_API_KEY = '';
+let INCEPTION_API_KEY = '';
 let API_SERVICE = 'groq';
 
 // Frontend visualizer instance
@@ -278,6 +279,7 @@ async function loadSettings() {
         MISTRAL_API_KEY = settings.mistral_api_key || '';
         DEEPGRAM_API_KEY = settings.deepgram_api_key || '';
         CARTESIA_API_KEY = settings.cartesia_api_key || '';
+        INCEPTION_API_KEY = settings.inception_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.transcription_language || 'multilingual');
@@ -490,7 +492,8 @@ async function performRewrite() {
             'fireworks': FIREWORKS_API_KEY,
             'gemini-flash': GEMINI_API_KEY,
             'gemini-flash-lite': GEMINI_API_KEY,
-            'mistral': MISTRAL_API_KEY
+            'mistral': MISTRAL_API_KEY,
+            'inception': INCEPTION_API_KEY
         };
         
         const rewriteApiKey = rewriteApiKeyMap[REWRITE_PROVIDER] || GROQ_API_KEY;

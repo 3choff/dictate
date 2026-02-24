@@ -15,7 +15,8 @@ export class RewriteSection {
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
             { value: 'gemini-flash-lite', label: 'Gemini 2.5 Flash Lite' },
             { value: 'gemini-flash', label: 'Gemini 3 Flash' },
-            { value: 'mistral', label: 'Mistral Small' }
+            { value: 'mistral', label: 'Mistral Small' },
+            { value: 'inception', label: 'Mercury 2' }
         ]);
 
         const placeholder = i18n.t('rewrite.apiKeys.placeholder');
@@ -25,7 +26,8 @@ export class RewriteSection {
             fireworks: new PasswordField('rewriteFireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder),
             sambanova: new PasswordField('rewriteSambanovaApiKey', `SambaNova ${apiKeyLabel}`, placeholder),
             gemini: new PasswordField('rewriteGeminiApiKey', `Gemini ${apiKeyLabel}`, placeholder),
-            mistral: new PasswordField('rewriteMistralApiKey', `Mistral ${apiKeyLabel}`, placeholder)
+            mistral: new PasswordField('rewriteMistralApiKey', `Mistral ${apiKeyLabel}`, placeholder),
+            inception: new PasswordField('rewriteInceptionApiKey', `Inception ${apiKeyLabel}`, placeholder)
         };
 
         // Rewrite mode dropdown
@@ -123,7 +125,8 @@ export class RewriteSection {
         // Map model variants to their shared API key field
         const keyMap = {
             'gemini-flash': 'gemini',
-            'gemini-flash-lite': 'gemini'
+            'gemini-flash-lite': 'gemini',
+            'inception': 'inception'
         };
         const lookupKey = keyMap[provider] || provider;
         

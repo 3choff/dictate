@@ -258,6 +258,7 @@ async function loadSettings(loadedSettings) {
             mistralApiKey: settings.mistral_api_key || '',
             sambanovaApiKey: settings.sambanova_api_key || '',
             fireworksApiKey: settings.fireworks_api_key || '',
+            inceptionApiKey: settings.inception_api_key || '',
             keyboardShortcuts: {
                 toggleRecording: settings.keyboard_shortcuts?.toggle_recording || 'Ctrl+Shift+D',
                 rewrite: settings.keyboard_shortcuts?.rewrite || 'Ctrl+Shift+R',
@@ -332,6 +333,7 @@ async function saveSettings() {
             mistral_api_key: transcriptionValues.mistralApiKey || rewriteValues.mistralApiKey || '',
             sambanova_api_key: transcriptionValues.sambanovaApiKey || rewriteValues.sambanovaApiKey || '',
             fireworks_api_key: transcriptionValues.fireworksApiKey || rewriteValues.fireworksApiKey || '',
+            inception_api_key: rewriteValues.inceptionApiKey || '',
             keyboard_shortcuts: {
                 toggle_recording: shortcutValues.keyboardShortcuts.toggleRecording,
                 rewrite: shortcutValues.keyboardShortcuts.rewrite,
