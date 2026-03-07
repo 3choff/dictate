@@ -63,16 +63,19 @@ body.transitioning.compact-exit {
     padding: 1.5px;
     background: conic-gradient(from var(--recording-angle),
             transparent 0deg,
-            transparent 80deg,
+            transparent 90deg,
             var(--blue-ramp-5) 120deg,
-            var(--blue-ramp-4) 160deg,
-            var(--blue-ramp-3) 210deg,
-            var(--blue-ramp-2) 270deg,
-            var(--blue-ramp-1) 350deg,
-            /* var(--shine-color) 350deg, */
-            /* var(--blue-ramp-1) 355deg, */
-            /* var(--blue-ramp-3) 357deg, */
-            /* var(--blue-ramp-5) 359deg, */
+            var(--blue-ramp-4) 140deg,
+            var(--blue-ramp-3) 155deg,
+            var(--blue-ramp-2) 170deg,
+            var(--blue-ramp-1) 180deg,
+            /* var(--shine-color) 180deg, */
+            var(--blue-ramp-1) 180deg,
+            var(--blue-ramp-2) 190deg,
+            var(--blue-ramp-3) 205deg,
+            var(--blue-ramp-4) 220deg,
+            var(--blue-ramp-5) 240deg,
+            transparent 270deg,
             transparent 360deg);
     /* Masking to create a hollow inner border */
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -81,11 +84,12 @@ body.transitioning.compact-exit {
     mask-composite: exclude;
     opacity: 0;
     transition: opacity 0.4s ease;
+    will-change: --recording-angle;
+    contain: layout style;
 }
 
 body:has(.mic-button.recording) .container::after {
     opacity: 1;
-    /* Combine two animations: the continuous rotation and an easing correction */
     animation: window-recording-shimmer 4s infinite linear;
 }
 

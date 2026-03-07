@@ -13,7 +13,7 @@ export class RewriteSection {
             { value: 'groq', label: 'Groq GPT-OSS-120B' },
             { value: 'fireworks', label: 'Fireworks GPT-OSS-20B' },
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
-            { value: 'gemini-flash-lite', label: 'Gemini 2.5 Flash Lite' },
+            { value: 'gemini-flash-lite', label: 'Gemini 3.1 Flash Lite' },
             { value: 'gemini-flash', label: 'Gemini 3 Flash' },
             { value: 'mistral', label: 'Mistral Small' },
             { value: 'inception', label: 'Mercury 2' }

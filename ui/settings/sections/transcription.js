@@ -30,7 +30,7 @@ export class TranscriptionSection {
             { value: 'groq', label: 'Groq Whisper' },
             { value: 'sambanova', label: 'SambaNova Whisper' },
             { value: 'fireworks', label: 'Fireworks Whisper' },
-            { value: 'gemini', label: 'Gemini 2.5 Flash Lite' },
+            { value: 'gemini', label: 'Gemini 3.1 Flash Lite' },
             { value: 'mistral', label: 'Mistral Voxtral' }
         ]);
 

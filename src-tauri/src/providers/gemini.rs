@@ -37,12 +37,28 @@ enum ContentPart {
 
 #[derive(Debug, Serialize)]
 struct Content {
+    role: String,
     parts: Vec<ContentPart>,
+}
+
+#[derive(Debug, Serialize)]
+struct ThinkingConfig {
+    #[serde(rename = "thinkingLevel")]
+    thinking_level: String,
+}
+
+#[derive(Debug, Serialize)]
+struct GenerationConfig {
+    #[serde(rename = "thinkingConfig")]
+    thinking_config: ThinkingConfig,
 }
 
 #[derive(Debug, Serialize)]
 struct TranscriptionRequest {
     contents: Vec<Content>,
+    #[serde(rename = "generationConfig")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    generation_config: Option<GenerationConfig>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,6 +104,7 @@ pub async fn transcribe_verbose(
     // Construct request body
     let request_body = TranscriptionRequest {
         contents: vec![Content {
+            role: "user".to_string(),
             parts: vec![
                 ContentPart::Text {
                     text: "Generate a transcript of the speech.".to_string(),
@@ -100,11 +117,16 @@ pub async fn transcribe_verbose(
                 },
             ],
         }],
+        generation_config: Some(GenerationConfig {
+            thinking_config: ThinkingConfig {
+                thinking_level: "MINIMAL".to_string(),
+            },
+        }),
     };
     
     // API key goes in URL query param
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={}",
         urlencoding::encode(&api_key)
     );
     
@@ -159,6 +181,7 @@ pub async fn transcribe_verbose(
 
 #[derive(Debug, Serialize)]
 struct ChatContent {
+    role: String,
     parts: Vec<ChatPart>,
 }
 
@@ -170,6 +193,9 @@ struct ChatPart {
 #[derive(Debug, Serialize)]
 struct ChatRequest {
     contents: Vec<ChatContent>,
+    #[serde(rename = "generationConfig")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    generation_config: Option<GenerationConfig>,
 }
 
 // ============================================================================
@@ -196,14 +222,25 @@ pub async fn rewrite_text(
     let client = get_http_client();
     
     // Construct the request body
-    let request_body = ChatRequest {
+    let mut request_body = ChatRequest {
         contents: vec![ChatContent {
+            role: "user".to_string(),
             parts: vec![
                 ChatPart { text: prompt },
                 ChatPart { text },
             ],
         }],
+        generation_config: None,
     };
+
+    // If using the 3.1 flash lite model, apply the MINIMAL thinking level
+    if model == "gemini-3.1-flash-lite-preview" {
+        request_body.generation_config = Some(GenerationConfig {
+            thinking_config: ThinkingConfig {
+                thinking_level: "MINIMAL".to_string(),
+            },
+        });
+    }
     
     // API key goes in URL query param
     let url = format!(
