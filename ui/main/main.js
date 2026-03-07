@@ -496,10 +496,12 @@ async function performRewrite() {
             'inception': INCEPTION_API_KEY
         };
         
-        const rewriteApiKey = rewriteApiKeyMap[REWRITE_PROVIDER] || GROQ_API_KEY;
+        const rewriteApiKey = rewriteApiKeyMap[REWRITE_PROVIDER];
         
         if (!rewriteApiKey) {
-            console.error(`API key not set for rewrite provider: ${REWRITE_PROVIDER}`);
+            const tooltipAnchor = document.body.classList.contains('compact-mode') ? micButton : rewriteBtn;
+            showTemporaryTooltip(tooltipAnchor, i18n.t('main.apiKeyMissing'));
+            console.warn(`API key not set for rewrite provider: ${REWRITE_PROVIDER}`);
             return;
         }
         
@@ -525,7 +527,8 @@ async function performRewrite() {
         // If text area is completely empty, nothing to rewrite
         if (!selectedText || !selectedText.trim()) {
             console.warn('No text available for rewrite');
-            showTemporaryTooltip(rewriteBtn, i18n.t('main.noTextSelected'));
+            const tooltipAnchor = document.body.classList.contains('compact-mode') ? micButton : rewriteBtn;
+            showTemporaryTooltip(tooltipAnchor, i18n.t('main.noTextSelected'));
             rewriteBtn.classList.remove('loading');
             return;
         }
