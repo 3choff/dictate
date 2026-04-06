@@ -175,7 +175,7 @@ fn normalize_whisper_transcript(text: &str) -> String {
     let lowercase = trimmed.to_lowercase();
     let cleaned: String = lowercase
         .chars()
-        .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+        .filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '\'' || *c == '’')
         .collect();
     
     // Add trailing space for natural flow

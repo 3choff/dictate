@@ -50,8 +50,7 @@ pub async fn transcribe_verbose(
     
     let client = get_http_client();
     
-    // Mistral uses voxtral-mini-2507 model
-    let model_name = "voxtral-mini-2507";
+    let model_name = "voxtral-mini-2602";
 
     // Create multipart form
     let part = multipart::Part::bytes(audio_data)

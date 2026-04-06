@@ -551,7 +551,9 @@ function createCustomSelect(selectElement) {
 
     // Event Listeners
     trigger.addEventListener('click', () => {
-        dropdown.toggle();
+        if (!selectElement.disabled) {
+            dropdown.toggle();
+        }
     });
 
     options.addEventListener('click', (e) => {

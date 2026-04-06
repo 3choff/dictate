@@ -45,10 +45,19 @@ export class SelectField {
     setValue(value) {
         const select = document.getElementById(this.id);
         if (select) {
-            // Use selectedIndex to force visual update
+            // Use selectedIndex to force visual update on the native select
             const optionIndex = Array.from(select.options).findIndex(opt => opt.value === value);
             if (optionIndex !== -1) {
                 select.selectedIndex = optionIndex;
+
+                // Also sync the visible custom dropdown trigger text if it exists
+                const wrapper = select.closest('.custom-select-wrapper');
+                if (wrapper) {
+                    const triggerSpan = wrapper.querySelector('.custom-select-trigger span');
+                    if (triggerSpan) {
+                        triggerSpan.textContent = select.options[optionIndex].textContent;
+                    }
+                }
             }
         }
     }

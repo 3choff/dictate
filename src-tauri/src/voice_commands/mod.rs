@@ -40,6 +40,43 @@ impl VoiceCommands {
     pub fn get_commands(&self) -> &HashMap<String, String> {
         &self.commands
     }
+
+    /// Check if the given text exactly matches a voice command phrase (case-insensitive).
+    /// Also checks with spaces collapsed to handle Voxtral word fragmentation
+    /// (e.g., "ex clamation mark" matches "exclamation mark").
+    pub fn is_exact_command(&self, text: &str) -> bool {
+        let lower = text.to_lowercase();
+        let collapsed = lower.replace(" ", "");
+        self.commands.keys().any(|phrase| {
+            let phrase_lower = phrase.to_lowercase();
+            phrase_lower == lower || phrase_lower.replace(" ", "") == collapsed
+        })
+    }
+
+    /// Check if the given text is a prefix of any voice command phrase (case-insensitive).
+    /// Also checks with spaces collapsed for Voxtral word fragmentation.
+    pub fn is_command_prefix(&self, text: &str) -> bool {
+        let lower = text.to_lowercase();
+        let collapsed = lower.replace(" ", "");
+        self.commands.keys().any(|phrase| {
+            let phrase_lower = phrase.to_lowercase();
+            let phrase_collapsed = phrase_lower.replace(" ", "");
+            // Standard prefix check: "press" is a prefix of "press enter"
+            let is_standard_prefix = phrase_lower.starts_with(&format!("{} ", lower));
+            // Collapsed prefix check: "ex cla" collapsed to "excla" is a prefix of "exclamationmark"
+            let is_collapsed_prefix = phrase_collapsed.starts_with(&collapsed) && collapsed != phrase_collapsed;
+            is_standard_prefix || is_collapsed_prefix
+        })
+    }
+
+    /// If the buffer (possibly fragmented) matches a command when spaces are collapsed,
+    /// return the correct command phrase. Used to fix the buffer before processing.
+    pub fn reconstruct_command(&self, text: &str) -> Option<String> {
+        let collapsed = text.to_lowercase().replace(" ", "");
+        self.commands.keys().find(|phrase| {
+            phrase.to_lowercase().replace(" ", "") == collapsed
+        }).cloned()
+    }
 }
 
 #[derive(Debug)]
@@ -92,13 +129,18 @@ pub struct ProcessedText {
     pub processed_text: String,
     pub actions: Vec<CommandAction>,
     pub had_key_action: bool,
+    pub had_any_command: bool,
 }
 
 pub fn process_voice_commands(text: &str, voice_commands: &VoiceCommands) -> ProcessedText {
+    // Keep original casing for text that gets inserted as dictation
     let mut remaining = text.trim().to_string();
+    // Lowercase copy used only for command detection (models may capitalize first words)
+    let mut remaining_lower = remaining.to_lowercase();
     let mut processed = String::new();
     let mut actions = Vec::new();
     let mut had_key_action = false;
+    let mut had_any_command = false;
     
     // Process each voice command
     for (phrase, action) in voice_commands.get_commands() {
@@ -114,8 +156,9 @@ pub fn process_voice_commands(text: &str, voice_commands: &VoiceCommands) -> Pro
             match &cmd_action {
                 CommandAction::DeleteLastWord => {
                     // Remove the command phrase and delete last word before it
-                    if re.is_match(&remaining) {
+                    if re.is_match(&remaining_lower) {
                         remaining = re.replace_all(&remaining, "").to_string();
+                        remaining_lower = remaining.to_lowercase();
                         // Remove last word from processed text
                         let words: Vec<&str> = processed.trim().split_whitespace().collect();
                         if !words.is_empty() {
@@ -126,41 +169,59 @@ pub fn process_voice_commands(text: &str, voice_commands: &VoiceCommands) -> Pro
                         }
                         actions.push(cmd_action);
                         had_key_action = true;
+                        had_any_command = true;
                     }
                 }
                 CommandAction::Rewrite | CommandAction::PauseDictation => {
                     // Remove the command phrase and add action
-                    if re.is_match(&remaining) {
+                    if re.is_match(&remaining_lower) {
                         remaining = re.replace_all(&remaining, "").to_string().trim().to_string();
+                        remaining_lower = remaining.to_lowercase();
                         processed = processed.trim_end().to_string();
                         actions.push(cmd_action);
                         had_key_action = true;
+                        had_any_command = true;
                     }
                 }
                 CommandAction::KeyPress(_) | CommandAction::KeyCombo(_, _) => {
                     // Remove the command phrase and add key action
-                    remaining = re.replace_all(&remaining, "").to_string();
-                    if re.is_match(text) {
+                    if re.is_match(&remaining_lower) {
+                        remaining = re.replace_all(&remaining, "").to_string();
+                        remaining_lower = remaining.to_lowercase();
                         actions.push(cmd_action);
                         had_key_action = true;
+                        had_any_command = true;
                     }
                 }
                 CommandAction::InsertText(text) => {
                     // Replace command phrase with punctuation/text
-                    if re.is_match(&remaining) {
+                    if re.is_match(&remaining_lower) {
                         remaining = re.replace_all(&remaining, "").to_string();
+                        remaining_lower = remaining.to_lowercase();
                         processed.push_str(text);
                         processed.push(' ');
+                        had_any_command = true;
                     }
                 }
             }
         }
     }
     
+    // After a voice command, the model often adds trailing punctuation (. ,)
+    // because the user paused after speaking the command. Strip it.
+    let mut final_remaining = remaining.trim().to_string();
+    if had_any_command {
+        // Remove trailing period/comma that the model added after the command
+        final_remaining = final_remaining.trim_end_matches(|c: char| c == '.' || c == ',').trim().to_string();
+        // Also remove leading period/comma (command was at the end of the chunk)
+        final_remaining = final_remaining.trim_start_matches(|c: char| c == '.' || c == ',').trim().to_string();
+    }
+    
     ProcessedText {
-        remaining_text: remaining.trim().to_string(),
+        remaining_text: final_remaining,
         processed_text: processed,
         actions,
         had_key_action,
+        had_any_command,
     }
 }

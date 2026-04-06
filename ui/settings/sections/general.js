@@ -142,7 +142,7 @@ export class GeneralSection {
     
     handlePttToggle(event) {
         const currentProvider = document.getElementById('api-service')?.value || 'groq';
-        const streamingProviders = ['deepgram', 'cartesia'];
+        const streamingProviders = ['deepgram', 'cartesia', 'voxtral'];
         const isStreamingProvider = streamingProviders.includes(currentProvider);
         
         if (event.target.checked && isStreamingProvider) {
@@ -173,7 +173,7 @@ export class GeneralSection {
         const pttEnabled = pttToggle?.checked || false;
         const currentProvider = document.getElementById('api-service')?.value || 'groq';
         
-        const streamingProviders = ['deepgram', 'cartesia'];
+        const streamingProviders = ['deepgram', 'cartesia', 'voxtral'];
         const isStreamingProvider = streamingProviders.includes(currentProvider);
         
         if (pttEnabled && isStreamingProvider && pttToggle) {

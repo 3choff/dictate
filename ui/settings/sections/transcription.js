@@ -27,6 +27,7 @@ export class TranscriptionSection {
         this.providerField = new SelectField('api-service', i18n.t('transcription.model'), [
             { value: 'deepgram', label: 'Deepgram Nova 3 (Real-time)' },
             { value: 'cartesia', label: 'Cartesia Ink Whisper (Real-time)' },
+            { value: 'voxtral', label: 'Mistral Voxtral (Real-time)' },
             { value: 'groq', label: 'Groq Whisper' },
             { value: 'sambanova', label: 'SambaNova Whisper' },
             { value: 'fireworks', label: 'Fireworks Whisper' },
@@ -127,6 +128,7 @@ export class TranscriptionSection {
         // Set up change listener after DOM insertion
         this.providerField.onChange((value) => {
             this.updateApiKeyVisibility(value);
+            this.updateLanguageLock(value);
             if (this.generalSection && this.generalSection.updatePttWarning) {
                 this.generalSection.updatePttWarning();
             }
@@ -151,6 +153,9 @@ export class TranscriptionSection {
     }
 
     updateApiKeyVisibility(provider) {
+        // Map voxtral to mistral since they share the same API key
+        const mappedProvider = provider === 'voxtral' ? 'mistral' : provider;
+
         Object.entries(this.apiKeyFields).forEach(([p, field]) => {
             const fieldEl = document.querySelector(`#${field.id}-group`);
             if (fieldEl) {
@@ -158,7 +163,7 @@ export class TranscriptionSection {
             }
         });
         
-        const relevantField = this.apiKeyFields[provider];
+        const relevantField = this.apiKeyFields[mappedProvider];
         if (relevantField) {
             const fieldEl = document.querySelector(`#${relevantField.id}-group`);
             if (fieldEl) {
@@ -167,10 +172,33 @@ export class TranscriptionSection {
         }
     }
 
+    /**
+     * Lock language to multilingual when Voxtral is selected (auto-detects language)
+     */
+    updateLanguageLock(provider) {
+        const languageSelect = document.getElementById('language-select');
+        if (!languageSelect) return;
+
+        // Walk up to the .focus-gradient-border wrapper — this exists even before
+        // createCustomSelect runs (it's created by SelectField.render())
+        // so it works both at startup (loadValues) and on model-switch.
+        const gradientBorder = languageSelect.closest('.focus-gradient-border');
+
+        if (provider === 'voxtral') {
+            this.languageField.setValue('multilingual');
+            languageSelect.disabled = true;
+            if (gradientBorder) gradientBorder.classList.add('select-disabled');
+        } else {
+            languageSelect.disabled = false;
+            if (gradientBorder) gradientBorder.classList.remove('select-disabled');
+        }
+    }
+
     loadValues(settings) {
         if (settings.provider) {
             this.providerField.setValue(settings.provider);
             this.updateApiKeyVisibility(settings.provider);
+            this.updateLanguageLock(settings.provider);
         }
         if (settings.language) {
             this.languageField.setValue(settings.language);

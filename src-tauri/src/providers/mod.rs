@@ -9,3 +9,4 @@ pub mod inception;
 // Streaming providers (WebSocket-based)
 pub mod deepgram;
 pub mod cartesia;
+pub mod voxtral;

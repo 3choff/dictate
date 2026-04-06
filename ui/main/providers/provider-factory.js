@@ -10,6 +10,7 @@ import { SambaNovaProvider } from './sambanova-provider.js';
 import { FireworksProvider } from './fireworks-provider.js';
 import { DeepgramProvider } from './deepgram-provider.js';
 import { CartesiaProvider } from './cartesia-provider.js';
+import { VoxtralProvider } from './voxtral-provider.js';
 
 /**
  * Create a provider instance
@@ -47,6 +48,9 @@ export function createProvider(serviceName, config) {
         case 'cartesia':
             return new CartesiaProvider(config);
         
+        case 'voxtral':
+            return new VoxtralProvider(config);
+        
         default:
             throw new Error(`Unknown provider: ${serviceName}`);
     }
@@ -64,7 +68,8 @@ export function getAvailableProviders() {
         'sambanova',
         'fireworks',
         'deepgram',
-        'cartesia'
+        'cartesia',
+        'voxtral'
     ];
 }
 
@@ -74,5 +79,5 @@ export function getAvailableProviders() {
  * @returns {boolean}
  */
 export function isStreamingProvider(serviceName) {
-    return ['deepgram', 'cartesia'].includes(serviceName.toLowerCase());
+    return ['deepgram', 'cartesia', 'voxtral'].includes(serviceName.toLowerCase());
 }

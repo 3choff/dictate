@@ -313,3 +313,19 @@ input::-ms-clear {
 .focus-gradient-border:hover::after {
     background-position: 100% 100%;
 }
+
+/* === Disabled select field: no shimmer, no hover, not-allowed cursor === */
+.focus-gradient-border.select-disabled {
+    opacity: 0.5;
+}
+
+.focus-gradient-border.select-disabled::after,
+.focus-gradient-border.select-disabled:hover::after,
+.focus-gradient-border.select-disabled:focus-within::after {
+    background-position: 0% 0% !important;
+    transition: none !important;
+}
+
+.focus-gradient-border.select-disabled .custom-select-trigger {
+    cursor: not-allowed;
+}

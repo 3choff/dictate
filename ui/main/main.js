@@ -634,7 +634,8 @@ async function startRecording() {
             'sambanova': SAMBANOVA_API_KEY,
             'fireworks': FIREWORKS_API_KEY,
             'deepgram': DEEPGRAM_API_KEY,
-            'cartesia': CARTESIA_API_KEY
+            'cartesia': CARTESIA_API_KEY,
+            'voxtral': MISTRAL_API_KEY
         };
         
         const apiKey = apiKeyMap[API_SERVICE];
@@ -737,7 +738,8 @@ function getProviderDisplayName(provider) {
         'sambanova': 'SambaNova',
         'fireworks': 'Fireworks',
         'deepgram': 'Deepgram',
-        'cartesia': 'Cartesia'
+        'cartesia': 'Cartesia',
+        'voxtral': 'Voxtral'
     };
     return names[provider] || provider;
 }
