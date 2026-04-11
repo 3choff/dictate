@@ -10,3 +10,4 @@ pub mod inception;
 pub mod deepgram;
 pub mod cartesia;
 pub mod voxtral;
+pub mod elevenlabs;

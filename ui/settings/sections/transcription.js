@@ -28,6 +28,7 @@ export class TranscriptionSection {
             { value: 'deepgram', label: 'Deepgram Nova 3 (Real-time)' },
             { value: 'cartesia', label: 'Cartesia Ink Whisper (Real-time)' },
             { value: 'voxtral', label: 'Mistral Voxtral (Real-time)' },
+            { value: 'elevenlabs', label: 'ElevenLabs Scribe v2 (Real-time)' },
             { value: 'groq', label: 'Groq Whisper' },
             { value: 'sambanova', label: 'SambaNova Whisper' },
             { value: 'fireworks', label: 'Fireworks Whisper' },
@@ -45,7 +46,8 @@ export class TranscriptionSection {
             gemini: new PasswordField('geminiApiKey', `Gemini ${apiKeyLabel}`, placeholder),
             mistral: new PasswordField('mistralApiKey', `Mistral ${apiKeyLabel}`, placeholder),
             sambanova: new PasswordField('sambanovaApiKey', `SambaNova ${apiKeyLabel}`, placeholder),
-            fireworks: new PasswordField('fireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder)
+            fireworks: new PasswordField('fireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder),
+            elevenlabs: new PasswordField('elevenlabsApiKey', `ElevenLabs ${apiKeyLabel}`, placeholder)
         };
 
         // Word correction components

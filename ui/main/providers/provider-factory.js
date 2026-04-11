@@ -11,6 +11,7 @@ import { FireworksProvider } from './fireworks-provider.js';
 import { DeepgramProvider } from './deepgram-provider.js';
 import { CartesiaProvider } from './cartesia-provider.js';
 import { VoxtralProvider } from './voxtral-provider.js';
+import { ElevenLabsProvider } from './elevenlabs-provider.js';
 
 /**
  * Create a provider instance
@@ -51,6 +52,9 @@ export function createProvider(serviceName, config) {
         case 'voxtral':
             return new VoxtralProvider(config);
         
+        case 'elevenlabs':
+            return new ElevenLabsProvider(config);
+        
         default:
             throw new Error(`Unknown provider: ${serviceName}`);
     }
@@ -69,7 +73,8 @@ export function getAvailableProviders() {
         'fireworks',
         'deepgram',
         'cartesia',
-        'voxtral'
+        'voxtral',
+        'elevenlabs'
     ];
 }
 
@@ -79,5 +84,5 @@ export function getAvailableProviders() {
  * @returns {boolean}
  */
 export function isStreamingProvider(serviceName) {
-    return ['deepgram', 'cartesia', 'voxtral'].includes(serviceName.toLowerCase());
+    return ['deepgram', 'cartesia', 'voxtral', 'elevenlabs'].includes(serviceName.toLowerCase());
 }

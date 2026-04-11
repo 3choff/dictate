@@ -55,6 +55,7 @@ let GEMINI_API_KEY = '';
 let MISTRAL_API_KEY = '';
 let DEEPGRAM_API_KEY = '';
 let CARTESIA_API_KEY = '';
+let ELEVENLABS_API_KEY = '';
 let INCEPTION_API_KEY = '';
 let API_SERVICE = 'groq';
 
@@ -279,6 +280,7 @@ async function loadSettings() {
         MISTRAL_API_KEY = settings.mistral_api_key || '';
         DEEPGRAM_API_KEY = settings.deepgram_api_key || '';
         CARTESIA_API_KEY = settings.cartesia_api_key || '';
+        ELEVENLABS_API_KEY = settings.elevenlabs_api_key || '';
         INCEPTION_API_KEY = settings.inception_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
@@ -635,6 +637,7 @@ async function startRecording() {
             'fireworks': FIREWORKS_API_KEY,
             'deepgram': DEEPGRAM_API_KEY,
             'cartesia': CARTESIA_API_KEY,
+            'elevenlabs': ELEVENLABS_API_KEY,
             'voxtral': MISTRAL_API_KEY
         };
         
@@ -739,6 +742,7 @@ function getProviderDisplayName(provider) {
         'fireworks': 'Fireworks',
         'deepgram': 'Deepgram',
         'cartesia': 'Cartesia',
+        'elevenlabs': 'ElevenLabs',
         'voxtral': 'Voxtral'
     };
     return names[provider] || provider;
