@@ -70,6 +70,8 @@ pub struct Settings {
     pub custom_rewrite_prompt: String,
     #[serde(default = "default_close_to_tray")]
     pub close_to_tray: bool,
+    #[serde(default = "default_show_transcript_overlay")]
+    pub show_transcript_overlay: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -273,8 +275,13 @@ impl Default for Settings {
             word_correction_enabled: default_word_correction_enabled(),
             custom_rewrite_prompt: String::new(),
             close_to_tray: default_close_to_tray(),
+            show_transcript_overlay: default_show_transcript_overlay(),
         }
     }
+}
+
+fn default_show_transcript_overlay() -> bool {
+    true
 }
 
 fn default_close_to_tray() -> bool {
@@ -913,5 +920,183 @@ pub async fn set_autostart_enabled(app: AppHandle, enabled: bool) -> Result<(), 
     settings.autostart_enabled = enabled;
     save_settings_internal(&app, settings, false).await?;
     
+    Ok(())
+}
+
+// ============================================================================
+// Transcript Overlay Window Commands
+// ============================================================================
+
+fn get_overlay_target_position(monitor: &tauri::Monitor, overlay_width: f64) -> (i32, i32) {
+    let (target_x, target_y) = {
+        #[cfg(target_os = "windows")]
+        {
+            unsafe {
+                use windows::Win32::Foundation::*;
+                use windows::Win32::UI::WindowsAndMessaging::*;
+                
+                let mut pt = POINT::default();
+                let mut found_caret = false;
+                let fg_window = GetForegroundWindow();
+                
+                if fg_window.0 != std::ptr::null_mut() {
+                    let thread_id = GetWindowThreadProcessId(fg_window, None);
+                    let mut gui_info = GUITHREADINFO::default();
+                    gui_info.cbSize = std::mem::size_of::<GUITHREADINFO>() as u32;
+                    
+                    if GetGUIThreadInfo(thread_id, &mut gui_info).is_ok() {
+                        if gui_info.hwndCaret.0 != std::ptr::null_mut() {
+                            pt.x = gui_info.rcCaret.left;
+                            pt.y = gui_info.rcCaret.bottom + 20; // 20px downward offset
+                            let _ = windows::Win32::Graphics::Gdi::ClientToScreen(gui_info.hwndCaret, &mut pt);
+                            found_caret = true;
+                        }
+                    }
+                }
+                
+                if !found_caret {
+                    let _ = GetCursorPos(&mut pt);
+                    pt.y += 20; // 20px downward offset from mouse pointer
+                }
+                
+                (pt.x as f64 - 12.0, pt.y as f64)
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            // Fallback for non-Windows (default to bottom center)
+            let scale = monitor.scale_factor();
+            let x = monitor.position().x as f64 + (monitor.size().width as f64 - overlay_width) / 2.0;
+            let y = monitor.position().y as f64 + monitor.size().height as f64 - 100.0 * scale;
+            (x, y)
+        }
+    };
+
+    // Clamp coordinates to the current monitor bounds so it doesn't spill over
+    let scale = monitor.scale_factor();
+    let monitor_pos = monitor.position();
+    let monitor_size = monitor.size();
+    
+    // Convert overlay height to physical for boundary checking
+    let overlay_height = 80.0 * scale;
+    
+    let mut final_x = target_x;
+    let mut final_y = target_y;
+
+    if final_x < monitor_pos.x as f64 { final_x = monitor_pos.x as f64; }
+    let max_x = monitor_pos.x as f64 + monitor_size.width as f64 - overlay_width;
+    if final_x > max_x { final_x = max_x; }
+
+    if final_y < monitor_pos.y as f64 { final_y = monitor_pos.y as f64; }
+    let max_y = monitor_pos.y as f64 + monitor_size.height as f64 - overlay_height;
+    if final_y > max_y { final_y = max_y; }
+
+    (final_x as i32, final_y as i32)
+}
+
+#[tauri::command]
+pub async fn open_transcript_overlay(app: AppHandle) -> Result<(), String> {
+    // Get primary monitor info for positioning
+    let main_window = app.get_webview_window("main")
+        .ok_or("Main window not found")?;
+    let monitor = main_window.current_monitor().map_err(|e| e.to_string())?
+        .ok_or("No monitor found")?;
+        
+    let overlay_width = 800.0_f64;
+    let overlay_height = 80.0_f64;
+
+    // Calculate dynamic position
+    let (target_x, target_y) = get_overlay_target_position(&monitor, overlay_width * monitor.scale_factor());
+
+    // If overlay window already exists, update pos and show
+    if let Some(window) = app.get_webview_window("transcript_overlay") {
+        window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x: target_x, y: target_y })).ok();
+        if !window.is_visible().map_err(|e| e.to_string())? {
+            window.show().map_err(|e| e.to_string())?;
+        }
+        return Ok(());
+    }
+
+    // Create the overlay window
+    let overlay = tauri::WebviewWindowBuilder::new(
+        &app,
+        "transcript_overlay",
+        tauri::WebviewUrl::App("../overlay/index.html".into())
+    )
+    .title("Transcript Overlay")
+    .inner_size(overlay_width, overlay_height)
+    .resizable(false)
+    .decorations(false)
+    .shadow(false)
+    .transparent(true)
+    .visible(true)
+    .skip_taskbar(true)
+    .always_on_top(true)
+    .focusable(false)
+    .build()
+    .map_err(|e| e.to_string())?;
+
+    // Position the window
+    overlay.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+        x: target_x,
+        y: target_y,
+    })).map_err(|e| e.to_string())?;
+
+    // Apply click-through and no-activate styles on Windows
+    #[cfg(target_os = "windows")]
+    {
+        use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+        if let Ok(handle) = overlay.window_handle() {
+            if let RawWindowHandle::Win32(win32_handle) = handle.as_raw() {
+                let hwnd = win32_handle.hwnd.get() as isize;
+                // WS_EX_TRANSPARENT makes the window click-through
+                // WS_EX_NOACTIVATE prevents focus stealing
+                unsafe {
+                    use windows::Win32::UI::WindowsAndMessaging::*;
+                    let hwnd_win = windows::Win32::Foundation::HWND(hwnd as *mut _);
+                    let ex_style = GetWindowLongW(hwnd_win, GWL_EXSTYLE);
+                    SetWindowLongW(
+                        hwnd_win,
+                        GWL_EXSTYLE,
+                        ex_style | WS_EX_TRANSPARENT.0 as i32 | WS_EX_NOACTIVATE.0 as i32 | WS_EX_LAYERED.0 as i32 | WS_EX_TOOLWINDOW.0 as i32
+                    );
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn close_transcript_overlay(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("transcript_overlay") {
+        // Clear text before hiding
+        let _ = window.eval("if(window.__clearOverlayText__) window.__clearOverlayText__()");
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_transcript_overlay(app: AppHandle, text: String) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("transcript_overlay") {
+        // Escape text for JS string
+        let escaped = text.replace('\\', "\\\\").replace('\'', "\\'").replace('\n', " ");
+        let _ = window.eval(&format!("if(window.__updateOverlayText__) window.__updateOverlayText__('{}')" , escaped));
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn reposition_transcript_overlay(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("transcript_overlay") {
+        if let Ok(Some(monitor)) = window.current_monitor() {
+            let overlay_width = 800.0_f64;
+            let (target_x, target_y) = get_overlay_target_position(&monitor, overlay_width * monitor.scale_factor());
+            window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x: target_x, y: target_y })).ok();
+        }
+    }
     Ok(())
 }

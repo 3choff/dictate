@@ -40,13 +40,15 @@
         "closeToTray": "关闭到托盘",
         "autostart": "开机启动",
         "language": "语言",
+        "transcriptOverlay": "转录覆盖层",
         "tooltips": {
             "darkMode": "在浅色和深色配色方案之间切换",
             "compactMode": "切换到紧凑的水平药丸布局",
             "startHidden": "启动应用程序到系统托盘而不打开窗口",
             "closeToTray": "关闭时最小化到系统托盘而不是退出",
             "autostart": "登录Windows时自动启动Dictate",
-            "language": "更改应用程序界面语言"
+            "language": "更改应用程序界面语言",
+            "transcriptOverlay": "录制时将部分转录显示为字幕叠加层"
         }
     },
     "transcription": {

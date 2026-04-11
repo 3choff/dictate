@@ -40,13 +40,15 @@
         "closeToTray": "トレイに閉じる",
         "autostart": "システム起動時に開始",
         "language": "言語",
+        "transcriptOverlay": "転写オーバーレイ",
         "tooltips": {
             "darkMode": "ライトとダークの配色を切り替え",
             "compactMode": "コンパクトな横型ピルレイアウトに切り替え",
             "startHidden": "ウィンドウを開かずにシステムトレイでアプリを起動",
             "closeToTray": "閉じる時に終了せずシステムトレイに最小化",
             "autostart": "Windows起動時にDictateを自動起動",
-            "language": "アプリケーションのインターフェース言語を変更"
+            "language": "アプリケーションのインターフェース言語を変更",
+            "transcriptOverlay": "録音中に部分的な転写を字幕オーバーレイとして表示する"
         }
     },
     "transcription": {

@@ -455,7 +455,7 @@ pub async fn start_streaming_transcription(
                 Some(language)
             };
             
-            let (audio_tx, mut transcript_rx) = providers::elevenlabs::start_streaming(
+            let (audio_tx, mut transcript_rx, mut partial_rx) = providers::elevenlabs::start_streaming(
                 api_key,
                 el_language,
             )
@@ -468,14 +468,38 @@ pub async fn start_streaming_transcription(
                 sessions.insert(session_id.clone(), audio_tx);
             }
             
-            // Spawn task to handle incoming transcripts
+            // Spawn task to forward partial transcripts to overlay
+            let app_partial = app.clone();
+            tokio::spawn(async move {
+                let noise_re = regex::Regex::new(r"\[.*?\]|\(.*?\)").unwrap();
+                let space_re = regex::Regex::new(r"\s+").unwrap();
+                while let Some(partial_text) = partial_rx.recv().await {
+                    let cleaned = noise_re.replace_all(&partial_text, " ");
+                    let cleaned = space_re.replace_all(&cleaned, " ").trim().to_string();
+                    
+                    if let Some(window) = app_partial.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-transcript", &cleaned);
+                    }
+                }
+            });
+            
+            // Spawn task to handle incoming committed transcripts
             let app_clone = app.clone();
             let session_id_clone = session_id.clone();
             let sessions_clone = state.sessions.clone();
             
             let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
             tokio::spawn(async move {
-                while let Some(transcript) = transcript_rx.recv().await {
+                let noise_re = regex::Regex::new(r"\[.*?\]|\(.*?\)").unwrap();
+                let space_re = regex::Regex::new(r"\s+").unwrap();
+                while let Some(raw_transcript) = transcript_rx.recv().await {
+                    let transcript = noise_re.replace_all(&raw_transcript, " ");
+                    let transcript = space_re.replace_all(&transcript, " ").trim().to_string();
+                    // Clear partial overlay when committed text arrives
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-clear", ());
+                    }
+                    
                     // Apply formatting based on smart_format setting
                     let formatted_transcript = if smart_format {
                         transcript

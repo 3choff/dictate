@@ -40,13 +40,15 @@
         "closeToTray": "Sluiten naar systeemvak",
         "autostart": "Starten bij opstarten",
         "language": "Taal",
+        "transcriptOverlay": "Transcriptie-overlay",
         "tooltips": {
             "darkMode": "Schakelen tussen licht en donker kleurenschema",
             "compactMode": "Schakel naar compacte horizontale pil-layout",
             "startHidden": "Applicatie starten in systeemvak zonder venster te openen",
             "closeToTray": "Minimaliseren naar systeemvak in plaats van afsluiten",
             "autostart": "Dictate automatisch starten bij Windows-aanmelding",
-            "language": "Wijzig de taal van de applicatie-interface"
+            "language": "Wijzig de taal van de applicatie-interface",
+            "transcriptOverlay": "Gedeeltelijke transcriptie weergeven als ondertiteling tijdens opname"
         }
     },
     "transcription": {

@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default permissions for Dictate app",
-  "windows": ["main", "settings"],
+  "windows": ["main", "settings", "tray_menu", "transcript_overlay"],
   "permissions": [
     "core:default",
     "core:event:allow-listen",

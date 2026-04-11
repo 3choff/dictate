@@ -40,13 +40,15 @@
         "closeToTray": "In Taskleiste minimieren",
         "autostart": "Beim Systemstart starten",
         "language": "Sprache",
+        "transcriptOverlay": "Transkriptions-Overlay",
         "tooltips": {
             "darkMode": "Zwischen hellem und dunklem Farbschema wechseln",
             "compactMode": "Zur kompakten horizontalen Pillenansicht wechseln",
             "startHidden": "Anwendung in der Taskleiste ohne Fenster starten",
             "closeToTray": "In die Taskleiste minimieren statt beenden",
             "autostart": "Dictate automatisch bei Windows-Anmeldung starten",
-            "language": "Sprache der Benutzeroberfläche ändern"
+            "language": "Sprache der Benutzeroberfläche ändern",
+            "transcriptOverlay": "Teiltranskription während der Aufnahme als Untertitel anzeigen"
         }
     },
     "transcription": {

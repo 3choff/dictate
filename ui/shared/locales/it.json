@@ -40,13 +40,15 @@
         "closeToTray": "Chiudi nel vassoio",
         "autostart": "Avvia all'accensione",
         "language": "Lingua",
+        "transcriptOverlay": "Sottotitoli sovrimpressi",
         "tooltips": {
             "darkMode": "Passa dallo schema colori chiaro a quello scuro",
             "compactMode": "Passa al layout compatto a pillola orizzontale",
             "startHidden": "Avvia l'applicazione nel vassoio di sistema senza aprire la finestra",
             "closeToTray": "Minimizza nel vassoio di sistema invece di uscire quando si chiude la finestra",
             "autostart": "Avvia automaticamente Dictate quando accedi a Windows",
-            "language": "Cambia la lingua dell'interfaccia dell'applicazione"
+            "language": "Cambia la lingua dell'interfaccia dell'applicazione",
+            "transcriptOverlay": "Mostra la trascrizione parziale come sottotitolo durante la registrazione"
         }
     },
     "transcription": {

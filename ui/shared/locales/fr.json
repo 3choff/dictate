@@ -40,13 +40,15 @@
         "closeToTray": "Fermer dans la barre",
         "autostart": "Lancer au démarrage",
         "language": "Langue",
+        "transcriptOverlay": "Overlay de transcription",
         "tooltips": {
             "darkMode": "Basculer entre les thèmes clair et sombre",
             "compactMode": "Passer à la disposition compacte en pilule horizontale",
             "startHidden": "Lancer l'application dans la barre système sans ouvrir de fenêtre",
             "closeToTray": "Minimiser dans la barre système au lieu de quitter",
             "autostart": "Démarrer Dictate automatiquement à la connexion Windows",
-            "language": "Changer la langue de l'interface"
+            "language": "Changer la langue de l'interface",
+            "transcriptOverlay": "Afficher la transcription partielle sous forme de sous-titres pendant l'enregistrement"
         }
     },
     "transcription": {

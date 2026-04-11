@@ -579,6 +579,10 @@ pub fn run() {
             commands::vad::vad_stop_session,
             commands::vad::vad_destroy_session,
             commands::set_autostart_enabled,
+            commands::open_transcript_overlay,
+            commands::close_transcript_overlay,
+            commands::update_transcript_overlay,
+            commands::reposition_transcript_overlay,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

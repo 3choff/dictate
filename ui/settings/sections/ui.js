@@ -13,6 +13,7 @@ export class UISection {
         this.startHiddenToggle = new ToggleSwitch('start-hidden', i18n.t('interface.startHidden'));
         this.closeToTrayToggle = new ToggleSwitch('close-to-tray', i18n.t('interface.closeToTray'));
         this.autostartToggle = new ToggleSwitch('autostart-enabled', i18n.t('interface.autostart'));
+        this.transcriptOverlayToggle = new ToggleSwitch('show-transcript-overlay', i18n.t('interface.transcriptOverlay', 'Transcript Overlay'));
         
         this.languageField = new SelectField('app-language-select', i18n.t('interface.language'), [
             { value: 'en', label: 'English' },
@@ -69,6 +70,7 @@ export class UISection {
         behaviorBody.appendChild(this.startHiddenToggle.render());
         behaviorBody.appendChild(this.autostartToggle.render());
         behaviorBody.appendChild(this.closeToTrayToggle.render());
+        behaviorBody.appendChild(this.transcriptOverlayToggle.render());
         behaviorGroup.appendChild(behaviorBody);
         section.appendChild(behaviorGroup);
         
@@ -109,6 +111,9 @@ export class UISection {
         
         // Add tooltip to close to tray toggle
         this.addTooltip('close-to-tray', i18n.t('interface.tooltips.closeToTray'));
+        
+        // Add tooltip to transcript overlay toggle
+        this.addTooltip('show-transcript-overlay', i18n.t('interface.tooltips.transcriptOverlay', 'Show partial transcription as a subtitle overlay while recording'));
         
         // Add tooltip to autostart toggle and handle change
         const autostartToggleElement = document.getElementById('autostart-enabled');
@@ -164,6 +169,9 @@ export class UISection {
         if (settings.compactMode !== undefined) {
             this.compactModeToggle.setValue(settings.compactMode);
         }
+        if (settings.showTranscriptOverlay !== undefined) {
+            this.transcriptOverlayToggle.setValue(settings.showTranscriptOverlay);
+        }
     }
 
     getValues() {
@@ -173,7 +181,8 @@ export class UISection {
             startHidden: this.startHiddenToggle.getValue(),
             closeToTray: this.closeToTrayToggle.getValue(),
             autostartEnabled: this.autostartToggle.getValue(),
-            appLanguage: this.languageField.getValue()
+            appLanguage: this.languageField.getValue(),
+            showTranscriptOverlay: this.transcriptOverlayToggle.getValue()
         };
     }
     

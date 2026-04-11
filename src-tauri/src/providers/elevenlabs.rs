@@ -25,11 +25,13 @@ struct ElevenLabsMessage {
 
 /// Start ElevenLabs Scribe v2 realtime streaming session
 /// Connects to ElevenLabs WebSocket and returns channels for audio/transcripts
+/// Returns: (audio_tx, committed_transcript_rx, partial_transcript_rx)
 pub async fn start_streaming(
     api_key: String,
     language: Option<String>,
 ) -> Result<(
     tokio::sync::mpsc::Sender<Vec<u8>>,
+    tokio::sync::mpsc::Receiver<String>,
     tokio::sync::mpsc::Receiver<String>,
 ), Box<dyn std::error::Error + Send + Sync>> {
     
@@ -72,6 +74,7 @@ pub async fn start_streaming(
     // Create channels for communication
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel::<Vec<u8>>(100);
     let (transcript_tx, transcript_rx) = tokio::sync::mpsc::channel::<String>(100);
+    let (partial_tx, partial_rx) = tokio::sync::mpsc::channel::<String>(100);
     
     // Spawn task to send audio chunks as base64 JSON messages
     tokio::spawn(async move {
@@ -107,15 +110,16 @@ pub async fn start_streaming(
         }
     });
     
-    // Spawn task to receive transcripts
+    // Spawn task to receive transcripts (both committed and partial)
     let transcript_tx_clone = transcript_tx.clone();
+    let partial_tx_clone = partial_tx.clone();
     tokio::spawn(async move {
         while let Some(msg) = read.next().await {
             match msg {
                 Ok(Message::Text(text)) => {
                     if let Ok(event) = serde_json::from_str::<ElevenLabsMessage>(&text) {
-                        // Only forward committed (finalized) transcripts
                         if event.message_type == "committed_transcript" {
+                            // Forward committed (finalized) transcripts
                             if let Some(transcript_text) = event.text {
                                 let transcript = transcript_text.trim();
                                 if !transcript.is_empty() {
@@ -124,12 +128,19 @@ pub async fn start_streaming(
                                     }
                                 }
                             }
+                        } else if event.message_type == "partial_transcript" {
+                            // Forward partial transcripts for overlay display
+                            if let Some(partial_text) = event.text {
+                                let partial = partial_text.trim();
+                                if !partial.is_empty() {
+                                    let _ = partial_tx_clone.send(partial.to_string()).await;
+                                }
+                            }
                         } else if event.message_type == "error" {
                             if let Some(error) = event.error {
                                 eprintln!("[ElevenLabs] Server error: {}", error);
                             }
                         }
-                        // Ignore partial_transcript and other message types
                     }
                 }
                 Ok(Message::Close(_)) => {
@@ -143,5 +154,5 @@ pub async fn start_streaming(
         }
     });
     
-    Ok((audio_tx, transcript_rx))
+    Ok((audio_tx, transcript_rx, partial_rx))
 }

@@ -71,6 +71,7 @@ let PUSH_TO_TALK_ENABLED = false;
 let REWRITE_MODE = 'grammar_correction';
 let REWRITE_PROVIDER = 'groq';
 let CUSTOM_REWRITE_PROMPT = '';
+let SHOW_TRANSCRIPT_OVERLAY = true;
 
 // Audio cues (loaded at startup)
 let beepSound = null;
@@ -292,6 +293,7 @@ async function loadSettings() {
         REWRITE_MODE = settings.rewrite_mode || 'grammar_correction';
         REWRITE_PROVIDER = settings.rewrite_provider || 'groq';
         CUSTOM_REWRITE_PROMPT = settings.custom_rewrite_prompt || '';
+        SHOW_TRANSCRIPT_OVERLAY = (settings.show_transcript_overlay !== false);  // Default true
         
         console.log(`[Settings] Loaded: provider=${API_SERVICE} lang=${LANGUAGE} formatted=${TEXT_FORMATTED} voiceCmds=${VOICE_COMMANDS_ENABLED} audioCues=${AUDIO_CUES_ENABLED} pushToTalk=${PUSH_TO_TALK_ENABLED} rewriteMode=${REWRITE_MODE} groqKeySet=${Boolean(GROQ_API_KEY)} sambaKeySet=${Boolean(SAMBANOVA_API_KEY)} fireworksKeySet=${Boolean(FIREWORKS_API_KEY)} geminiKeySet=${Boolean(GEMINI_API_KEY)} mistralKeySet=${Boolean(MISTRAL_API_KEY)} deepgramKeySet=${Boolean(DEEPGRAM_API_KEY)} cartesiaKeySet=${Boolean(CARTESIA_API_KEY)}`);
         
@@ -685,6 +687,13 @@ async function startRecording() {
         
         // UI was already set by the caller for immediate feedback
         status.textContent = i18n.t('main.recording');
+        
+        // Open transcript overlay for ElevenLabs if enabled
+        if (API_SERVICE === 'elevenlabs' && SHOW_TRANSCRIPT_OVERLAY) {
+            invoke('open_transcript_overlay').catch(e => 
+                console.error('[Overlay] Failed to open:', e)
+            );
+        }
     } catch (error) {
         console.error('Error starting recording:', error);
         currentSession = null;
@@ -784,6 +793,11 @@ async function stopRecording() {
         }
         windowAutoShownForDictation = false;
     }
+    
+    // Close transcript overlay
+    invoke('close_transcript_overlay').catch(e => 
+        console.error('[Overlay] Failed to close:', e)
+    );
 }
 
 // Compact mode toggle functionality
@@ -872,6 +886,27 @@ listen('sparkle-trigger', async () => {
 // Listen for settings changes
 listen('settings-changed', async () => {
     await loadSettings();
+});
+
+let needsOverlayReposition = true;
+
+// Listen for partial transcript events (for overlay display)
+listen('streaming-partial-transcript', async (event) => {
+    if (SHOW_TRANSCRIPT_OVERLAY) {
+        if (needsOverlayReposition) {
+            invoke('reposition_transcript_overlay').catch(() => {});
+            needsOverlayReposition = false;
+        }
+        invoke('update_transcript_overlay', { text: event.payload }).catch(() => {});
+    }
+});
+
+// Listen for partial transcript clear (committed text arrived)
+listen('streaming-partial-clear', async () => {
+    if (SHOW_TRANSCRIPT_OVERLAY) {
+        invoke('update_transcript_overlay', { text: '' }).catch(() => {});
+        needsOverlayReposition = true;
+    }
 });
 
 // Load settings on startup

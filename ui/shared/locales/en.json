@@ -40,13 +40,15 @@
         "closeToTray": "Close to tray",
         "autostart": "Launch on startup",
         "language": "Language",
+        "transcriptOverlay": "Transcript overlay",
         "tooltips": {
             "darkMode": "Switch between dark and light color scheme",
             "compactMode": "Switch to compact horizontal pill layout",
             "startHidden": "Launch application to system tray without opening window",
             "closeToTray": "Minimize to system tray instead of exiting when closing window",
             "autostart": "Automatically start Dictate when you log in to Windows",
-            "language": "Change the application interface language"
+            "language": "Change the application interface language",
+            "transcriptOverlay": "Show partial transcription as a subtitle overlay while recording"
         }
     },
     "transcription": {

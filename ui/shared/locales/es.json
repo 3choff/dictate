@@ -40,13 +40,15 @@
         "closeToTray": "Cerrar a la bandeja",
         "autostart": "Iniciar con el sistema",
         "language": "Idioma",
+        "transcriptOverlay": "Superposición de transcripción",
         "tooltips": {
             "darkMode": "Cambiar entre esquemas de color claro y oscuro",
             "compactMode": "Cambiar al diseño compacto de píldora horizontal",
             "startHidden": "Iniciar la aplicación en la bandeja del sistema sin abrir ventana",
             "closeToTray": "Minimizar a la bandeja del sistema en lugar de salir al cerrar",
             "autostart": "Iniciar Dictate automáticamente al iniciar sesión en Windows",
-            "language": "Cambiar el idioma de la interfaz de la aplicación"
+            "language": "Cambiar el idioma de la interfaz de la aplicación",
+            "transcriptOverlay": "Mostrar transcripción parcial como subtítulos durante la grabación"
         }
     },
     "transcription": {
