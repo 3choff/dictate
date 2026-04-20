@@ -927,87 +927,138 @@ pub async fn set_autostart_enabled(app: AppHandle, enabled: bool) -> Result<(), 
 // Transcript Overlay Window Commands
 // ============================================================================
 
-fn get_overlay_target_position(monitor: &tauri::Monitor, overlay_width: f64) -> (i32, i32) {
-    let (target_x, target_y) = {
-        #[cfg(target_os = "windows")]
-        {
-            unsafe {
-                use windows::Win32::Foundation::*;
-                use windows::Win32::UI::WindowsAndMessaging::*;
-                
-                let mut pt = POINT::default();
-                let mut found_caret = false;
-                let fg_window = GetForegroundWindow();
-                
-                if fg_window.0 != std::ptr::null_mut() {
-                    let thread_id = GetWindowThreadProcessId(fg_window, None);
-                    let mut gui_info = GUITHREADINFO::default();
-                    gui_info.cbSize = std::mem::size_of::<GUITHREADINFO>() as u32;
+/// Logical overlay dimensions (in CSS pixels)
+const OVERLAY_WIDTH: f64 = 800.0;
+const OVERLAY_HEIGHT: f64 = 120.0;
+
+/// Gap between the cursor/caret edge and the overlay window (in physical pixels)
+const OVERLAY_GAP: i32 = 20;
+
+/// Small horizontal inset so text doesn't start at the very edge of the pill (physical pixels)
+const OVERLAY_LEFT_INSET: f64 = 12.0;
+
+/// Raw anchor coordinates extracted from the caret or mouse position.
+/// All values are in physical (screen) pixels.
+struct OverlayAnchor {
+    x: i32,
+    y_below: i32,  // Y coordinate for placing the overlay below the anchor
+    y_above: i32,  // Y coordinate of the anchor's top edge (before subtracting overlay height)
+}
+
+/// Retrieve the screen anchor point from the caret or mouse cursor.
+#[cfg(target_os = "windows")]
+fn get_overlay_anchor() -> OverlayAnchor {
+    unsafe {
+        use windows::Win32::Foundation::*;
+        use windows::Win32::UI::WindowsAndMessaging::*;
+
+        let fg_window = GetForegroundWindow();
+        
+        if fg_window.0 != std::ptr::null_mut() {
+            let thread_id = GetWindowThreadProcessId(fg_window, None);
+            let mut gui_info = GUITHREADINFO::default();
+            gui_info.cbSize = std::mem::size_of::<GUITHREADINFO>() as u32;
+            
+            if GetGUIThreadInfo(thread_id, &mut gui_info).is_ok() {
+                if gui_info.hwndCaret.0 != std::ptr::null_mut() {
+                    // We need both top and bottom of the caret in screen coords
+                    let mut pt_bottom = POINT { x: gui_info.rcCaret.left, y: gui_info.rcCaret.bottom };
+                    let mut pt_top = POINT { x: gui_info.rcCaret.left, y: gui_info.rcCaret.top };
+                    let _ = windows::Win32::Graphics::Gdi::ClientToScreen(gui_info.hwndCaret, &mut pt_bottom);
+                    let _ = windows::Win32::Graphics::Gdi::ClientToScreen(gui_info.hwndCaret, &mut pt_top);
                     
-                    if GetGUIThreadInfo(thread_id, &mut gui_info).is_ok() {
-                        if gui_info.hwndCaret.0 != std::ptr::null_mut() {
-                            pt.x = gui_info.rcCaret.left;
-                            pt.y = gui_info.rcCaret.bottom + 20; // 20px downward offset
-                            let _ = windows::Win32::Graphics::Gdi::ClientToScreen(gui_info.hwndCaret, &mut pt);
-                            found_caret = true;
-                        }
-                    }
+                    return OverlayAnchor {
+                        x: pt_bottom.x,
+                        y_below: pt_bottom.y + OVERLAY_GAP,
+                        y_above: pt_top.y - OVERLAY_GAP,
+                    };
                 }
-                
-                if !found_caret {
-                    let _ = GetCursorPos(&mut pt);
-                    pt.y += 20; // 20px downward offset from mouse pointer
-                }
-                
-                (pt.x as f64 - 12.0, pt.y as f64)
             }
         }
-
-        #[cfg(not(target_os = "windows"))]
-        {
-            // Fallback for non-Windows (default to bottom center)
-            let scale = monitor.scale_factor();
-            let x = monitor.position().x as f64 + (monitor.size().width as f64 - overlay_width) / 2.0;
-            let y = monitor.position().y as f64 + monitor.size().height as f64 - 100.0 * scale;
-            (x, y)
+        
+        // Fallback: use mouse cursor position
+        let mut pt = POINT::default();
+        let _ = GetCursorPos(&mut pt);
+        OverlayAnchor {
+            x: pt.x,
+            y_below: pt.y + OVERLAY_GAP,
+            y_above: pt.y - OVERLAY_GAP,
         }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_overlay_anchor() -> OverlayAnchor {
+    // Non-Windows fallback: center of screen
+    OverlayAnchor { x: 400, y_below: 500, y_above: 480 }
+}
+
+/// Smart placement algorithm that tries positions in priority order:
+/// 1. Below-Right (preferred)  2. Below-Left  3. Above-Right  4. Above-Left
+/// Falls back to clamped positioning if nothing fits perfectly.
+fn get_overlay_target_position(monitor: &tauri::Monitor, overlay_phys_width: f64, overlay_phys_height: f64) -> (i32, i32) {
+    let anchor = get_overlay_anchor();
+    
+    let mon_x = monitor.position().x as f64;
+    let mon_y = monitor.position().y as f64;
+    let mon_w = monitor.size().width as f64;
+    let mon_h = monitor.size().height as f64;
+    let mon_right = mon_x + mon_w;
+    let mon_bottom = mon_y + mon_h;
+
+    // Anchor X with a small left inset so text aligns naturally
+    let anchor_x = anchor.x as f64 - OVERLAY_LEFT_INSET;
+    let y_below = anchor.y_below as f64;
+    let y_above = anchor.y_above as f64 - overlay_phys_height;
+
+    // Helper: check if a rect fits within the monitor
+    let fits = |x: f64, y: f64| -> bool {
+        x >= mon_x && y >= mon_y
+            && (x + overlay_phys_width) <= mon_right
+            && (y + overlay_phys_height) <= mon_bottom
     };
 
-    // Clamp coordinates to the current monitor bounds so it doesn't spill over
-    let scale = monitor.scale_factor();
-    let monitor_pos = monitor.position();
-    let monitor_size = monitor.size();
-    
-    // Convert overlay height to physical for boundary checking
-    let overlay_height = 80.0 * scale;
-    
-    let mut final_x = target_x;
-    let mut final_y = target_y;
+    // Strategy 1: Below-Right (overlay starts at anchor, expands right and down)
+    if fits(anchor_x, y_below) {
+        return (anchor_x as i32, y_below as i32);
+    }
 
-    if final_x < monitor_pos.x as f64 { final_x = monitor_pos.x as f64; }
-    let max_x = monitor_pos.x as f64 + monitor_size.width as f64 - overlay_width;
-    if final_x > max_x { final_x = max_x; }
+    // Strategy 2: Below-Left (shift left so overlay's right edge aligns with monitor right)
+    let shifted_x = mon_right - overlay_phys_width;
+    if fits(shifted_x, y_below) {
+        return (shifted_x.max(mon_x) as i32, y_below as i32);
+    }
 
-    if final_y < monitor_pos.y as f64 { final_y = monitor_pos.y as f64; }
-    let max_y = monitor_pos.y as f64 + monitor_size.height as f64 - overlay_height;
-    if final_y > max_y { final_y = max_y; }
+    // Strategy 3: Above-Right (flip above the caret, keep horizontal position)
+    if fits(anchor_x, y_above) {
+        return (anchor_x as i32, y_above as i32);
+    }
 
+    // Strategy 4: Above-Left (flip above + shift left)
+    if fits(shifted_x, y_above) {
+        return (shifted_x.max(mon_x) as i32, y_above as i32);
+    }
+
+    // Final fallback: clamp to monitor bounds
+    let final_x = anchor_x.max(mon_x).min(mon_right - overlay_phys_width);
+    let final_y = y_below.max(mon_y).min(mon_bottom - overlay_phys_height);
     (final_x as i32, final_y as i32)
 }
 
 #[tauri::command]
 pub async fn open_transcript_overlay(app: AppHandle) -> Result<(), String> {
-    // Get primary monitor info for positioning
+    // Get monitor info for positioning
     let main_window = app.get_webview_window("main")
         .ok_or("Main window not found")?;
     let monitor = main_window.current_monitor().map_err(|e| e.to_string())?
         .ok_or("No monitor found")?;
-        
-    let overlay_width = 800.0_f64;
-    let overlay_height = 80.0_f64;
+    
+    let scale = monitor.scale_factor();
+    let phys_w = OVERLAY_WIDTH * scale;
+    let phys_h = OVERLAY_HEIGHT * scale;
 
     // Calculate dynamic position
-    let (target_x, target_y) = get_overlay_target_position(&monitor, overlay_width * monitor.scale_factor());
+    let (target_x, target_y) = get_overlay_target_position(&monitor, phys_w, phys_h);
 
     // If overlay window already exists, update pos and show
     if let Some(window) = app.get_webview_window("transcript_overlay") {
@@ -1025,7 +1076,7 @@ pub async fn open_transcript_overlay(app: AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("../overlay/index.html".into())
     )
     .title("Transcript Overlay")
-    .inner_size(overlay_width, overlay_height)
+    .inner_size(OVERLAY_WIDTH, OVERLAY_HEIGHT)
     .resizable(false)
     .decorations(false)
     .shadow(false)
@@ -1050,8 +1101,6 @@ pub async fn open_transcript_overlay(app: AppHandle) -> Result<(), String> {
         if let Ok(handle) = overlay.window_handle() {
             if let RawWindowHandle::Win32(win32_handle) = handle.as_raw() {
                 let hwnd = win32_handle.hwnd.get() as isize;
-                // WS_EX_TRANSPARENT makes the window click-through
-                // WS_EX_NOACTIVATE prevents focus stealing
                 unsafe {
                     use windows::Win32::UI::WindowsAndMessaging::*;
                     let hwnd_win = windows::Win32::Foundation::HWND(hwnd as *mut _);
@@ -1093,10 +1142,13 @@ pub async fn update_transcript_overlay(app: AppHandle, text: String) -> Result<(
 pub async fn reposition_transcript_overlay(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("transcript_overlay") {
         if let Ok(Some(monitor)) = window.current_monitor() {
-            let overlay_width = 800.0_f64;
-            let (target_x, target_y) = get_overlay_target_position(&monitor, overlay_width * monitor.scale_factor());
+            let scale = monitor.scale_factor();
+            let phys_w = OVERLAY_WIDTH * scale;
+            let phys_h = OVERLAY_HEIGHT * scale;
+            let (target_x, target_y) = get_overlay_target_position(&monitor, phys_w, phys_h);
             window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x: target_x, y: target_y })).ok();
         }
     }
     Ok(())
 }
+

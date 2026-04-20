@@ -688,8 +688,8 @@ async function startRecording() {
         // UI was already set by the caller for immediate feedback
         status.textContent = i18n.t('main.recording');
         
-        // Open transcript overlay for ElevenLabs if enabled
-        if (API_SERVICE === 'elevenlabs' && SHOW_TRANSCRIPT_OVERLAY) {
+        // Open transcript overlay for streaming providers with partial support
+        if ((API_SERVICE === 'elevenlabs' || API_SERVICE === 'deepgram' || API_SERVICE === 'cartesia') && SHOW_TRANSCRIPT_OVERLAY) {
             invoke('open_transcript_overlay').catch(e => 
                 console.error('[Overlay] Failed to open:', e)
             );

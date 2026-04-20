@@ -219,3 +219,76 @@ pub fn copy_selected_or_all_text(app_handle: &AppHandle) -> Result<String, Strin
 
     Ok(result_text)
 }
+
+/// Sentinel string used to detect whether text is selected for deletion.
+const DELETE_SENTINEL: &str = "__DICTATE_DELETE_SENTINEL_4e8c2d__";
+
+/// Smart delete: if text is selected, delete the selection (Backspace).
+/// If nothing is selected, delete the last word (Ctrl+Backspace).
+pub fn delete_selected_or_last_word(app_handle: &AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    let (modifier_key, c_key_code) = (Key::Meta, Key::Other(8));
+    #[cfg(target_os = "windows")]
+    let (modifier_key, c_key_code) = (Key::Control, Key::Other(0x43)); // VK_C
+    #[cfg(target_os = "linux")]
+    let (modifier_key, c_key_code) = (Key::Control, Key::Unicode('c'));
+
+    let state = app_handle.state::<EnigoState>();
+    let mut enigo = state.0.lock().map_err(|e| format!("Failed to lock Enigo: {}", e))?;
+
+    let clipboard = app_handle.clipboard();
+
+    // BACKUP: Save current clipboard content
+    let backup_content = clipboard.read_text().unwrap_or_default();
+
+    // SENTINEL: Write unique marker to clipboard
+    clipboard
+        .write_text(DELETE_SENTINEL)
+        .map_err(|e| format!("Failed to write sentinel: {}", e))?;
+    thread::sleep(Duration::from_millis(20));
+
+    // COPY: Send Ctrl+C to copy any selected text
+    enigo
+        .key(modifier_key, enigo::Direction::Press)
+        .map_err(|e| format!("Failed to press modifier key: {}", e))?;
+    enigo
+        .key(c_key_code, enigo::Direction::Click)
+        .map_err(|e| format!("Failed to click C key: {}", e))?;
+    thread::sleep(Duration::from_millis(50));
+    enigo
+        .key(modifier_key, enigo::Direction::Release)
+        .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+
+    // Wait for clipboard to be populated
+    thread::sleep(Duration::from_millis(150));
+
+    // READ: Check what's in the clipboard
+    let clipboard_content = clipboard.read_text().unwrap_or_default();
+
+    if clipboard_content == DELETE_SENTINEL || clipboard_content.is_empty() {
+        // Nothing was selected → delete last word with Ctrl+Backspace
+        enigo
+            .key(Key::Control, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press Control: {}", e))?;
+        thread::sleep(Duration::from_millis(10));
+        enigo
+            .key(Key::Backspace, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to press Backspace: {}", e))?;
+        thread::sleep(Duration::from_millis(10));
+        enigo
+            .key(Key::Control, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release Control: {}", e))?;
+    } else {
+        // Text was selected → just press Backspace to delete the selection
+        enigo
+            .key(Key::Backspace, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to press Backspace: {}", e))?;
+    }
+
+    // RESTORE: Write back the original clipboard content
+    clipboard
+        .write_text(&backup_content)
+        .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+
+    Ok(())
+}

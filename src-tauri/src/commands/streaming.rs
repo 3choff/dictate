@@ -48,7 +48,7 @@ pub async fn start_streaming_transcription(
             // Clone language for voice commands before passing ownership to start_streaming
             let voice_lang = language.clone();
             
-            let (audio_tx, mut transcript_rx) = providers::deepgram::start_streaming(
+            let (audio_tx, mut transcript_rx, mut partial_rx) = providers::deepgram::start_streaming(
                 api_key,
                 language,
                 smart_format,
@@ -63,6 +63,21 @@ pub async fn start_streaming_transcription(
                 sessions.insert(session_id.clone(), audio_tx);
             }
             
+            // Spawn task to forward partial transcripts to overlay
+            let app_partial = app.clone();
+            tokio::spawn(async move {
+                let noise_re = regex::Regex::new(r"\[.*?\]|\(.*?\)").unwrap();
+                let space_re = regex::Regex::new(r"\s+").unwrap();
+                while let Some(partial_text) = partial_rx.recv().await {
+                    let cleaned = noise_re.replace_all(&partial_text, " ");
+                    let cleaned = space_re.replace_all(&cleaned, " ").trim().to_string();
+                    
+                    if let Some(window) = app_partial.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-transcript", &cleaned);
+                    }
+                }
+            });
+            
             // Spawn task to handle incoming transcripts
             let app_clone = app.clone();
             let session_id_clone = session_id.clone();
@@ -72,7 +87,11 @@ pub async fn start_streaming_transcription(
             // voice_lang is already cloned above
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
-                    // Apply word correction if custom words are configured
+                    // Clear partial overlay when committed text arrives
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-clear", ());
+                    }
+                    
                     // Apply word correction if custom words are configured
                     let corrected_transcript = if let Ok(settings) = crate::commands::settings::get_settings(app_clone.clone()).await {
                         if settings.word_correction_enabled {
@@ -147,7 +166,7 @@ pub async fn start_streaming_transcription(
                 Some(language)
             };
             
-            let (audio_tx, mut transcript_rx) = providers::cartesia::start_streaming(
+            let (audio_tx, mut transcript_rx, mut partial_rx) = providers::cartesia::start_streaming(
                 api_key,
                 cart_language,
             )
@@ -160,6 +179,21 @@ pub async fn start_streaming_transcription(
                 sessions.insert(session_id.clone(), audio_tx);
             }
             
+            // Spawn task to forward partial transcripts to overlay
+            let app_partial = app.clone();
+            tokio::spawn(async move {
+                let noise_re = regex::Regex::new(r"\[.*?\]|\(.*?\)").unwrap();
+                let space_re = regex::Regex::new(r"\s+").unwrap();
+                while let Some(partial_text) = partial_rx.recv().await {
+                    let cleaned = noise_re.replace_all(&partial_text, " ");
+                    let cleaned = space_re.replace_all(&cleaned, " ").trim().to_string();
+                    
+                    if let Some(window) = app_partial.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-transcript", &cleaned);
+                    }
+                }
+            });
+            
             // Spawn task to handle incoming transcripts
             let app_clone = app.clone();
             let session_id_clone = session_id.clone();
@@ -168,6 +202,11 @@ pub async fn start_streaming_transcription(
             let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
             tokio::spawn(async move {
                 while let Some(transcript) = transcript_rx.recv().await {
+                    // Clear partial overlay when committed text arrives
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-clear", ());
+                    }
+                    
                     // Apply formatting based on smart_format setting
                     let formatted_transcript = if smart_format {
                         transcript
@@ -256,12 +295,13 @@ pub async fn start_streaming_transcription(
                 sessions.insert(session_id.clone(), audio_tx);
             }
             
-            // Spawn task to handle incoming transcripts
+            // Spawn task to handle incoming stable transcripts (or fast in single-stream mode)
             let app_clone = app.clone();
             let session_id_clone = session_id.clone();
             let sessions_clone = state.sessions.clone();
             
             let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
+            #[allow(unused_assignments)]
             tokio::spawn(async move {
                 // Word buffer for multi-word voice command detection.
                 // Voxtral sends one word per delta, so we accumulate words here
@@ -271,6 +311,7 @@ pub async fn start_streaming_transcription(
                 
                 // After a voice command, suppress trailing punctuation (period/comma)
                 // that the model adds because the user paused speaking.
+                #[allow(unused_assignments)]
                 let mut last_command_time: Option<tokio::time::Instant> = None;
                 
                 let voice_commands = if voice_cmds_enabled {
@@ -279,28 +320,172 @@ pub async fn start_streaming_transcription(
                     None
                 };
                 
-                // Helper closure to process and insert text (buffer flush)
-                // We use a macro-like approach since async closures aren't stable
+                // Helper closure removed as overlay is disabled for Voxtral
+                let emit_clear = |_app: &AppHandle| {
+                    // No-op
+                };
+                
+                // === Two-tier buffer for Voxtral syllable fragmentation ===
+                //
+                // Tier 1: Fragment assembly (`current_word`)
+                //   Voxtral sends syllable fragments: "ex" + "pect" + "ation"
+                //   Fragments without a leading space are concatenated.
+                //   When a space-prefixed delta arrives, the previous word is complete.
+                //
+                // Tier 2: Word buffer (`pending_buffer`)
+                //   Completed words are pushed here for voice command matching.
+                //   Only complete words are checked against commands & word correction.
+                
+                let mut current_word = String::new();       // Tier 1: syllable fragment assembly
+                #[allow(unused_assignments)]
+                let mut current_word_has_leading_space = false;
+                
+                // Helper: push a completed word into pending_buffer and check commands
+                #[allow(unused_assignments)]
+                macro_rules! push_completed_word {
+                    ($completed:expr, $had_leading_space:expr) => {{
+                        let completed_word: String = $completed;
+                        let word_leading: bool = $had_leading_space;
+                        
+                        if completed_word.is_empty() {
+                            // Nothing to push
+                        } else if !voice_cmds_enabled {
+                            // No voice commands: insert the word directly
+                            let formatted = if smart_format {
+                                completed_word.clone()
+                            } else {
+                                normalize_whisper_transcript(&completed_word)
+                            };
+                            let corrected = apply_word_correction_if_needed(&formatted, &app_clone).await;
+                            let final_text = if word_leading && !corrected.starts_with(' ') {
+                                format!(" {}", corrected)
+                            } else {
+                                corrected.clone()
+                            };
+                            let _ = insert_transcript_text(&final_text, &insertion_mode, &app_clone).await;
+                            
+                            if let Some(window) = app_clone.get_webview_window("main") {
+                                let _ = window.emit("streaming-transcript", &corrected);
+                            }
+                            emit_clear(&app_clone);
+                        } else {
+                            // Voice commands enabled: push to word buffer
+                            let vc = voice_commands.as_ref().unwrap();
+                            
+                            // Check if this is post-command punctuation to suppress
+                            let mut skip = false;
+                            if let Some(cmd_time) = last_command_time {
+                                if cmd_time.elapsed() < tokio::time::Duration::from_millis(500) {
+                                    let trimmed_lower = completed_word.trim().to_lowercase();
+                                    if trimmed_lower == "." || trimmed_lower == "," {
+                                        last_command_time = None;
+                                        skip = true;
+                                    }
+                                }
+                                if !skip {
+                                    last_command_time = None;
+                                }
+                            }
+                            
+                            if !skip {
+                                // Track leading space
+                                if pending_buffer.is_empty() {
+                                    pending_leading_space = word_leading;
+                                }
+                                
+                                // Append completed word to pending buffer
+                                if pending_buffer.is_empty() {
+                                    pending_buffer = completed_word;
+                                } else {
+                                    pending_buffer = format!("{} {}", pending_buffer, completed_word);
+                                }
+                                
+                                // Check buffer against voice commands
+                                if vc.is_exact_command(&pending_buffer) && !vc.is_command_prefix(&pending_buffer) {
+                                    let buffer_text = if let Some(cmd) = vc.reconstruct_command(&pending_buffer) {
+                                        pending_buffer.clear();
+                                        cmd
+                                    } else {
+                                        std::mem::take(&mut pending_buffer)
+                                    };
+                                    let leading = pending_leading_space;
+                                    pending_leading_space = false;
+                                    
+                                    let had_cmd = flush_voxtral_text(
+                                        &buffer_text, leading, smart_format,
+                                        &insertion_mode, &app_clone, &voice_commands
+                                    ).await;
+                                    if had_cmd {
+                                        last_command_time = Some(tokio::time::Instant::now());
+                                    }
+                                    emit_clear(&app_clone);
+                                } else if vc.is_command_prefix(&pending_buffer) || vc.is_exact_command(&pending_buffer) {
+                                    // Could become a longer command → hold the buffer
+                                } else {
+                                    // Not a command → flush immediately
+                                    let buffer_text = std::mem::take(&mut pending_buffer);
+                                    let leading = pending_leading_space;
+                                    pending_leading_space = false;
+                                    
+                                    let had_cmd = flush_voxtral_text(
+                                        &buffer_text, leading, smart_format,
+                                        &insertion_mode, &app_clone, &voice_commands
+                                    ).await;
+                                    if had_cmd {
+                                        last_command_time = Some(tokio::time::Instant::now());
+                                    }
+                                    emit_clear(&app_clone);
+                                }
+                            }
+                        }
+                    }};
+                }
+                
                 loop {
-                    // Use timeout when buffer has a potential command prefix
-                    let recv_result = if !pending_buffer.is_empty() && voice_cmds_enabled {
+                    // Determine timeout: use shorter timeout for fragment assembly,
+                    // longer timeout for voice command buffer
+                    let needs_timeout = !current_word.is_empty() || (!pending_buffer.is_empty() && voice_cmds_enabled);
+                    let timeout_ms = if !current_word.is_empty() { 300 } else { 700 };
+                    
+                    let recv_result = if needs_timeout {
                         match tokio::time::timeout(
-                            tokio::time::Duration::from_millis(700),
+                            tokio::time::Duration::from_millis(timeout_ms),
                             transcript_rx.recv()
                         ).await {
                             Ok(result) => result,
                             Err(_) => {
-                                // Timeout: flush pending buffer as regular text
-                                let buffer_text = std::mem::take(&mut pending_buffer);
-                                let leading = pending_leading_space;
-                                pending_leading_space = false;
+                                // Timeout fired. Two cases:
+                                // 1) current_word was non-empty (300ms timeout) → push it, but
+                                //    do NOT flush pending_buffer yet. Let it get its own 700ms timeout.
+                                // 2) current_word was empty (700ms timeout) → flush pending_buffer.
                                 
-                                let had_cmd = flush_voxtral_text(
-                                    &buffer_text, leading, smart_format,
-                                    &insertion_mode, &app_clone, &voice_commands
-                                ).await;
-                                if had_cmd {
-                                    last_command_time = Some(tokio::time::Instant::now());
+                                let had_current_word = !current_word.is_empty();
+                                
+                                if had_current_word {
+                                    let word = std::mem::take(&mut current_word);
+                                    let leading = current_word_has_leading_space;
+                                    current_word_has_leading_space = false;
+                                    push_completed_word!(word, leading);
+                                    // Do NOT flush pending_buffer here — it may be holding
+                                    // a command prefix like "question" waiting for "mark".
+                                    // The next loop iteration will set a 700ms timeout for it.
+                                }
+                                
+                                // Only flush pending_buffer on a dedicated 700ms timeout
+                                // (i.e., when current_word was already empty at timeout)
+                                if !had_current_word && !pending_buffer.is_empty() {
+                                    let buffer_text = std::mem::take(&mut pending_buffer);
+                                    let leading = pending_leading_space;
+                                    pending_leading_space = false;
+                                    
+                                    let had_cmd = flush_voxtral_text(
+                                        &buffer_text, leading, smart_format,
+                                        &insertion_mode, &app_clone, &voice_commands
+                                    ).await;
+                                    if had_cmd {
+                                        last_command_time = Some(tokio::time::Instant::now());
+                                    }
+                                    emit_clear(&app_clone);
                                 }
                                 
                                 continue;
@@ -310,118 +495,46 @@ pub async fn start_streaming_transcription(
                         transcript_rx.recv().await
                     };
                     
-                    let transcript = match recv_result {
+                    let raw_transcript = match recv_result {
                         Some(t) => t,
                         None => break, // Channel closed
                     };
                     
-                    // If voice commands are disabled, insert directly
-                    if !voice_cmds_enabled {
-                        let has_leading_space = transcript.starts_with(' ');
-                        let formatted = if smart_format {
-                            transcript.clone()
-                        } else {
-                            normalize_whisper_transcript(&transcript)
-                        };
-                        let corrected = apply_word_correction_if_needed(&formatted, &app_clone).await;
-                        let final_text = if has_leading_space && !corrected.starts_with(' ') {
-                            format!(" {}", corrected)
-                        } else {
-                            corrected.clone()
-                        };
-                        let _ = insert_transcript_text(&final_text, &insertion_mode, &app_clone).await;
-                        
-                        if let Some(window) = app_clone.get_webview_window("main") {
-                            let _ = window.emit("streaming-transcript", corrected);
+                    if raw_transcript.is_empty() {
+                        continue;
+                    }
+                    
+                    // Replace newlines with spaces to treat them as word boundaries
+                    let transcript = raw_transcript.replace('\n', " ").replace('\r', "");
+                    
+                    // A Voxtral transcript delta might contain multiple words (e.g. " Select all.").
+                    // We split by space to ensure we assemble fragments and emit complete words singly.
+                    let mut splits = transcript.split(' ');
+                    
+                    if let Some(first) = splits.next() {
+                        if !first.is_empty() {
+                            current_word.push_str(first);
                         }
-                        continue;
-                    }
-                    
-                    // Voice commands enabled: use the word buffer
-                    let vc = voice_commands.as_ref().unwrap();
-                    let word = transcript.trim().to_string();
-                    
-                    if word.is_empty() {
-                        continue;
-                    }
-                    
-                    // Suppress trailing punctuation (. ,) right after a voice command.
-                    // The model adds these because the user paused after speaking the command.
-                    // Real punctuation dictated later (after 500ms) will go through normally.
-                    if let Some(cmd_time) = last_command_time {
-                        if cmd_time.elapsed() < tokio::time::Duration::from_millis(500) {
-                            let trimmed_lower = word.trim().to_lowercase();
-                            if trimmed_lower == "." || trimmed_lower == "," {
-                                // Suppress this trailing punctuation
-                                last_command_time = None;
-                                continue;
+                        
+                        for part in splits {
+                            if !current_word.is_empty() {
+                                let completed = std::mem::take(&mut current_word);
+                                let leading = current_word_has_leading_space;
+                                push_completed_word!(completed, leading);
                             }
-                        }
-                        // Clear the flag once we're past suppression window or got a real word
-                        last_command_time = None;
-                    }
-                    
-                    // Track the leading space from the first word in this buffer
-                    if pending_buffer.is_empty() {
-                        pending_leading_space = transcript.starts_with(' ');
-                    }
-                    
-                    // Append to buffer: check if this delta is a word fragment or a new word.
-                    // Voxtral sometimes splits words mid-syllable (e.g., "ex" + "clamation").
-                    // If the delta has NO leading space, it's a continuation → concat directly.
-                    // If it HAS a leading space, it's a new word → join with space.
-                    let is_new_word = transcript.starts_with(' ');
-                    
-                    if pending_buffer.is_empty() {
-                        pending_buffer = word;
-                    } else if is_new_word {
-                        pending_buffer = format!("{} {}", pending_buffer, word);
-                    } else {
-                        // Word fragment: concatenate directly (no space)
-                        pending_buffer = format!("{}{}", pending_buffer, word);
-                    }
-                    
-                    // Check buffer against voice commands
-                    if vc.is_exact_command(&pending_buffer) && !vc.is_command_prefix(&pending_buffer) {
-                        // Exact match and NOT a prefix of a longer command → execute immediately.
-                        // Reconstruct the proper command phrase in case Voxtral fragmented it
-                        // (e.g., "ex clamation mark" → "exclamation mark")
-                        let buffer_text = if let Some(cmd) = vc.reconstruct_command(&pending_buffer) {
-                            pending_buffer.clear();
-                            cmd
-                        } else {
-                            std::mem::take(&mut pending_buffer)
-                        };
-                        let leading = pending_leading_space;
-                        pending_leading_space = false;
-                        
-                        let had_cmd = flush_voxtral_text(
-                            &buffer_text, leading, smart_format,
-                            &insertion_mode, &app_clone, &voice_commands
-                        ).await;
-                        if had_cmd {
-                            last_command_time = Some(tokio::time::Instant::now());
-                        }
-                    } else if vc.is_command_prefix(&pending_buffer) || vc.is_exact_command(&pending_buffer) {
-                        // Could become a longer command → hold the buffer, wait for more words
-                        // (the timeout at the top of the loop will flush if nothing comes)
-                    } else {
-                        // Not a command and not a prefix → flush immediately as regular text
-                        let buffer_text = std::mem::take(&mut pending_buffer);
-                        let leading = pending_leading_space;
-                        pending_leading_space = false;
-                        
-                        let had_cmd = flush_voxtral_text(
-                            &buffer_text, leading, smart_format,
-                            &insertion_mode, &app_clone, &voice_commands
-                        ).await;
-                        if had_cmd {
-                            last_command_time = Some(tokio::time::Instant::now());
+                            
+                            current_word = part.to_string();
+                            current_word_has_leading_space = true;
                         }
                     }
                 }
                 
-                // Flush any remaining buffer on session end
+                // Flush any remaining fragments and buffer on session end
+                if !current_word.is_empty() {
+                    let word = std::mem::take(&mut current_word);
+                    let leading = current_word_has_leading_space;
+                    push_completed_word!(word, leading);
+                }
                 if !pending_buffer.is_empty() {
                     let buffer_text = std::mem::take(&mut pending_buffer);
                     let leading = pending_leading_space;
@@ -661,9 +774,14 @@ async fn execute_streaming_command_action(action: &CommandAction, app: &AppHandl
                 .map_err(|e| e.to_string())
         }
         CommandAction::DeleteLastWord => {
-            // Send Ctrl+Backspace to delete last word
-            services::direct_typing::send_key_combo_native("control", "backspace", app)
-                .map_err(|e| e.to_string())
+            // Smart delete: if text is selected, delete the selection.
+            // If nothing is selected, fall back to Ctrl+Backspace to delete last word.
+            let app_clone = app.clone();
+            tokio::task::spawn_blocking(move || {
+                services::clipboard_paste::delete_selected_or_last_word(&app_clone)
+            })
+            .await
+            .map_err(|e| format!("Task join error: {}", e))?
         }
         CommandAction::Rewrite => {
             // Emit event to trigger text rewrite - frontend handles smart selection

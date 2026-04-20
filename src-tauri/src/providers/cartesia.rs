@@ -26,6 +26,7 @@ pub async fn start_streaming(
 ) -> Result<(
     tokio::sync::mpsc::Sender<Vec<u8>>,
     tokio::sync::mpsc::Receiver<String>,
+    tokio::sync::mpsc::Receiver<String>,
 ), Box<dyn std::error::Error + Send + Sync>> {
     
     // Build WebSocket URL with query parameters
@@ -57,6 +58,7 @@ pub async fn start_streaming(
     // Create channels for communication
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel::<Vec<u8>>(100);
     let (transcript_tx, transcript_rx) = tokio::sync::mpsc::channel::<String>(100);
+    let (partial_tx, partial_rx) = tokio::sync::mpsc::channel::<String>(100);
     
     // Spawn task to send audio chunks to Cartesia
     tokio::spawn(async move {
@@ -82,6 +84,7 @@ pub async fn start_streaming(
     
     // Spawn task to receive transcripts from Cartesia
     let transcript_tx_clone = transcript_tx.clone();
+    let partial_tx_clone = partial_tx.clone();
     tokio::spawn(async move {
         while let Some(msg) = read.next().await {
             match msg {
@@ -89,12 +92,16 @@ pub async fn start_streaming(
                     // Parse Cartesia message
                     if let Ok(ct_msg) = serde_json::from_str::<CartesiaMessage>(&text) {
                         // Check if this is a final transcript
-                        if ct_msg.msg_type == "transcript" && ct_msg.is_final.unwrap_or(false) {
+                        if ct_msg.msg_type == "transcript" {
                             if let Some(transcript_text) = ct_msg.text {
                                 let transcript = transcript_text.trim();
                                 if !transcript.is_empty() {
-                                    if let Err(_) = transcript_tx_clone.send(transcript.to_string()).await {
-                                        break;
+                                    if ct_msg.is_final.unwrap_or(false) {
+                                        if let Err(_) = transcript_tx_clone.send(transcript.to_string()).await {
+                                            break;
+                                        }
+                                    } else {
+                                        let _ = partial_tx_clone.send(transcript.to_string()).await;
                                     }
                                 }
                             }
@@ -112,5 +119,5 @@ pub async fn start_streaming(
         }
     });
     
-    Ok((audio_tx, transcript_rx))
+    Ok((audio_tx, transcript_rx, partial_rx))
 }

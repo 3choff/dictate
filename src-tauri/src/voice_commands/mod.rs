@@ -41,11 +41,19 @@ impl VoiceCommands {
         &self.commands
     }
 
+    /// Helper to efficiently strip punctuation for command matching
+    fn clean_text_for_matching(text: &str) -> String {
+        text.to_lowercase()
+            .chars()
+            .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+            .collect()
+    }
+
     /// Check if the given text exactly matches a voice command phrase (case-insensitive).
     /// Also checks with spaces collapsed to handle Voxtral word fragmentation
     /// (e.g., "ex clamation mark" matches "exclamation mark").
     pub fn is_exact_command(&self, text: &str) -> bool {
-        let lower = text.to_lowercase();
+        let lower = Self::clean_text_for_matching(text);
         let collapsed = lower.replace(" ", "");
         self.commands.keys().any(|phrase| {
             let phrase_lower = phrase.to_lowercase();
@@ -56,7 +64,7 @@ impl VoiceCommands {
     /// Check if the given text is a prefix of any voice command phrase (case-insensitive).
     /// Also checks with spaces collapsed for Voxtral word fragmentation.
     pub fn is_command_prefix(&self, text: &str) -> bool {
-        let lower = text.to_lowercase();
+        let lower = Self::clean_text_for_matching(text);
         let collapsed = lower.replace(" ", "");
         self.commands.keys().any(|phrase| {
             let phrase_lower = phrase.to_lowercase();
@@ -72,7 +80,8 @@ impl VoiceCommands {
     /// If the buffer (possibly fragmented) matches a command when spaces are collapsed,
     /// return the correct command phrase. Used to fix the buffer before processing.
     pub fn reconstruct_command(&self, text: &str) -> Option<String> {
-        let collapsed = text.to_lowercase().replace(" ", "");
+        let lower = Self::clean_text_for_matching(text);
+        let collapsed = lower.replace(" ", "");
         self.commands.keys().find(|phrase| {
             phrase.to_lowercase().replace(" ", "") == collapsed
         }).cloned()

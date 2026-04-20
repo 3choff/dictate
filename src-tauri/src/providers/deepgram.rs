@@ -32,6 +32,7 @@ struct DeepgramMessage {
 
 /// Start Deepgram streaming session
 /// Connects to Deepgram WebSocket and returns a channel for sending audio
+/// Returns: (audio_tx, committed_transcript_rx, partial_transcript_rx)
 pub async fn start_streaming(
     api_key: String,
     language: String,
@@ -39,6 +40,7 @@ pub async fn start_streaming(
     encoding: Option<String>,
 ) -> Result<(
     tokio::sync::mpsc::Sender<Vec<u8>>,
+    tokio::sync::mpsc::Receiver<String>,
     tokio::sync::mpsc::Receiver<String>,
 ), Box<dyn std::error::Error + Send + Sync>> {
     
@@ -50,17 +52,17 @@ pub async fn start_streaming(
     // Add sample_rate for raw audio formats like linear16
     let url = if enc == "linear16" {
         format!(
-            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=false&endpointing=100&encoding={}&sample_rate=16000",
+            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=true&endpointing=100&encoding={}&sample_rate=16000",
             language,
-            smart_format,  // punctuate matches smart_format
+            smart_format,
             smart_format,
             enc
         )
     } else {
         format!(
-            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=false&endpointing=100&encoding={}",
+            "wss://api.deepgram.com/v1/listen?model=nova-3&language={}&punctuate={}&smart_format={}&interim_results=true&endpointing=100&encoding={}",
             language,
-            smart_format,  // punctuate matches smart_format
+            smart_format,
             smart_format,
             enc
         )
@@ -83,6 +85,7 @@ pub async fn start_streaming(
     // Create channels for communication
     let (audio_tx, mut audio_rx) = tokio::sync::mpsc::channel::<Vec<u8>>(100);
     let (transcript_tx, transcript_rx) = tokio::sync::mpsc::channel::<String>(100);
+    let (partial_tx, partial_rx) = tokio::sync::mpsc::channel::<String>(100);
     
     // Spawn task to send audio chunks to Deepgram
     tokio::spawn(async move {
@@ -102,23 +105,29 @@ pub async fn start_streaming(
     
     // Spawn task to receive transcripts from Deepgram
     let transcript_tx_clone = transcript_tx.clone();
+    let partial_tx_clone = partial_tx.clone();
     tokio::spawn(async move {
         while let Some(msg) = read.next().await {
             match msg {
                 Ok(Message::Text(text)) => {
                     // Parse Deepgram message
                     if let Ok(dg_msg) = serde_json::from_str::<DeepgramMessage>(&text) {
-                        // Check if this is a final transcript
-                        let is_final = dg_msg.is_final.unwrap_or(false) 
-                                    || dg_msg.speech_final.unwrap_or(false);
-                        
-                        if is_final && dg_msg.msg_type == "Results" {
+                        if dg_msg.msg_type == "Results" {
                             if let Some(channel) = dg_msg.channel {
                                 if let Some(alt) = channel.alternatives.first() {
                                     let transcript = alt.transcript.trim();
                                     if !transcript.is_empty() {
-                                        if let Err(_) = transcript_tx_clone.send(transcript.to_string()).await {
-                                            break;
+                                        let is_final = dg_msg.is_final.unwrap_or(false)
+                                            || dg_msg.speech_final.unwrap_or(false);
+                                        
+                                        if is_final {
+                                            // Final transcript → committed channel
+                                            if let Err(_) = transcript_tx_clone.send(transcript.to_string()).await {
+                                                break;
+                                            }
+                                        } else {
+                                            // Interim transcript → partial channel (for overlay)
+                                            let _ = partial_tx_clone.send(transcript.to_string()).await;
                                         }
                                     }
                                 }
@@ -137,5 +146,5 @@ pub async fn start_streaming(
         }
     });
     
-    Ok((audio_tx, transcript_rx))
+    Ok((audio_tx, transcript_rx, partial_rx))
 }
