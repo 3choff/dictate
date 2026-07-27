@@ -43,8 +43,8 @@ pub async fn rewrite_text(app: AppHandle, text: String, prompt: String, api_key:
     let result = match provider.as_str() {
         "sambanova" => providers::sambanova::rewrite_text(text, prompt, active_key.to_string()).await,
         "fireworks" => providers::fireworks::rewrite_text(text, prompt, active_key.to_string()).await,
-        "gemini-flash-lite" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.1-flash-lite".to_string()).await,
-        "gemini-flash" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.5-flash".to_string()).await,
+        "gemini-flash-lite" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.5-flash-lite".to_string()).await,
+        "gemini-flash" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.6-flash".to_string()).await,
         "mistral" => providers::mistral::rewrite_text(text, prompt, active_key.to_string()).await,
         "inception" => providers::inception::rewrite_text(text, prompt, active_key.to_string()).await,
         _ => providers::groq::rewrite_text(text, prompt, active_key.to_string()).await,

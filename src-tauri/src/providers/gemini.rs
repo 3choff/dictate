@@ -126,7 +126,7 @@ pub async fn transcribe_verbose(
     
     // API key goes in URL query param
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={}",
         urlencoding::encode(&api_key)
     );
     

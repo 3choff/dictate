@@ -41,7 +41,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Multilingual Understanding:** Pick a default transcription language in settings. Providers that accept language hints receive it automatically; leaving the selector on `Multilingual` falls back to each provider's auto-detect mode.
     * Deepgram streams with `language=multi`.
     * Groq Whisper (whisper-large-v3-turbo) auto-detects language.
-    * Gemini 3.1 Flash Lite handles multilingual audio.
+    * Gemini 3.5 Flash Lite handles multilingual audio.
     * Mistral Voxtral receives the selected language when provided.
     * SambaNova Whisper receives the selected language when provided.
 *   **Word Correction:** Automatically correct frequent mis-transcriptions (e.g., "chat gpt" -> "ChatGPT") using a customizable dictionary. Supports fuzzy matching (configurable threshold) to catch slight variations in spelling or spacing. Manage your custom word list easily in Settings.
@@ -130,7 +130,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 *   Select your preferred transcription service and transcription language (or leave `Multilingual`).
 *   Configure text rewrite settings:
     *   Choose rewrite mode: Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized
-    *   Select AI provider: Groq GPT-OSS-120B, Gemini 3.5 Flash, Gemini 3.1 Flash Lite, Mistral Small, SambaNova Llama-3.3-70B, Fireworks GPT-OSS-20B, or Mercury 2 (Default: Groq)
+    *   Select AI provider: Groq GPT-OSS-120B, Gemini 3.6 Flash, Gemini 3.5 Flash Lite, Mistral Small, SambaNova Llama-3.3-70B, Fireworks GPT-OSS-20B, or Mercury 2 (Default: Groq)
 *   Choose your text insertion mode (Simulated Typing via SendKeys or Clipboard paste).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 
