@@ -57,6 +57,7 @@ let DEEPGRAM_API_KEY = '';
 let CARTESIA_API_KEY = '';
 let ELEVENLABS_API_KEY = '';
 let INCEPTION_API_KEY = '';
+let CRISPERWHISPER_API_KEY = '';
 let API_SERVICE = 'groq';
 
 // Frontend visualizer instance
@@ -283,6 +284,7 @@ async function loadSettings() {
         CARTESIA_API_KEY = settings.cartesia_api_key || '';
         ELEVENLABS_API_KEY = settings.elevenlabs_api_key || '';
         INCEPTION_API_KEY = settings.inception_api_key || '';
+        CRISPERWHISPER_API_KEY = settings.crisperwhisper_api_key || '';
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.transcription_language || 'multilingual');
@@ -640,7 +642,8 @@ async function startRecording() {
             'deepgram': DEEPGRAM_API_KEY,
             'cartesia': CARTESIA_API_KEY,
             'elevenlabs': ELEVENLABS_API_KEY,
-            'voxtral': MISTRAL_API_KEY
+            'voxtral': MISTRAL_API_KEY,
+            'crisperwhisper': CRISPERWHISPER_API_KEY || 'none'
         };
         
         const apiKey = apiKeyMap[API_SERVICE];
@@ -752,7 +755,8 @@ function getProviderDisplayName(provider) {
         'deepgram': 'Deepgram',
         'cartesia': 'Cartesia',
         'elevenlabs': 'ElevenLabs',
-        'voxtral': 'Voxtral'
+        'voxtral': 'Voxtral',
+        'crisperwhisper': 'CrisperWhisper 2.0'
     };
     return names[provider] || provider;
 }

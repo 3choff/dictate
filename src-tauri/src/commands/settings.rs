@@ -26,6 +26,8 @@ pub struct Settings {
     pub elevenlabs_api_key: String,
     #[serde(default)]
     pub inception_api_key: String,
+    #[serde(default)]
+    pub crisperwhisper_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
     #[serde(default)]
@@ -253,6 +255,7 @@ impl Default for Settings {
             cartesia_api_key: String::new(),
             elevenlabs_api_key: String::new(),
             inception_api_key: String::new(),
+            crisperwhisper_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
             api_service: default_api_service(),

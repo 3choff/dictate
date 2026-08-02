@@ -12,6 +12,7 @@ import { DeepgramProvider } from './deepgram-provider.js';
 import { CartesiaProvider } from './cartesia-provider.js';
 import { VoxtralProvider } from './voxtral-provider.js';
 import { ElevenLabsProvider } from './elevenlabs-provider.js';
+import { CrisperWhisperProvider } from './crisperwhisper-provider.js';
 
 /**
  * Create a provider instance
@@ -42,6 +43,9 @@ export function createProvider(serviceName, config) {
         
         case 'fireworks':
             return new FireworksProvider(config);
+
+        case 'crisperwhisper':
+            return new CrisperWhisperProvider(config);
         
         case 'deepgram':
             return new DeepgramProvider(config);
@@ -71,6 +75,7 @@ export function getAvailableProviders() {
         'mistral',
         'sambanova',
         'fireworks',
+        'crisperwhisper',
         'deepgram',
         'cartesia',
         'voxtral',

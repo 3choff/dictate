@@ -28,6 +28,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     *   **Groq:** ML-based Voice Activity Detection (VAD) with intelligent speech segmentation.
     *   **Deepgram:** Real-time streaming transcription for lower latency.
     *   **Cartesia:** Real-time streaming transcription using a dedicated PCM pipeline.
+    *   **CrisperWhisper 2.0:** High-accuracy batch transcription endpoint with verbatim and intended speech cleaning.
     *   **Gemini:** ML-based VAD with intelligent speech segmentation.
     *   **Mistral:** ML-based VAD with intelligent speech segmentation.
     *   **SambaNova:** ML-based VAD with intelligent speech segmentation.

@@ -32,6 +32,7 @@ export class TranscriptionSection {
             { value: 'groq', label: 'Groq Whisper' },
             { value: 'sambanova', label: 'SambaNova Whisper' },
             { value: 'fireworks', label: 'Fireworks Whisper' },
+            { value: 'crisperwhisper', label: 'CrisperWhisper 2.0' },
             { value: 'gemini', label: 'Gemini 3.5 Flash Lite' },
             { value: 'mistral', label: 'Mistral Voxtral' }
         ]);
@@ -47,7 +48,8 @@ export class TranscriptionSection {
             mistral: new PasswordField('mistralApiKey', `Mistral ${apiKeyLabel}`, placeholder),
             sambanova: new PasswordField('sambanovaApiKey', `SambaNova ${apiKeyLabel}`, placeholder),
             fireworks: new PasswordField('fireworksApiKey', `Fireworks ${apiKeyLabel}`, placeholder),
-            elevenlabs: new PasswordField('elevenlabsApiKey', `ElevenLabs ${apiKeyLabel}`, placeholder)
+            elevenlabs: new PasswordField('elevenlabsApiKey', `ElevenLabs ${apiKeyLabel}`, placeholder),
+            crisperwhisper: new PasswordField('crisperwhisperApiKey', `CrisperWhisper ${apiKeyLabel} (Optional)`, placeholder)
         };
 
         // Word correction components

@@ -5,6 +5,7 @@ pub mod fireworks;
 pub mod gemini;
 pub mod mistral;
 pub mod inception;
+pub mod crisperwhisper;
 
 // Streaming providers (WebSocket-based)
 pub mod deepgram;

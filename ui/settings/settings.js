@@ -261,6 +261,7 @@ async function loadSettings(loadedSettings) {
             fireworksApiKey: settings.fireworks_api_key || '',
             elevenlabsApiKey: settings.elevenlabs_api_key || '',
             inceptionApiKey: settings.inception_api_key || '',
+            crisperwhisperApiKey: settings.crisperwhisper_api_key || '',
             keyboardShortcuts: {
                 toggleRecording: settings.keyboard_shortcuts?.toggle_recording || 'Ctrl+Shift+D',
                 rewrite: settings.keyboard_shortcuts?.rewrite || 'Ctrl+Shift+R',
@@ -338,6 +339,7 @@ async function saveSettings() {
             fireworks_api_key: transcriptionValues.fireworksApiKey || rewriteValues.fireworksApiKey || '',
             elevenlabs_api_key: transcriptionValues.elevenlabsApiKey || '',
             inception_api_key: rewriteValues.inceptionApiKey || '',
+            crisperwhisper_api_key: transcriptionValues.crisperwhisperApiKey || '',
             keyboard_shortcuts: {
                 toggle_recording: shortcutValues.keyboardShortcuts.toggleRecording,
                 rewrite: shortcutValues.keyboardShortcuts.rewrite,
