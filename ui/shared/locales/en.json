@@ -16,6 +16,7 @@
         "typing": "Typing (Simulated)",
         "clipboard": "Clipboard (Paste)",
         "textFormatted": "Text formatted",
+        "smartTranscription": "Smart transcription",
         "voiceCommands": "Voice commands",
         "audioCues": "Audio feedback",
         "pushToTalk": "Push-to-Talk",
@@ -25,6 +26,7 @@
         "tooltips": {
             "insertionMode": "Select the insertion mode of the transcribed text",
             "textFormatted": "Apply punctuation and capitalization to transcribed text",
+            "smartTranscription": "Automatically remove filler words and clean up self-corrections (Gemini 3.5 Transcribe)",
             "voiceCommands": "Enable voice commands during recording",
             "audioCues": "Play audio cues when recordings start and stop",
             "pushToTalk": "Hold keys shortcut to record, release to stop"

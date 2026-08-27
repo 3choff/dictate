@@ -14,6 +14,7 @@ export class GeneralSection {
         ]);
         
         this.textFormattedToggle = new ToggleSwitch('text-formatted', i18n.t('general.textFormatted'));
+        this.smartTranscriptionToggle = new ToggleSwitch('smart-transcription-enabled', i18n.t('general.smartTranscription'));
         this.voiceCommandsToggle = new ToggleSwitch('voice-commands-enabled', i18n.t('general.voiceCommands'));
         this.audioCuesToggle = new ToggleSwitch('audio-cues-enabled', i18n.t('general.audioCues'));
         this.pushToTalkToggle = new ToggleSwitch('push-to-talk-enabled', i18n.t('general.pushToTalk'));
@@ -56,10 +57,15 @@ export class GeneralSection {
         outputLabel.textContent = i18n.t('general.output');
         outputGroup.appendChild(outputLabel);
 
+        const smartToggleEl = this.smartTranscriptionToggle.render();
+        smartToggleEl.id = 'smart-transcription-group';
+        smartToggleEl.style.display = 'none';
+
         const outputBody = document.createElement('div');
         outputBody.className = 'settings-group-body';
         outputBody.appendChild(this.insertionModeField.render());
         outputBody.appendChild(this.textFormattedToggle.render());
+        outputBody.appendChild(smartToggleEl);
         outputBody.appendChild(this.audioCuesToggle.render());
         outputGroup.appendChild(outputBody);
         section.appendChild(outputGroup);
@@ -82,6 +88,7 @@ export class GeneralSection {
     initialize() {
         this.addTooltip('audio-cues-enabled', i18n.t('general.tooltips.audioCues'));
         this.addTooltip('text-formatted', i18n.t('general.tooltips.textFormatted'));
+        this.addTooltip('smart-transcription-enabled', i18n.t('general.tooltips.smartTranscription'));
         this.addTooltip('voice-commands-enabled', i18n.t('general.tooltips.voiceCommands'));
         
         const pushToTalkToggleElement = document.getElementById('push-to-talk-enabled');
@@ -119,6 +126,11 @@ export class GeneralSection {
         if (settings.formatted !== undefined) {
             this.textFormattedToggle.setValue(settings.formatted);
         }
+        if (settings.smartTranscriptionEnabled !== undefined) {
+            this.smartTranscriptionToggle.setValue(settings.smartTranscriptionEnabled);
+        } else {
+            this.smartTranscriptionToggle.setValue(true);
+        }
         if (settings.voiceCommandsEnabled !== undefined) {
             this.voiceCommandsToggle.setValue(settings.voiceCommandsEnabled);
         }
@@ -128,16 +140,27 @@ export class GeneralSection {
         if (settings.pushToTalkEnabled !== undefined) {
             this.pushToTalkToggle.setValue(settings.pushToTalkEnabled);
         }
+        if (settings.provider) {
+            this.updateSmartTranscriptionVisibility(settings.provider);
+        }
     }
 
     getValues() {
         return {
             insertionMode: this.insertionModeField.getValue(),
             formatted: this.textFormattedToggle.getValue(),
+            smartTranscriptionEnabled: this.smartTranscriptionToggle.getValue(),
             voiceCommandsEnabled: this.voiceCommandsToggle.getValue(),
             audioCuesEnabled: this.audioCuesToggle.getValue(),
             pushToTalkEnabled: this.pushToTalkToggle.getValue()
         };
+    }
+
+    updateSmartTranscriptionVisibility(provider) {
+        const smartGroup = document.getElementById('smart-transcription-group');
+        if (smartGroup) {
+            smartGroup.style.display = (provider === 'gemini-transcribe' || provider === 'gemini-live') ? 'flex' : 'none';
+        }
     }
     
     handlePttToggle(event) {

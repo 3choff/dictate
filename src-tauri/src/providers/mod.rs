@@ -12,3 +12,4 @@ pub mod deepgram;
 pub mod cartesia;
 pub mod voxtral;
 pub mod elevenlabs;
+pub mod gemini_live;

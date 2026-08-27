@@ -14,7 +14,7 @@ export class RewriteSection {
             { value: 'fireworks', label: 'Fireworks GPT-OSS-20B' },
             { value: 'sambanova', label: 'SambaNova Llama-3.3-70B' },
             { value: 'gemini-flash-lite', label: 'Gemini 3.5 Flash Lite' },
-            { value: 'gemini-flash', label: 'Gemini 3.6 Flash' },
+            { value: 'gemini-flash', label: 'Gemini 3.7 Flash' },
             { value: 'mistral', label: 'Mistral Small' },
             { value: 'inception', label: 'Mercury 2' }
         ]);

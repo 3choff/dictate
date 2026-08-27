@@ -29,11 +29,13 @@ export class TranscriptionSection {
             { value: 'elevenlabs', label: 'ElevenLabs Scribe v2 (Real-time)' },
             { value: 'cartesia', label: 'Cartesia Ink Whisper (Real-time)' },
             { value: 'voxtral', label: 'Mistral Voxtral (Real-time)' },
+            { value: 'gemini-live', label: 'Gemini 3.5 Transcribe Live' },
             { value: 'groq', label: 'Groq Whisper' },
             { value: 'sambanova', label: 'SambaNova Whisper' },
             { value: 'fireworks', label: 'Fireworks Whisper' },
             { value: 'crisperwhisper', label: 'CrisperWhisper 2.0' },
             { value: 'gemini', label: 'Gemini 3.5 Flash Lite' },
+            { value: 'gemini-transcribe', label: 'Gemini 3.5 Transcribe' },
             { value: 'mistral', label: 'Mistral Voxtral' }
         ]);
 
@@ -136,6 +138,9 @@ export class TranscriptionSection {
             if (this.generalSection && this.generalSection.updatePttWarning) {
                 this.generalSection.updatePttWarning();
             }
+            if (this.generalSection && this.generalSection.updateSmartTranscriptionVisibility) {
+                this.generalSection.updateSmartTranscriptionVisibility(value);
+            }
         });
 
         this.wordCorrectionToggle.onChange((enabled) => {
@@ -157,8 +162,13 @@ export class TranscriptionSection {
     }
 
     updateApiKeyVisibility(provider) {
-        // Map voxtral to mistral since they share the same API key
-        const mappedProvider = provider === 'voxtral' ? 'mistral' : provider;
+        // Map providers sharing the same API key
+        const keyMap = {
+            'voxtral': 'mistral',
+            'gemini-transcribe': 'gemini',
+            'gemini-live': 'gemini'
+        };
+        const mappedProvider = keyMap[provider] || provider;
 
         Object.entries(this.apiKeyFields).forEach(([p, field]) => {
             const fieldEl = document.querySelector(`#${field.id}-group`);

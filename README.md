@@ -29,7 +29,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
     *   **Deepgram:** Real-time streaming transcription for lower latency.
     *   **Cartesia:** Real-time streaming transcription using a dedicated PCM pipeline.
     *   **CrisperWhisper 2.0:** High-accuracy batch transcription endpoint with verbatim and intended speech cleaning.
-    *   **Gemini:** ML-based VAD with intelligent speech segmentation.
+    *   **Gemini:** ML-based VAD with intelligent speech segmentation (supporting Gemini 3.5 Flash Lite and Gemini 3.5 Transcribe).
     *   **Mistral:** ML-based VAD with intelligent speech segmentation.
     *   **SambaNova:** ML-based VAD with intelligent speech segmentation.
     *   **Fireworks:** ML-based VAD with intelligent speech segmentation.
@@ -131,7 +131,7 @@ Click the gear icon in the Dictate window to open the settings. Here you can:
 *   Select your preferred transcription service and transcription language (or leave `Multilingual`).
 *   Configure text rewrite settings:
     *   Choose rewrite mode: Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized
-    *   Select AI provider: Groq GPT-OSS-120B, Gemini 3.6 Flash, Gemini 3.5 Flash Lite, Mistral Small, SambaNova Llama-3.3-70B, Fireworks GPT-OSS-20B, or Mercury 2 (Default: Groq)
+    *   Select AI provider: Groq GPT-OSS-120B, Gemini 3.7 Flash, Gemini 3.5 Flash Lite, Mistral Small, SambaNova Llama-3.3-70B, Fireworks GPT-OSS-20B, or Mercury 2 (Default: Groq)
 *   Choose your text insertion mode (Simulated Typing via SendKeys or Clipboard paste).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 

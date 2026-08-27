@@ -59,6 +59,7 @@ let ELEVENLABS_API_KEY = '';
 let INCEPTION_API_KEY = '';
 let CRISPERWHISPER_API_KEY = '';
 let API_SERVICE = 'groq';
+let SMART_TRANSCRIPTION_ENABLED = true;
 
 // Frontend visualizer instance
 let visualizer = null;
@@ -289,6 +290,7 @@ async function loadSettings() {
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.transcription_language || 'multilingual');
         TEXT_FORMATTED = (settings.text_formatted !== false);  // Default true
+        SMART_TRANSCRIPTION_ENABLED = (settings.smart_transcription_enabled !== false); // Default true
         VOICE_COMMANDS_ENABLED = (settings.voice_commands_enabled !== false);  // Default true
         AUDIO_CUES_ENABLED = (settings.audio_cues_enabled !== false);  // Default true
         PUSH_TO_TALK_ENABLED = (settings.push_to_talk_enabled === true);  // Default false
@@ -636,6 +638,8 @@ async function startRecording() {
         const apiKeyMap = {
             'groq': GROQ_API_KEY,
             'gemini': GEMINI_API_KEY,
+            'gemini-transcribe': GEMINI_API_KEY,
+            'gemini-live': GEMINI_API_KEY,
             'mistral': MISTRAL_API_KEY,
             'sambanova': SAMBANOVA_API_KEY,
             'fireworks': FIREWORKS_API_KEY,
@@ -657,6 +661,7 @@ async function startRecording() {
             apiKey: apiKey,
             language: LANGUAGE,
             smartFormat: TEXT_FORMATTED,
+            smartTranscription: SMART_TRANSCRIPTION_ENABLED,
             insertionMode: INSERTION_MODE,
             voiceCommandsEnabled: VOICE_COMMANDS_ENABLED,
             pushToTalkEnabled: PUSH_TO_TALK_ENABLED,
@@ -692,7 +697,7 @@ async function startRecording() {
         status.textContent = i18n.t('main.recording');
         
         // Open transcript overlay for streaming providers with partial support
-        if ((API_SERVICE === 'elevenlabs' || API_SERVICE === 'deepgram' || API_SERVICE === 'cartesia') && SHOW_TRANSCRIPT_OVERLAY) {
+        if ((API_SERVICE === 'elevenlabs' || API_SERVICE === 'deepgram' || API_SERVICE === 'cartesia' || API_SERVICE === 'gemini-live') && SHOW_TRANSCRIPT_OVERLAY) {
             invoke('open_transcript_overlay').catch(e => 
                 console.error('[Overlay] Failed to open:', e)
             );
@@ -756,7 +761,9 @@ function getProviderDisplayName(provider) {
         'cartesia': 'Cartesia',
         'elevenlabs': 'ElevenLabs',
         'voxtral': 'Voxtral',
-        'crisperwhisper': 'CrisperWhisper 2.0'
+        'crisperwhisper': 'CrisperWhisper 2.0',
+        'gemini-transcribe': 'Gemini 3.5 Transcribe',
+        'gemini-live': 'Gemini 3.5 Transcribe Live'
     };
     return names[provider] || provider;
 }

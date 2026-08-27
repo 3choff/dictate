@@ -35,6 +35,7 @@ pub async fn start_streaming_transcription(
     insertion_mode: String,
     encoding: Option<String>,
     voice_commands_enabled: Option<bool>,
+    smart_transcription: Option<bool>,
 ) -> Result<String, String> {
     // Get or create streaming state
     let state = app.state::<StreamingState>();
@@ -629,6 +630,120 @@ pub async fn start_streaming_transcription(
                         }
                     } else {
                         formatted_transcript.clone()
+                    };
+                    
+                    // Process voice commands if enabled
+                    if voice_cmds_enabled {
+                        let voice_commands = VoiceCommands::new_with_language(&voice_lang);
+                        let processed = process_voice_commands(&corrected_transcript, &voice_commands);
+                        
+                        // Execute command actions
+                        for action in &processed.actions {
+                            if let Err(e) = execute_streaming_command_action(action, &app_clone).await {
+                                eprintln!("[Voice Commands] Failed to execute action: {}", e);
+                            }
+                        }
+                        
+                        // Insert remaining text
+                        let text_to_insert = if processed.remaining_text.is_empty() {
+                            processed.processed_text.clone()
+                        } else if processed.processed_text.is_empty() {
+                            if processed.had_key_action {
+                                processed.remaining_text.clone()
+                            } else {
+                                format!("{} ", processed.remaining_text)
+                            }
+                        } else {
+                            format!("{}{}", processed.remaining_text, processed.processed_text)
+                        };
+                        
+                        if !text_to_insert.is_empty() {
+                            let _ = insert_transcript_text(&text_to_insert, &insertion_mode, &app_clone).await;
+                        }
+                    } else {
+                        // No voice commands - insert directly with space
+                        let transcript_with_space = format!("{} ", corrected_transcript);
+                        let _ = insert_transcript_text(&transcript_with_space, &insertion_mode, &app_clone).await;
+                    }
+                    
+                    // Emit event to frontend for status update
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-transcript", corrected_transcript);
+                    }
+                }
+                
+                // Clean up session when done
+                let mut sessions = sessions_clone.lock().await;
+                sessions.remove(&session_id_clone);
+            });
+            
+            Ok(session_id)
+        }
+        "gemini-live" => {
+            // Start Gemini Live streaming
+            let voice_lang = if language == "multilingual" || language == "multi" || language.is_empty() {
+                "en".to_string()
+            } else {
+                language.clone()
+            };
+            
+            let gemini_language = if language == "multilingual" || language == "multi" || language.is_empty() {
+                None
+            } else {
+                Some(language)
+            };
+            
+            let (audio_tx, mut transcript_rx, mut partial_rx) = providers::gemini_live::start_streaming(
+                api_key,
+                gemini_language,
+                smart_transcription,
+            )
+            .await
+            .map_err(|e| format!("Failed to start Gemini Live: {}", e))?;
+            
+            // Store audio sender for this session
+            {
+                let mut sessions = state.sessions.lock().await;
+                sessions.insert(session_id.clone(), audio_tx);
+            }
+            
+            // Spawn task to forward partial transcripts to overlay
+            let app_partial = app.clone();
+            tokio::spawn(async move {
+                let noise_re = regex::Regex::new(r"\[.*?\]|\(.*?\)").unwrap();
+                let space_re = regex::Regex::new(r"\s+").unwrap();
+                while let Some(partial_text) = partial_rx.recv().await {
+                    let cleaned = noise_re.replace_all(&partial_text, " ");
+                    let cleaned = space_re.replace_all(&cleaned, " ").trim().to_string();
+                    
+                    if let Some(window) = app_partial.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-transcript", &cleaned);
+                    }
+                }
+            });
+            
+            // Spawn task to handle incoming transcripts
+            let app_clone = app.clone();
+            let session_id_clone = session_id.clone();
+            let sessions_clone = state.sessions.clone();
+            
+            let voice_cmds_enabled = voice_commands_enabled.unwrap_or(true);
+            tokio::spawn(async move {
+                while let Some(transcript) = transcript_rx.recv().await {
+                    // Clear partial overlay when committed text arrives
+                    if let Some(window) = app_clone.get_webview_window("main") {
+                        let _ = window.emit("streaming-partial-clear", ());
+                    }
+                    
+                    // Apply word correction if custom words are configured
+                    let corrected_transcript = if let Ok(settings) = crate::commands::settings::get_settings(app_clone.clone()).await {
+                        if settings.word_correction_enabled {
+                            apply_word_correction_sync(&transcript, &settings.custom_words, settings.word_correction_threshold)
+                        } else {
+                            transcript.clone()
+                        }
+                    } else {
+                        transcript.clone()
                     };
                     
                     // Process voice commands if enabled

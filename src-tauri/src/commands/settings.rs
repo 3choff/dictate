@@ -46,6 +46,8 @@ pub struct Settings {
     pub app_language: String,
     #[serde(default = "default_text_formatted")]
     pub text_formatted: bool,
+    #[serde(default = "default_smart_transcription_enabled")]
+    pub smart_transcription_enabled: bool,
     #[serde(default = "default_voice_commands_enabled")]
     pub voice_commands_enabled: bool,
     #[serde(default = "default_audio_cues_enabled")]
@@ -126,6 +128,10 @@ fn default_app_language() -> String {
 
 fn default_text_formatted() -> bool {
     true  // Default to preserving formatting (matches Electron)
+}
+
+fn default_smart_transcription_enabled() -> bool {
+    true  // Default to smart mode for Gemini 3.5 Transcribe
 }
 
 fn default_voice_commands_enabled() -> bool {
@@ -265,6 +271,7 @@ impl Default for Settings {
             transcription_language: default_transcription_language(),
             app_language: default_app_language(),
             text_formatted: default_text_formatted(),
+            smart_transcription_enabled: default_smart_transcription_enabled(),
             voice_commands_enabled: default_voice_commands_enabled(),
             audio_cues_enabled: default_audio_cues_enabled(),
             push_to_talk_enabled: default_push_to_talk_enabled(),

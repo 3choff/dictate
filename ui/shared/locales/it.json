@@ -16,6 +16,7 @@
         "typing": "Digitazione (Simulata)",
         "clipboard": "Appunti (Incolla)",
         "textFormatted": "Formatta testo",
+        "smartTranscription": "Trascrizione smart",
         "voiceCommands": "Comandi vocali",
         "audioCues": "Feedback audio",
         "pushToTalk": "Push-to-Talk",
@@ -25,6 +26,7 @@
         "tooltips": {
             "insertionMode": "Seleziona la modalità di inserimento del testo trascritto",
             "textFormatted": "Applica punteggiatura e maiuscole al testo trascritto",
+            "smartTranscription": "Rimuove automaticamente intercalari e corregge ripensamenti (Gemini 3.5 Transcribe)",
             "voiceCommands": "Abilita i comandi vocali durante la registrazione",
             "audioCues": "Riproduci suoni all'avvio e all'arresto della registrazione",
             "pushToTalk": "Tieni premuto la scorciatoia per registrare, rilascia per fermare"

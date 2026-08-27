@@ -15,6 +15,7 @@ pub async fn transcribe_audio_segment(
     text_formatted: Option<bool>,
     api_service: Option<String>,
     voice_commands_enabled: Option<bool>,
+    smart_transcription: Option<bool>,
 ) -> Result<String, String> {
     // Validate inputs
     if audio_data.is_empty() {
@@ -43,6 +44,9 @@ pub async fn transcribe_audio_segment(
             .await
             .map_err(|e| e.to_string()),
         "gemini" => providers::gemini::transcribe_verbose(audio_data, api_key, normalized_lang)
+            .await
+            .map_err(|e| e.to_string()),
+        "gemini-transcribe" => providers::gemini::transcribe_specialized_verbose(audio_data, api_key, normalized_lang, smart_transcription)
             .await
             .map_err(|e| e.to_string()),
         "mistral" => providers::mistral::transcribe_verbose(audio_data, api_key, normalized_lang)

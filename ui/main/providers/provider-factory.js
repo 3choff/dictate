@@ -13,6 +13,8 @@ import { CartesiaProvider } from './cartesia-provider.js';
 import { VoxtralProvider } from './voxtral-provider.js';
 import { ElevenLabsProvider } from './elevenlabs-provider.js';
 import { CrisperWhisperProvider } from './crisperwhisper-provider.js';
+import { GeminiTranscribeProvider } from './gemini-transcribe-provider.js';
+import { GeminiLiveProvider } from './gemini-live-provider.js';
 
 /**
  * Create a provider instance
@@ -34,6 +36,12 @@ export function createProvider(serviceName, config) {
         
         case 'gemini':
             return new GeminiProvider(config);
+
+        case 'gemini-transcribe':
+            return new GeminiTranscribeProvider(config);
+
+        case 'gemini-live':
+            return new GeminiLiveProvider(config);
         
         case 'mistral':
             return new MistralProvider(config);
@@ -72,6 +80,8 @@ export function getAvailableProviders() {
     return [
         'groq',
         'gemini',
+        'gemini-transcribe',
+        'gemini-live',
         'mistral',
         'sambanova',
         'fireworks',
@@ -89,5 +99,5 @@ export function getAvailableProviders() {
  * @returns {boolean}
  */
 export function isStreamingProvider(serviceName) {
-    return ['deepgram', 'cartesia', 'voxtral', 'elevenlabs'].includes(serviceName.toLowerCase());
+    return ['deepgram', 'cartesia', 'voxtral', 'elevenlabs', 'gemini-live'].includes(serviceName.toLowerCase());
 }
