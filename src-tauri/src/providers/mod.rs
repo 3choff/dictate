@@ -13,3 +13,7 @@ pub mod cartesia;
 pub mod voxtral;
 pub mod elevenlabs;
 pub mod gemini_live;
+
+// Text-to-speech providers (HTTP-based)
+pub mod tts_sixtydb;
+pub mod tts_elevenlabs;

@@ -111,6 +111,25 @@ pub fn register_shortcuts(app: &AppHandle) {
         }
     }
 
+    // Speak selection (TTS) - frontend handles smart selection
+    if let Ok(shortcut) = shortcuts.speak_selection.parse::<Shortcut>() {
+        if let Err(e) = gs.on_shortcut(shortcut, |app, _shortcut, event| {
+            if event.state == ShortcutState::Released {
+                if let Some(window) = app.get_webview_window("main") {
+                    let window_clone = window.clone();
+                    tauri::async_runtime::spawn(async move {
+                        // Wait a bit for all modifiers from the hotkey to be released
+                        sleep(Duration::from_millis(200)).await;
+                        // Emit trigger - frontend performSpeakSelection() handles selection logic
+                        let _ = window_clone.emit("tts-speak-selection", ());
+                    });
+                }
+            }
+        }) {
+            eprintln!("[HOTKEY] Failed to register {}: {}", shortcuts.speak_selection, e);
+        }
+    }
+
     // Close app
     if let Ok(shortcut) = shortcuts.close_app.parse::<Shortcut>() {
         if let Err(e) = gs.on_shortcut(shortcut, |app, _event, _shortcut| {
@@ -574,6 +593,8 @@ pub fn run() {
             commands::start_streaming_transcription,
             commands::send_streaming_audio,
             commands::stop_streaming_transcription,
+            commands::tts::tts_speak,
+            commands::tts::tts_get_voices,
             commands::vad::vad_create_session,
             commands::vad::vad_push_frame,
             commands::vad::vad_stop_session,

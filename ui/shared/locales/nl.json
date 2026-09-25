@@ -6,6 +6,7 @@
         "general": "Aanpassen",
         "transcription": "Transcriptie",
         "rewrite": "Herschrijven",
+        "tts": "Spraak",
         "shortcuts": "Sneltoetsen",
         "ui": "Interface",
         "about": "Over"
@@ -99,10 +100,22 @@
             "placeholder": "Voer uw API-sleutel in"
         }
     },
+    "tts": {
+        "title": "Tekst naar spraak",
+        "provider": "Provider",
+        "voiceModel": "Stemkwaliteit",
+        "voice": "Stem",
+        "defaultVoice": "Standaardstem",
+        "fetchVoices": "Stemmen ophalen",
+        "preview": "Voorbeeld",
+        "previewText": "Hallo! Dit is een voorbeeld van de geselecteerde stem.",
+        "readback": "Dictaties voorlezen"
+    },
     "shortcuts": {
         "title": "Sneltoetsen",
         "toggleRecording": "Opname wisselen",
         "rewrite": "Tekst herschrijven",
+        "speakSelection": "Selectie voorlezen",
         "toggleView": "Weergave wisselen",
         "toggleSettings": "Instellingen wisselen",
         "toggleDebug": "Debug wisselen",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "Dictatie starten en stoppen",
             "rewrite": "Geselecteerde tekst herschrijven",
+            "speakSelection": "De geselecteerde tekst voorlezen met spraaksynthese",
             "toggleView": "Schakelen tussen compacte en uitgebreide modus",
             "toggleSettings": "Instellingen openen of sluiten",
             "toggleDebug": "Ontwikkelaarstools openen of sluiten",

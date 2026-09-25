@@ -6,6 +6,7 @@
         "general": "カスタマイズ",
         "transcription": "文字起こし",
         "rewrite": "書き換え",
+        "tts": "音声",
         "shortcuts": "ショートカット",
         "ui": "インターフェース",
         "about": "このアプリについて"
@@ -99,10 +100,22 @@
             "placeholder": "APIキーを入力"
         }
     },
+    "tts": {
+        "title": "音声合成",
+        "provider": "プロバイダー",
+        "voiceModel": "音声品質",
+        "voice": "ボイス",
+        "defaultVoice": "デフォルトボイス",
+        "fetchVoices": "ボイスを取得",
+        "preview": "プレビュー",
+        "previewText": "こんにちは！選択したボイスのプレビューです。",
+        "readback": "ディクテーションを読み上げる"
+    },
     "shortcuts": {
         "title": "ショートカット",
         "toggleRecording": "録音を切り替え",
         "rewrite": "テキストを書き換え",
+        "speakSelection": "選択範囲を読み上げ",
         "toggleView": "表示を切り替え",
         "toggleSettings": "設定を切り替え",
         "toggleDebug": "デバッグを切り替え",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "ディクテーションの開始と停止",
             "rewrite": "選択したテキストを書き換え",
+            "speakSelection": "選択したテキストを音声合成で読み上げる",
             "toggleView": "コンパクトと拡張モードを切り替え",
             "toggleSettings": "設定を開く/閉じる",
             "toggleDebug": "開発ツールを開く/閉じる",

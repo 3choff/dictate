@@ -6,6 +6,7 @@
         "general": "自定义",
         "transcription": "转录",
         "rewrite": "重写",
+        "tts": "语音",
         "shortcuts": "快捷键",
         "ui": "界面",
         "about": "关于"
@@ -99,10 +100,22 @@
             "placeholder": "输入您的API密钥"
         }
     },
+    "tts": {
+        "title": "文本转语音",
+        "provider": "提供商",
+        "voiceModel": "语音质量",
+        "voice": "声音",
+        "defaultVoice": "默认声音",
+        "fetchVoices": "获取声音",
+        "preview": "预览",
+        "previewText": "你好！这是所选声音的预览。",
+        "readback": "朗读听写内容"
+    },
     "shortcuts": {
         "title": "快捷键",
         "toggleRecording": "切换录音",
         "rewrite": "重写文本",
+        "speakSelection": "朗读所选文本",
         "toggleView": "切换视图",
         "toggleSettings": "切换设置",
         "toggleDebug": "切换调试",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "开始和停止听写",
             "rewrite": "重写选中的文本",
+            "speakSelection": "使用语音合成朗读选中的文本",
             "toggleView": "在紧凑和展开模式之间切换",
             "toggleSettings": "打开或关闭设置",
             "toggleDebug": "打开或关闭开发工具",

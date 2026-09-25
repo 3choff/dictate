@@ -28,6 +28,8 @@ pub struct Settings {
     pub inception_api_key: String,
     #[serde(default)]
     pub crisperwhisper_api_key: String,
+    #[serde(default)]
+    pub sixtydb_api_key: String,
     #[serde(default = "default_prompts")]
     pub prompts: HashMap<String, String>,
     #[serde(default)]
@@ -38,6 +40,14 @@ pub struct Settings {
     pub rewrite_provider: String,
     #[serde(default = "default_rewrite_mode")]
     pub rewrite_mode: String,
+    #[serde(default = "default_tts_provider")]
+    pub tts_provider: String,
+    #[serde(default)]
+    pub tts_voice_id: String,
+    #[serde(default = "default_tts_model")]
+    pub tts_model: String,
+    #[serde(default)]
+    pub tts_readback_enabled: bool,
     #[serde(default = "default_insertion_mode")]
     pub insertion_mode: String,
     #[serde(default = "default_transcription_language")]
@@ -112,6 +122,8 @@ pub struct KeyboardShortcuts {
     pub toggle_settings: String,
     #[serde(default = "default_close_app")]
     pub close_app: String,
+    #[serde(default = "default_speak_selection")]
+    pub speak_selection: String,
 }
 
 fn default_insertion_mode() -> String {
@@ -190,6 +202,10 @@ fn default_close_app() -> String {
     "Ctrl+Shift+X".to_string()
 }
 
+fn default_speak_selection() -> String {
+    "Ctrl+Shift+P".to_string()
+}
+
 fn default_keyboard_shortcuts() -> KeyboardShortcuts {
     KeyboardShortcuts {
         toggle_recording: default_toggle_recording(),
@@ -198,6 +214,7 @@ fn default_keyboard_shortcuts() -> KeyboardShortcuts {
         rewrite: default_rewrite(),
         toggle_settings: default_toggle_settings(),
         close_app: default_close_app(),
+        speak_selection: default_speak_selection(),
     }
 }
 
@@ -211,6 +228,14 @@ fn default_rewrite_provider() -> String {
 
 fn default_rewrite_mode() -> String {
     "grammar_correction".to_string()
+}
+
+fn default_tts_provider() -> String {
+    "60db".to_string()
+}
+
+fn default_tts_model() -> String {
+    "quality".to_string() // 60dB voice tier: "quality" | "fast"
 }
 
 fn default_prompts() -> HashMap<String, String> {
@@ -262,11 +287,16 @@ impl Default for Settings {
             elevenlabs_api_key: String::new(),
             inception_api_key: String::new(),
             crisperwhisper_api_key: String::new(),
+            sixtydb_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
             api_service: default_api_service(),
             rewrite_provider: default_rewrite_provider(),
             rewrite_mode: default_rewrite_mode(),
+            tts_provider: default_tts_provider(),
+            tts_voice_id: String::new(),
+            tts_model: default_tts_model(),
+            tts_readback_enabled: false,
             insertion_mode: default_insertion_mode(),
             transcription_language: default_transcription_language(),
             app_language: default_app_language(),

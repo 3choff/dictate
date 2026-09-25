@@ -6,6 +6,7 @@
         "general": "Personalizar",
         "transcription": "Transcrição",
         "rewrite": "Reescrever",
+        "tts": "Fala",
         "shortcuts": "Atalhos",
         "ui": "Interface",
         "about": "Sobre"
@@ -99,10 +100,22 @@
             "placeholder": "Digite sua chave API"
         }
     },
+    "tts": {
+        "title": "Texto para fala",
+        "provider": "Provedor",
+        "voiceModel": "Qualidade de voz",
+        "voice": "Voz",
+        "defaultVoice": "Voz padrão",
+        "fetchVoices": "Obter vozes",
+        "preview": "Prévia",
+        "previewText": "Olá! Esta é uma prévia da voz selecionada.",
+        "readback": "Ler ditados em voz alta"
+    },
     "shortcuts": {
         "title": "Atalhos",
         "toggleRecording": "Alternar gravação",
         "rewrite": "Reescrever texto",
+        "speakSelection": "Ler seleção",
         "toggleView": "Alternar visualização",
         "toggleSettings": "Alternar configurações",
         "toggleDebug": "Alternar depuração",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "Iniciar e parar ditado",
             "rewrite": "Reescrever texto selecionado",
+            "speakSelection": "Ler em voz alta o texto selecionado usando síntese de fala",
             "toggleView": "Alternar entre modo compacto e expandido",
             "toggleSettings": "Abrir ou fechar configurações",
             "toggleDebug": "Abrir ou fechar ferramentas de desenvolvimento",

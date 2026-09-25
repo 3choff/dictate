@@ -6,6 +6,7 @@
         "general": "Customize",
         "transcription": "Transcription",
         "rewrite": "Rewrite",
+        "tts": "Speech",
         "shortcuts": "Shortcuts",
         "ui": "Interface",
         "about": "About"
@@ -101,10 +102,22 @@
             "placeholder": "Enter your API key"
         }
     },
+    "tts": {
+        "title": "Text to Speech",
+        "provider": "Provider",
+        "voiceModel": "Voice Tier",
+        "voice": "Voice",
+        "defaultVoice": "Default voice",
+        "fetchVoices": "Fetch voices",
+        "preview": "Preview",
+        "previewText": "Hello! This is a preview of the selected voice.",
+        "readback": "Read back dictations"
+    },
     "shortcuts": {
         "title": "Shortcuts",
         "toggleRecording": "Toggle Recording",
         "rewrite": "Text Rewrite",
+        "speakSelection": "Speak Selection",
         "toggleView": "Toggle View",
         "toggleSettings": "Toggle Settings",
         "toggleDebug": "Toggle Debug",
@@ -112,6 +125,7 @@
         "tooltips": {
             "toggleRecording": "Start and stop dictation",
             "rewrite": "Rewrite selected text (grammar, tone, style)",
+            "speakSelection": "Speak the selected text aloud using text to speech",
             "toggleView": "Switch between compact and expanded mode",
             "toggleSettings": "Open or close settings window",
             "toggleDebug": "Open or close developer tools",

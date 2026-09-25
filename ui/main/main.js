@@ -7,6 +7,7 @@ import { RecordingSession } from './recording-session.js';
 import { Tooltip } from '../shared/tooltip.js';
 import { PRESET_PROMPTS } from '../shared/prompts.js';
 import { i18n } from '../shared/i18n.js';
+import { TtsPlayer } from '../shared/tts-player.js';
 
 // Check if Tauri APIs are available
 if (!window.__TAURI__) {
@@ -58,8 +59,17 @@ let CARTESIA_API_KEY = '';
 let ELEVENLABS_API_KEY = '';
 let INCEPTION_API_KEY = '';
 let CRISPERWHISPER_API_KEY = '';
+let SIXTYDB_API_KEY = '';
 let API_SERVICE = 'groq';
 let SMART_TRANSCRIPTION_ENABLED = true;
+
+// Text-to-speech state (loaded from settings)
+let TTS_PROVIDER = '60db';
+let TTS_READBACK_ENABLED = false;
+let lastTranscript = '';
+
+// Shared TTS playback instance (60dB / ElevenLabs via backend command)
+const ttsPlayer = new TtsPlayer(invoke);
 
 // Frontend visualizer instance
 let visualizer = null;
@@ -286,6 +296,9 @@ async function loadSettings() {
         ELEVENLABS_API_KEY = settings.elevenlabs_api_key || '';
         INCEPTION_API_KEY = settings.inception_api_key || '';
         CRISPERWHISPER_API_KEY = settings.crisperwhisper_api_key || '';
+        SIXTYDB_API_KEY = settings.sixtydb_api_key || '';
+        TTS_PROVIDER = settings.tts_provider || '60db';
+        TTS_READBACK_ENABLED = (settings.tts_readback_enabled === true);
         API_SERVICE = settings.api_service || 'groq';
         INSERTION_MODE = settings.insertion_mode || 'typing';
         LANGUAGE = (settings.transcription_language || 'multilingual');
@@ -597,6 +610,66 @@ rewriteBtn.addEventListener('click', async (e) => {
     await performRewrite();
 });
 
+// ============================================================================
+// Text-to-Speech (60dB / ElevenLabs)
+// ============================================================================
+
+function isTtsConfigured() {
+    if (TTS_PROVIDER === 'elevenlabs') return Boolean(ELEVENLABS_API_KEY);
+    return Boolean(SIXTYDB_API_KEY);
+}
+
+/**
+ * Track the latest transcript and speak it back when read-back is enabled.
+ * Fed by both batch ("transcript-inserted") and streaming ("streaming-transcript") events.
+ */
+function handleTranscriptForTts(text) {
+    const trimmed = (text || '').trim();
+    if (trimmed) lastTranscript = trimmed;
+
+    if (TTS_READBACK_ENABLED && trimmed && isTtsConfigured()) {
+        ttsPlayer.speak(trimmed).catch((error) => {
+            console.error('[TTS] Read-back failed:', error);
+        });
+    }
+}
+
+/**
+ * Speak the text selected in the foreground app (Ctrl+Shift+P).
+ * Falls back to the last dictated transcript when nothing is selected.
+ */
+async function performSpeakSelection() {
+    if (!isTtsConfigured()) {
+        showTemporaryTooltip(micButton, i18n.t('main.apiKeyMissing'));
+        console.warn(`API key not set for TTS provider: ${TTS_PROVIDER}`);
+        return;
+    }
+
+    try {
+        // Copy selected text, or select-all + copy if nothing is selected
+        let text = await invoke('copy_selected_or_all_text');
+        text = (text || '').trim();
+
+        // Fall back to the last dictated transcript
+        if (!text) text = lastTranscript;
+
+        if (!text) {
+            showTemporaryTooltip(micButton, i18n.t('main.noTextSelected'));
+            return;
+        }
+
+        // Guard against synthesizing very long selections
+        if (text.length > 3000) {
+            console.warn(`[TTS] Selection too long (${text.length} chars), truncating to 3000`);
+            text = text.slice(0, 3000);
+        }
+
+        await ttsPlayer.speak(text);
+    } catch (error) {
+        console.error('[TTS] Speak selection error:', error);
+    }
+}
+
 async function toggleRecording() {
     // Kept for shortcut handlers; click path handles immediate UI
     if (!isRecording) {
@@ -889,9 +962,30 @@ listen('sparkle-trigger', async () => {
         return;
     }
     lastRewriteTime = now;
-    
+
     // Directly call text rewrite function instead of simulating click
     await performRewrite();
+});
+
+// Listen for speak-selection shortcut (Ctrl+Shift+P)
+let lastSpeakTime = 0;
+listen('tts-speak-selection', async () => {
+    const now = Date.now();
+    if (now - lastSpeakTime < 300) {
+        return;
+    }
+    lastSpeakTime = now;
+
+    await performSpeakSelection();
+});
+
+// Track transcripts for TTS read-back (batch + streaming paths)
+listen('transcript-inserted', (event) => {
+    handleTranscriptForTts(event.payload);
+});
+
+listen('streaming-transcript', (event) => {
+    handleTranscriptForTts(event.payload);
 });
 
 // Listen for settings changes
