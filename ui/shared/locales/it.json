@@ -6,6 +6,7 @@
         "general": "Personalizza",
         "transcription": "Trascrizione",
         "rewrite": "Riscrivi",
+        "tts": "Voce",
         "shortcuts": "Scorciatoie",
         "ui": "Interfaccia",
         "about": "Info"
@@ -101,10 +102,22 @@
             "placeholder": "Inserisci la tua chiave API"
         }
     },
+    "tts": {
+        "title": "Sintesi vocale",
+        "provider": "Provider",
+        "voiceModel": "Qualità voce",
+        "voice": "Voce",
+        "defaultVoice": "Voce predefinita",
+        "fetchVoices": "Carica voci",
+        "preview": "Anteprima",
+        "previewText": "Ciao! Questa è un'anteprima della voce selezionata.",
+        "readback": "Leggi ad alta voce le dettature"
+    },
     "shortcuts": {
         "title": "Scorciatoie",
         "toggleRecording": "Attiva/Disattiva Registrazione",
         "rewrite": "Riscrivi Selezione",
+        "speakSelection": "Leggi Selezione",
         "toggleView": "Cambia Vista",
         "toggleSettings": "Apri/Chiudi Impostazioni",
         "toggleDebug": "Attiva Debug",
@@ -112,6 +125,7 @@
         "tooltips": {
             "toggleRecording": "Avvia e ferma la dettatura",
             "rewrite": "Riscrivi il testo selezionato (grammatica, tono, stile)",
+            "speakSelection": "Leggi ad alta voce il testo selezionato con la sintesi vocale",
             "toggleView": "Passa dalla modalità compatta a quella estesa",
             "toggleSettings": "Apri o chiudi la finestra delle impostazioni",
             "toggleDebug": "Apri o chiudi gli strumenti per sviluppatori",

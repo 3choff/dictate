@@ -21,6 +21,7 @@ If Dictate improves your workflow, please consider supporting ongoing AI members
 *   **Help & Support:** Quick access to the project's GitHub page via a help button.
 *   **Global Keyboard Shortcuts:** System-wide shortcuts for recording, text rewrite, compact mode, and more (see [Keyboard Shortcuts](#keyboard-shortcuts) section).
 *   **Text Rewrite:** Select any text in any app and click the sparkle button (or press `Ctrl+Shift+R`) to rewrite it. **Smart Selection Awareness:** If text is selected, it rewrites only that portion; if nothing is selected, it automatically selects all text in the focused area and rewrites the entire content. Choose from Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized. **Fully customizable prompts:** Edit the instructions for any mode directly in settings to tailor the AI's behavior to your exact needs.
+*   **Text to Speech:** Speak the selected text aloud from any application with `Ctrl+Shift+P`, or have Dictate automatically read dictations back to you. Powered by 60dB TTS (Quality/Fast voice tiers) or ElevenLabs, with a dynamic voice picker and preview in Settings → Speech.
 *   **User Notifications:** A sleek tooltip system provides instant feedback for missing API keys, empty text areas, or selection errors, fully localized in all 10 languages.
 *   **Audio Cues:** Audible "beep" on starting recording and "clack" on stopping recording for clear feedback.
 *   **Push‑to‑Talk (Batch Providers):** Optional mode that records only while you hold the recording shortcut, then transcribes immediately on release. Enable it in Settings → Customize. Supported with Groq, Gemini, Mistral, SambaNova, and Fireworks. When a streaming provider (Deepgram, Cartesia) is selected, Push‑to‑Talk is disabled and a brief warning explains it’s only available with batch providers.
@@ -124,14 +125,26 @@ Dictate features a "Smart Rewrite" capability that allows you to quickly refine 
 4. **AI Transformation:** The text is sent to your selected AI provider (default: Groq), processed according to your chosen mode (e.g., Grammar Correction), and inserted back into the application.
 5. **Feedback:** If the text area is completely empty, a localized tooltip will notify you that there is nothing to rewrite.
 
+### Text to Speech
+
+Dictate integrates text-to-speech via **60dB TTS** or **ElevenLabs**:
+
+*   **Speak Selection (`Ctrl+Shift+P`):** Reads the currently selected text aloud. **Smart Selection:** if no text is selected, Dictate selects all text in the focused window and speaks it; if the field is empty, it falls back to the most recent dictation.
+*   **Automatic Read-back:** Enable "Read back dictations" in Settings → Speech to hear each transcript spoken right after it is inserted.
+*   **Voice Picker & Preview:** In Settings → Speech, fetch the available voices for your provider (60dB organizes voices by tier: Quality or Fast) and preview any voice before saving.
+
 ### Settings
 
 Click the gear icon in the Dictate window to open the settings. Here you can:
-*   Enter your API keys for Groq, Deepgram, Cartesia, Gemini, Mistral, SambaNova, Fireworks, and Inception.
+*   Enter your API keys for Groq, Deepgram, Cartesia, Gemini, Mistral, SambaNova, Fireworks, Inception, 60dB (Speech), and ElevenLabs.
 *   Select your preferred transcription service and transcription language (or leave `Multilingual`).
 *   Configure text rewrite settings:
     *   Choose rewrite mode: Grammar Correction, Professional Tone, Polite Tone, Casual Tone, or Structured & Organized
     *   Select AI provider: Groq GPT-OSS-120B, Gemini 3.7 Flash, Gemini 3.5 Flash Lite, Mistral Small, SambaNova Llama-3.3-70B, Fireworks GPT-OSS-20B, or Mercury 2 (Default: Groq)
+*   Configure text-to-speech settings:
+    *   Select TTS provider: 60dB or ElevenLabs (Default: 60dB)
+    *   Choose the 60dB voice tier (Quality or Fast), fetch available voices, and preview them
+    *   Toggle automatic read-back of dictations
 *   Choose your text insertion mode (Simulated Typing via SendKeys or Clipboard paste).
 *   Toggle "Text formatted" to control normalized vs. formatted output for both providers (Groq normalization, Deepgram `smart_format`).
 
@@ -154,6 +167,7 @@ Dictate provides global keyboard shortcuts that work from anywhere on your syste
 |----------|----------|-------------|
 | `Ctrl+Shift+D` | **Toggle Recording** | Start or stop dictation. You'll hear a "beep" when recording starts and a "clack" when it stops. |
 | `Ctrl+Shift+R` | **Text Rewrite** | Rewrite selected text using your chosen mode and AI provider. **Smart Mode:** If no text is selected, it automatically selects all text in the focused window and rewrites it. |
+| `Ctrl+Shift+P` | **Speak Selection** | Speak the selected text aloud using text to speech. **Smart Mode:** If no text is selected, it selects all text in the focused window and speaks it. |
 | `Ctrl+Shift+V` | **Toggle Compact Mode** | Switch between compact and expanded window layouts. This preference is saved and restored on app launch. |
 | `Ctrl+Shift+S` | **Toggle Settings** | Open or close the settings window. |
 | `Ctrl+Shift+L` | **Toggle DevTools** | Open or close the developer console for debugging (development feature). |

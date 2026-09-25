@@ -4,6 +4,7 @@ import { RewriteSection } from './sections/rewrite.js';
 import { GeneralSection } from './sections/general.js';
 import { ShortcutsSection } from './sections/shortcuts.js';
 import { UISection } from './sections/ui.js';
+import { TtsSection } from './sections/tts.js';
 import { AboutSection } from './sections/about.js';
 import { i18n } from '../shared/i18n.js';
 
@@ -45,6 +46,15 @@ function getSidebarItems() {
         </svg>`
     },
     {
+        id: 'tts',
+        label: i18n.t('sidebar.tts'),
+        icon: `<svg class="sidebar-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 5L6 9H3C2.45 9 2 9.45 2 10V14C2 14.55 2.45 15 3 15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M15.54 8.46C16.4774 9.39764 17.0039 10.6692 17.0039 11.995C17.0039 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M18.7 5.3C20.1498 6.74978 20.9634 8.72945 20.9634 10.795C20.9634 12.8606 20.1498 14.8402 18.7 16.29" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>`
+    },
+    {
         id: 'shortcuts',
         label: i18n.t('sidebar.shortcuts'),
         icon: `<svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -75,6 +85,7 @@ function createSections() {
         general: new GeneralSection(),
         transcription: new TranscriptionSection(),
         rewrite: new RewriteSection(),
+        tts: new TtsSection(),
         shortcuts: new ShortcutsSection(),
         ui: new UISection(),
         about: new AboutSection()
@@ -135,11 +146,11 @@ function updateFooterVisibility() {
 
 function setupApiKeySync() {
     const sharedProviders = ['groq', 'gemini', 'mistral', 'sambanova', 'fireworks'];
-    
+
     sharedProviders.forEach(provider => {
         const transcriptionField = sections.transcription.apiKeyFields[provider];
         const rewriteField = sections.rewrite.apiKeyFields[provider];
-        
+
         if (transcriptionField && rewriteField) {
             transcriptionField.onChange((value) => {
                 const rewriteInput = document.getElementById('rewrite' + provider.charAt(0).toUpperCase() + provider.slice(1) + 'ApiKey');
@@ -150,6 +161,19 @@ function setupApiKeySync() {
             });
         }
     });
+
+    // ElevenLabs key is shared between Transcription (STT) and Text to Speech sections
+    const transcriptionElevenLabs = sections.transcription.apiKeyFields.elevenlabs;
+    const ttsElevenLabs = sections.tts?.elevenlabsApiKeyField;
+
+    if (transcriptionElevenLabs && ttsElevenLabs) {
+        transcriptionElevenLabs.onChange((value) => {
+            ttsElevenLabs.setValue(value);
+        });
+        ttsElevenLabs.onChange((value) => {
+            transcriptionElevenLabs.setValue(value);
+        });
+    }
 }
 
 function setupEventListeners() {
@@ -263,13 +287,19 @@ async function loadSettings(loadedSettings) {
             elevenlabsApiKey: settings.elevenlabs_api_key || '',
             inceptionApiKey: settings.inception_api_key || '',
             crisperwhisperApiKey: settings.crisperwhisper_api_key || '',
+            sixtydbApiKey: settings.sixtydb_api_key || '',
+            ttsProvider: settings.tts_provider || '60db',
+            ttsModel: settings.tts_model || 'quality',
+            ttsVoiceId: settings.tts_voice_id || '',
+            ttsReadbackEnabled: settings.tts_readback_enabled || false,
             keyboardShortcuts: {
                 toggleRecording: settings.keyboard_shortcuts?.toggle_recording || 'Ctrl+Shift+D',
                 rewrite: settings.keyboard_shortcuts?.rewrite || 'Ctrl+Shift+R',
                 toggleView: settings.keyboard_shortcuts?.toggle_view || 'Ctrl+Shift+V',
                 toggleSettings: settings.keyboard_shortcuts?.toggle_settings || 'Ctrl+Shift+S',
                 toggleDebug: settings.keyboard_shortcuts?.toggle_debug || 'Ctrl+Shift+L',
-                closeApp: settings.keyboard_shortcuts?.close_app || 'Ctrl+Shift+X'
+                closeApp: settings.keyboard_shortcuts?.close_app || 'Ctrl+Shift+X',
+                speakSelection: settings.keyboard_shortcuts?.speak_selection || 'Ctrl+Shift+P'
             },
             customWords: settings.custom_words || [],
             wordCorrectionThreshold: settings.word_correction_threshold ?? 0.18,
@@ -279,6 +309,7 @@ async function loadSettings(loadedSettings) {
         
         sections.transcription.loadValues(normalizedSettings);
         sections.rewrite.loadValues(normalizedSettings);
+        sections.tts.loadValues(normalizedSettings);
         sections.general.loadValues(normalizedSettings);
         sections.shortcuts.loadValues(normalizedSettings);
         sections.ui.loadValues(normalizedSettings);
@@ -310,6 +341,7 @@ async function saveSettings() {
     try {
         const transcriptionValues = sections.transcription.getValues();
         const rewriteValues = sections.rewrite.getValues();
+        const ttsValues = sections.tts.getValues();
         const generalValues = sections.general.getValues();
         const shortcutValues = sections.shortcuts.getValues();
         const uiValues = sections.ui.getValues();
@@ -321,6 +353,10 @@ async function saveSettings() {
             rewrite_provider: rewriteValues.rewriteProvider,
             rewrite_mode: rewriteValues.rewriteMode,
             custom_rewrite_prompt: rewriteValues.customRewritePrompt,
+            tts_provider: ttsValues.ttsProvider,
+            tts_model: ttsValues.ttsModel,
+            tts_voice_id: ttsValues.ttsVoiceId,
+            tts_readback_enabled: ttsValues.ttsReadbackEnabled,
             insertion_mode: generalValues.insertionMode,
             text_formatted: generalValues.formatted,
             smart_transcription_enabled: generalValues.smartTranscriptionEnabled,
@@ -339,16 +375,18 @@ async function saveSettings() {
             mistral_api_key: transcriptionValues.mistralApiKey || rewriteValues.mistralApiKey || '',
             sambanova_api_key: transcriptionValues.sambanovaApiKey || rewriteValues.sambanovaApiKey || '',
             fireworks_api_key: transcriptionValues.fireworksApiKey || rewriteValues.fireworksApiKey || '',
-            elevenlabs_api_key: transcriptionValues.elevenlabsApiKey || '',
+            elevenlabs_api_key: transcriptionValues.elevenlabsApiKey || ttsValues.elevenlabsApiKey || '',
             inception_api_key: rewriteValues.inceptionApiKey || '',
             crisperwhisper_api_key: transcriptionValues.crisperwhisperApiKey || '',
+            sixtydb_api_key: ttsValues.sixtydbApiKey || '',
             keyboard_shortcuts: {
                 toggle_recording: shortcutValues.keyboardShortcuts.toggleRecording,
                 rewrite: shortcutValues.keyboardShortcuts.rewrite,
                 toggle_view: shortcutValues.keyboardShortcuts.toggleView,
                 toggle_settings: shortcutValues.keyboardShortcuts.toggleSettings,
                 toggle_debug: shortcutValues.keyboardShortcuts.toggleDebug,
-                close_app: shortcutValues.keyboardShortcuts.closeApp
+                close_app: shortcutValues.keyboardShortcuts.closeApp,
+                speak_selection: shortcutValues.keyboardShortcuts.speakSelection
             },
             custom_words: transcriptionValues.customWords || [],
             word_correction_threshold: transcriptionValues.wordCorrectionThreshold ?? 0.18,
@@ -587,8 +625,35 @@ function initializeCustomSelects() {
     document.querySelectorAll('.custom-select').forEach(createCustomSelect);
 }
 
+/**
+ * Rebuild the custom dropdown for a select whose options changed at runtime
+ * (e.g. the TTS voice list after fetching voices from the API).
+ */
+function refreshCustomSelect(selectElement) {
+    const wrapper = selectElement.closest('.custom-select-wrapper');
+    if (!wrapper) return;
+
+    // Drop the stale dropdown from the global registry
+    for (let i = customDropdowns.length - 1; i >= 0; i--) {
+        if (customDropdowns[i].selectWrapper === wrapper) {
+            customDropdowns.splice(i, 1);
+        }
+    }
+
+    // Restore the native select, discard the old wrapper, rebuild
+    const parent = wrapper.parentNode;
+    parent.insertBefore(selectElement, wrapper);
+    wrapper.remove();
+    selectElement.style.display = '';
+    createCustomSelect(selectElement);
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    // Expose helpers for sections that need them (e.g. TTS voice picker, preview)
+    window.__refreshCustomSelect = refreshCustomSelect;
+    window.__saveSettingsNow = saveSettings;
+
     const settings = await invoke('get_settings');
     
     // Initialize i18n

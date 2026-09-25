@@ -6,6 +6,7 @@
         "general": "Anpassen",
         "transcription": "Transkription",
         "rewrite": "Umschreiben",
+        "tts": "Sprache",
         "shortcuts": "Tastenkürzel",
         "ui": "Oberfläche",
         "about": "Über"
@@ -99,10 +100,22 @@
             "placeholder": "API-Schlüssel eingeben"
         }
     },
+    "tts": {
+        "title": "Text zu Sprache",
+        "provider": "Anbieter",
+        "voiceModel": "Sprachqualität",
+        "voice": "Stimme",
+        "defaultVoice": "Standardstimme",
+        "fetchVoices": "Stimmen laden",
+        "preview": "Vorschau",
+        "previewText": "Hallo! Dies ist eine Vorschau der ausgewählten Stimme.",
+        "readback": "Diktate vorlesen"
+    },
     "shortcuts": {
         "title": "Tastenkürzel",
         "toggleRecording": "Aufnahme umschalten",
         "rewrite": "Text umschreiben",
+        "speakSelection": "Auswahl vorlesen",
         "toggleView": "Ansicht umschalten",
         "toggleSettings": "Einstellungen umschalten",
         "toggleDebug": "Debug umschalten",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "Diktat starten und stoppen",
             "rewrite": "Ausgewählten Text umschreiben",
+            "speakSelection": "Den ausgewählten Text über Sprachausgabe vorlesen",
             "toggleView": "Zwischen kompakt und erweitert wechseln",
             "toggleSettings": "Einstellungen öffnen oder schließen",
             "toggleDebug": "Entwicklertools öffnen oder schließen",

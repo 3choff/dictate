@@ -1020,6 +1020,44 @@ textarea {
     margin-top: 0;
 }
 
+/* Text-to-Speech voice picker */
+.tts-voice-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.tts-voice-row .focus-gradient-border {
+    flex: 1;
+    min-width: 0;
+}
+
+.tts-button {
+    padding: 8px 12px;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tts-button:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.tts-button:active {
+    transform: scale(0.96);
+}
+
+.tts-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
 .about-row-button .focus-gradient-border {
     margin-left: auto;
     margin-top: 0;

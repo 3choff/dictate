@@ -6,6 +6,7 @@
         "general": "Personnaliser",
         "transcription": "Transcription",
         "rewrite": "Réécrire",
+        "tts": "Voix",
         "shortcuts": "Raccourcis",
         "ui": "Interface",
         "about": "À propos"
@@ -99,10 +100,22 @@
             "placeholder": "Entrez votre clé API"
         }
     },
+    "tts": {
+        "title": "Synthèse vocale",
+        "provider": "Fournisseur",
+        "voiceModel": "Qualité de voix",
+        "voice": "Voix",
+        "defaultVoice": "Voix par défaut",
+        "fetchVoices": "Récupérer les voix",
+        "preview": "Aperçu",
+        "previewText": "Bonjour ! Ceci est un aperçu de la voix sélectionnée.",
+        "readback": "Relire les dictées"
+    },
     "shortcuts": {
         "title": "Raccourcis",
         "toggleRecording": "Basculer l'enregistrement",
         "rewrite": "Réécrire le texte",
+        "speakSelection": "Lire la sélection",
         "toggleView": "Basculer la vue",
         "toggleSettings": "Basculer les paramètres",
         "toggleDebug": "Basculer le débogage",
@@ -110,6 +123,7 @@
         "tooltips": {
             "toggleRecording": "Démarrer et arrêter la dictée",
             "rewrite": "Réécrire le texte sélectionné",
+            "speakSelection": "Lire à voix haute le texte sélectionné à l'aide de la synthèse vocale",
             "toggleView": "Basculer entre mode compact et étendu",
             "toggleSettings": "Ouvrir ou fermer les paramètres",
             "toggleDebug": "Ouvrir ou fermer les outils de développement",

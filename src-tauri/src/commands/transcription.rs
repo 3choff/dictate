@@ -157,6 +157,11 @@ pub async fn transcribe_audio_segment(
         }
     }
     
+    // Notify frontend of the inserted transcript (used for TTS read-back)
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit("transcript-inserted", formatted.trim());
+    }
+
     Ok(formatted)
 }
 

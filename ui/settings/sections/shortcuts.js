@@ -21,6 +21,13 @@ export class ShortcutsSection {
             'Ctrl+Shift+R',
             i18n.t('shortcuts.tooltips.rewrite')
         );
+
+        this.speakSelectionInput = new ShortcutInput(
+            'shortcut-speak-selection',
+            i18n.t('shortcuts.speakSelection'),
+            'Ctrl+Shift+P',
+            i18n.t('shortcuts.tooltips.speakSelection')
+        );
         
         this.toggleViewInput = new ShortcutInput(
             'shortcut-toggle-view',
@@ -63,6 +70,7 @@ export class ShortcutsSection {
         
         section.appendChild(this.toggleRecordingInput.render());
         section.appendChild(this.rewriteInput.render());
+        section.appendChild(this.speakSelectionInput.render());
         section.appendChild(this.toggleViewInput.render());
         section.appendChild(this.toggleSettingsInput.render());
         section.appendChild(this.toggleDebugInput.render());
@@ -76,6 +84,7 @@ export class ShortcutsSection {
         const inputs = [
             this.toggleRecordingInput,
             this.rewriteInput,
+            this.speakSelectionInput,
             this.toggleViewInput,
             this.toggleSettingsInput,
             this.toggleDebugInput,
@@ -100,6 +109,7 @@ export class ShortcutsSection {
             const shortcuts = settings.keyboardShortcuts;
             this.toggleRecordingInput.setValue(shortcuts.toggleRecording || '');
             this.rewriteInput.setValue(shortcuts.rewrite || '');
+            this.speakSelectionInput.setValue(shortcuts.speakSelection || '');
             this.toggleViewInput.setValue(shortcuts.toggleView || '');
             this.toggleSettingsInput.setValue(shortcuts.toggleSettings || '');
             this.toggleDebugInput.setValue(shortcuts.toggleDebug || '');
@@ -112,6 +122,7 @@ export class ShortcutsSection {
             keyboardShortcuts: {
                 toggleRecording: this.toggleRecordingInput.getValue(),
                 rewrite: this.rewriteInput.getValue(),
+                speakSelection: this.speakSelectionInput.getValue(),
                 toggleView: this.toggleViewInput.getValue(),
                 toggleSettings: this.toggleSettingsInput.getValue(),
                 toggleDebug: this.toggleDebugInput.getValue(),
