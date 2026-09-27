@@ -39,10 +39,12 @@ body.transitioning.compact-exit {
     overflow: hidden;
     transform: scale(1);
     opacity: 1;
-    -webkit-app-region: drag;
-    /* Make entire container draggable by default */
     position: relative;
     /* For absolute positioning of visualizer */
+}
+
+.compact-handle {
+    display: none;
 }
 
 /* Animatable custom property for conic-gradient rotation */
@@ -105,13 +107,14 @@ body:has(.mic-button.recording) .container::after {
 
 .top-bar {
     position: relative;
+    z-index: 1;
     padding: 6px 10px;
     min-height: 10px;
     height: 14px;
-    -webkit-app-region: drag;
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    pointer-events: none;
 }
 
 .drag-indicator-container {
@@ -131,11 +134,10 @@ body:has(.mic-button.recording) .container::after {
 
 .close-button {
     cursor: pointer;
-    -webkit-app-region: no-drag;
-    /* Buttons are not draggable */
     z-index: 10;
     transition: opacity 0.2s ease;
     display: flex;
+    pointer-events: auto;
 }
 
 .close-button svg {
@@ -180,12 +182,15 @@ body:has(.mic-button.recording) .container::after {
 }
 
 .main-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-grow: 1;
     padding: 0 10px 10px 10px;
-    /* Keep main-content draggable - only exclude buttons */
+    /* Let unused space fall through to the container's drag handler. */
+    pointer-events: none;
 }
 
 .icon-button,
@@ -194,8 +199,8 @@ body:has(.mic-button.recording) .container::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    -webkit-app-region: no-drag;
     transition: transform 80ms ease-out, box-shadow 80ms ease-out, background-color 120ms ease-out;
+    pointer-events: auto;
 }
 
 .icon-button:hover {
@@ -356,14 +361,63 @@ body.compact-mode {
 /* Compact mode: horizontal pill layout */
 body.compact-mode .container {
     border-radius: 30px;
-    /* Full pill shape */
     flex-direction: row;
-    /* Horizontal layout */
     align-items: center;
-    padding: 6px 10px;
-    -webkit-app-region: drag;
-    /* Entire pill is draggable */
+    /* 6px horizontal and 2px vertical headroom lets the surface overshoot
+       without ever reaching the fixed WebView boundary. */
+    padding: 8px 16px;
     overflow: visible;
+    /* The compact surface below owns the visual morph. The fixed-size host stays still. */
+    background-color: transparent;
+    box-shadow: none;
+}
+
+body.compact-mode .main-content {
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: center;
+    filter: blur(0);
+    transition: opacity 130ms ease-out 50ms, transform 180ms cubic-bezier(.2, .8, .2, 1), filter 130ms ease-out 50ms;
+}
+
+body.compact-mode .compact-handle {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 0;
+    width: 175px;
+    height: 35px;
+    border-radius: 30px;
+    background-color: var(--primary-bg);
+    box-shadow: inset -1px 0px 2px 0px rgba(255, 255, 255, 0.15);
+    opacity: 1;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: width 450ms cubic-bezier(.2, 1.25, .3, 1), height 450ms cubic-bezier(.2, 1.25, .3, 1), border-radius 300ms ease-out, background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+/* Keep the recording shimmer aligned to the visible 175x35 pill rather than
+   the slightly larger transparent host used for animation headroom. */
+body.compact-mode .container::after {
+    inset: 2px 6px;
+}
+
+/* One centered surface morphs from the pill into the idle handle. */
+body.compact-mode.compact-idle .compact-handle {
+    width: 50px;
+    height: 6px;
+    border-radius: 30px;
+    background-color: var(--handle-color);
+    box-shadow: none;
+    pointer-events: auto;
+}
+
+body.compact-mode.compact-idle .main-content {
+    opacity: 0;
+    transform: scale(0.4);
+    filter: blur(4px);
+    pointer-events: none;
 }
 
 body.compact-mode .top-bar {
@@ -383,13 +437,11 @@ body.compact-mode .main-content {
     padding: 0;
     width: 100%;
     gap: 2px;
-    /* Inherit drag from container - only buttons are excluded */
 }
 
-body.compact-mode .settings-icon,
-body.compact-mode .sparkle-icon {
+body.compact-mode .settings-icon {
     display: none;
-    /* Hide side buttons */
+    /* Hide settings in the compact layout. */
 }
 
 body.compact-mode .mic-button-wrapper {
@@ -402,6 +454,11 @@ body.compact-mode .mic-button-wrapper {
     flex-shrink: 0;
     order: 1;
     border-radius: 50% !important;
+}
+
+/* Keep compact mode borderless while idle; recording retains the shared shimmer. */
+body.compact-mode .mic-button-wrapper.focus-gradient-border:not(.active):not(:has(.recording)):not(:has(.loading))::after {
+    opacity: 0;
 }
 
 /* body.compact-mode .mic-button-wrapper.active {
@@ -423,8 +480,8 @@ body.compact-mode .mic-button svg {
     height: 16px;
 }
 
-/* Show compact close button in compact mode - positioned on the right */
-body.compact-mode .close-button-compact {
+/* Show the rewrite action on the right, matching the compact mic control. */
+body.compact-mode .sparkle-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -433,30 +490,19 @@ body.compact-mode .close-button-compact {
     border-radius: 50%;
     background-color: transparent;
     transition: all 0.2s ease;
-    -webkit-app-region: no-drag;
     flex-shrink: 0;
     order: 3;
+    padding: 0;
 }
 
-body.compact-mode .close-button-compact:hover {
-    /* box-shadow: 0 0 0 2px #f0f0f080, 0 0 10px 4px #f0f0f84d; */
-    /* box-shadow: 0 0 0 2px var(--accent-glow), 0 0 10px 4px var(--accent-glow-strong); */
-    background-color: rgba(255, 22, 22, 0.80);
-
-}
-
-body.compact-mode .close-button-compact svg {
+body.compact-mode .sparkle-icon svg {
     width: 16px;
     height: 16px;
 }
 
-body.compact-mode .close-button-compact svg path {
-    stroke: var(--accent-color);
-    transition: all 0.2s ease;
-}
-
-body.compact-mode .close-button-compact:hover svg path {
-    stroke: white;
+/* Compact view prioritizes rewrite; the close control remains available in normal view. */
+body.compact-mode .close-button-compact {
+    display: none;
 }
 
 /* Audio visualizer in compact mode - inline with buttons, always visible */
@@ -472,7 +518,7 @@ body.compact-mode .audio-visualizer {
     min-width: 90px;
     height: 20px;
     order: 2;
-    /* Between mic and close button */
+    /* Between microphone and rewrite controls */
     margin: 0 8px;
     padding: 0;
 }

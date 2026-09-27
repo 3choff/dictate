@@ -41,7 +41,27 @@ const closeBtnTop = document.getElementById('close-btn-top');
 const closeBtnCompact = document.getElementById('close-btn-compact');
 const visualizerContainer = document.getElementById('audioVisualizer');
 const micWrapper = document.querySelector('.mic-button-wrapper');
+const mainContainer = document.querySelector('.container');
+const compactHandle = document.querySelector('.compact-handle');
 const status = { textContent: '' }; // Dummy status object since we don't have a status element
+
+// Drag unused window space manually so interactive controls retain WebView2's
+// normal hover cursor and pointer handling.
+mainContainer?.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || event.target.closest('.icon-button, .mic-button, .close-button')) {
+        return;
+    }
+
+    // With a fixed compact window, keep its invisible surrounding area inert
+    // while idle: only the visible handle can begin a drag.
+    if (document.body.classList.contains('compact-idle') && !event.target.closest('.compact-handle')) {
+        return;
+    }
+
+    getCurrentWindow?.().startDragging().catch((error) => {
+        console.error('Failed to start window dragging:', error);
+    });
+});
 
 // Tooltip for temporary notifications (shared component)
 let temporaryTooltipInstance = null;
@@ -304,9 +324,9 @@ async function loadSettings() {
         // Restore/sync compact mode state (without animation when loading from settings)
         const isCurrentlyCompact = document.body.classList.contains('compact-mode');
         if (settings.compact_mode && !isCurrentlyCompact) {
-            document.body.classList.add('compact-mode');
+            document.body.classList.add('compact-mode', COMPACT_IDLE_CLASS);
         } else if (!settings.compact_mode && isCurrentlyCompact) {
-            document.body.classList.remove('compact-mode');
+            document.body.classList.remove('compact-mode', COMPACT_IDLE_CLASS);
         }
         
         // Apply theme
@@ -813,9 +833,89 @@ async function stopRecording() {
 
 // Compact mode toggle functionality
 const COMPACT_CLASS = 'compact-mode';
+const COMPACT_IDLE_CLASS = 'compact-idle';
 const TRANSITIONING_CLASS = 'transitioning';
 const ENTER_CLASS = 'compact-enter';
 const EXIT_CLASS = 'compact-exit';
+const COMPACT_COLLAPSE_DELAY_MS = 250;
+let compactCollapseTimer = null;
+let compactPointerInside = false;
+
+function isCompactMode() {
+    return document.body.classList.contains(COMPACT_CLASS);
+}
+
+function isCompactActivityActive() {
+    return micButton.classList.contains('recording') || rewriteBtn.classList.contains('loading');
+}
+
+function beginCompactCollapse() {
+    if (!isCompactMode() || isCompactActivityActive()) {
+        return;
+    }
+
+    // The compact window remains at its pill dimensions. Only this centered
+    // surface morphs, so native window positioning cannot affect the animation.
+    document.body.classList.add(COMPACT_IDLE_CLASS);
+}
+
+function expandCompactWindow() {
+    clearTimeout(compactCollapseTimer);
+    if (isCompactMode()) {
+        document.body.classList.remove(COMPACT_IDLE_CLASS);
+    }
+}
+
+function scheduleCompactWindowCollapse() {
+    clearTimeout(compactCollapseTimer);
+    if (!isCompactMode() || isCompactActivityActive()) {
+        return;
+    }
+
+    compactCollapseTimer = setTimeout(() => {
+        if (!compactPointerInside && !isCompactActivityActive()) {
+            beginCompactCollapse();
+        }
+    }, COMPACT_COLLAPSE_DELAY_MS);
+}
+
+mainContainer?.addEventListener('pointerenter', (event) => {
+    // In idle mode the dedicated handle listener below is the only wake target.
+    if (isCompactMode() && document.body.classList.contains(COMPACT_IDLE_CLASS)) {
+        return;
+    }
+    compactPointerInside = true;
+    expandCompactWindow();
+});
+
+compactHandle?.addEventListener('pointerenter', () => {
+    if (!isCompactMode() || !document.body.classList.contains(COMPACT_IDLE_CLASS)) {
+        return;
+    }
+
+    compactPointerInside = true;
+    expandCompactWindow();
+});
+
+mainContainer?.addEventListener('pointerleave', () => {
+    compactPointerInside = false;
+    scheduleCompactWindowCollapse();
+});
+
+const compactActivityObserver = new MutationObserver(() => {
+    if (!isCompactMode()) {
+        return;
+    }
+
+    if (isCompactActivityActive()) {
+        expandCompactWindow();
+    } else {
+        scheduleCompactWindowCollapse();
+    }
+});
+
+compactActivityObserver.observe(micButton, { attributes: true, attributeFilter: ['class'] });
+compactActivityObserver.observe(rewriteBtn, { attributes: true, attributeFilter: ['class'] });
 
 async function toggleCompactMode(targetState) {
     const isCompact = document.body.classList.contains(COMPACT_CLASS);
@@ -833,9 +933,10 @@ async function toggleCompactMode(targetState) {
 
     requestAnimationFrame(() => {
         if (enteringCompact) {
-            document.body.classList.add(COMPACT_CLASS);
+            document.body.classList.add(COMPACT_CLASS, COMPACT_IDLE_CLASS);
         } else {
-            document.body.classList.remove(COMPACT_CLASS);
+            clearTimeout(compactCollapseTimer);
+            document.body.classList.remove(COMPACT_CLASS, COMPACT_IDLE_CLASS);
         }
 
         setTimeout(() => {
@@ -853,9 +954,9 @@ async function toggleCompactMode(targetState) {
         document.body.classList.add(revertToCompact ? ENTER_CLASS : EXIT_CLASS);
         requestAnimationFrame(() => {
             if (revertToCompact) {
-                document.body.classList.add(COMPACT_CLASS);
+                document.body.classList.add(COMPACT_CLASS, COMPACT_IDLE_CLASS);
             } else {
-                document.body.classList.remove(COMPACT_CLASS);
+                document.body.classList.remove(COMPACT_CLASS, COMPACT_IDLE_CLASS);
             }
             setTimeout(() => {
                 document.body.classList.remove(TRANSITIONING_CLASS, ENTER_CLASS, EXIT_CLASS);

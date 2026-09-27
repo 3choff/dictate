@@ -461,8 +461,8 @@ pub fn run() {
                         // Restore compact mode
                         if settings.compact_mode {
                             let _ = window_clone.set_size(tauri::Size::Logical(tauri::LogicalSize {
-                                width: 175.0,
-                                height: 35.0,
+                                width: commands::settings::COMPACT_MAIN_WINDOW_WIDTH,
+                                height: commands::settings::COMPACT_MAIN_WINDOW_HEIGHT,
                             }));
                         }
                         

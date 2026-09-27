@@ -659,8 +659,71 @@ pub async fn update_settings_size(app: AppHandle, width: f64, height: f64) -> Re
 
 const DEFAULT_MAIN_WINDOW_WIDTH: f64 = 145.0;
 const DEFAULT_MAIN_WINDOW_HEIGHT: f64 = 90.0;
-const COMPACT_MAIN_WINDOW_WIDTH: f64 = 175.0;  // Horizontal pill shape
-const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 35.0;
+// The transparent host is slightly larger than the visible 175x35 pill so its
+// spring overshoot is never clipped by the native WebView boundary.
+pub const COMPACT_MAIN_WINDOW_WIDTH: f64 = 187.0;
+pub const COMPACT_MAIN_WINDOW_HEIGHT: f64 = 39.0;
+
+/// Resize around the current window center when switching compact mode on or off.
+async fn resize_main_window_centered(
+    window: &tauri::WebviewWindow,
+    target_width: f64,
+    target_height: f64,
+) -> Result<(), String> {
+    const RESIZE_STEPS: u32 = 8;
+    const RESIZE_STEP_DURATION_MS: u64 = 18;
+
+    let start_position = window.outer_position().map_err(|e| e.to_string())?;
+    let start_outer_size = window.outer_size().map_err(|e| e.to_string())?;
+    let start_inner_size = window.inner_size().map_err(|e| e.to_string())?;
+    let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    let target_width_px = (target_width * scale).round() as u32;
+    let target_height_px = (target_height * scale).round() as u32;
+    let horizontal_frame_size = start_outer_size.width.saturating_sub(start_inner_size.width);
+    let vertical_frame_size = start_outer_size.height.saturating_sub(start_inner_size.height);
+
+    if start_inner_size.width == target_width_px && start_inner_size.height == target_height_px {
+        return Ok(());
+    }
+
+    // Store the center doubled so odd physical dimensions retain their half-pixel
+    // center through the animation instead of always rounding toward the top-left.
+    let center_x_times_two = start_position.x.saturating_mul(2) + start_outer_size.width as i32;
+    let center_y_times_two = start_position.y.saturating_mul(2) + start_outer_size.height as i32;
+    let rounded_half = |value: i32| {
+        if value >= 0 { (value + 1) / 2 } else { (value - 1) / 2 }
+    };
+
+    for step in 1..=RESIZE_STEPS {
+        let progress = step as f64 / RESIZE_STEPS as f64;
+        let eased_progress = 1.0 - (1.0 - progress).powi(3);
+        let width = (start_inner_size.width as f64 + (target_width_px as f64 - start_inner_size.width as f64) * eased_progress).round() as u32;
+        let height = (start_inner_size.height as f64 + (target_height_px as f64 - start_inner_size.height as f64) * eased_progress).round() as u32;
+        let expected_outer_width = width.saturating_add(horizontal_frame_size);
+        let expected_outer_height = height.saturating_add(vertical_frame_size);
+
+        // Move first, then resize so mode changes remain centered instead of
+        // briefly anchoring to the previous top-left corner.
+        window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: rounded_half(center_x_times_two - expected_outer_width as i32),
+            y: rounded_half(center_y_times_two - expected_outer_height as i32),
+        })).map_err(|e| e.to_string())?;
+        window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }))
+            .map_err(|e| e.to_string())?;
+
+        tokio::time::sleep(std::time::Duration::from_millis(RESIZE_STEP_DURATION_MS)).await;
+    }
+
+    // Re-read the final native bounds after the last resize to absorb any DPI
+    // rounding or platform frame adjustment.
+    let final_outer_size = window.outer_size().map_err(|e| e.to_string())?;
+    window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+        x: rounded_half(center_x_times_two - final_outer_size.width as i32),
+        y: rounded_half(center_y_times_two - final_outer_size.height as i32),
+    })).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
 
 #[tauri::command]
 pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), String> {
@@ -683,17 +746,20 @@ pub async fn toggle_compact_mode(app: AppHandle, enabled: bool) -> Result<(), St
     
     // Simple fixed size toggle - like Electron
     if enabled {
-        // println!("[COMPACT] Setting compact size: {}x{}", COMPACT_MAIN_WINDOW_WIDTH, COMPACT_MAIN_WINDOW_HEIGHT);
-        main_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
-            width: COMPACT_MAIN_WINDOW_WIDTH,
-            height: COMPACT_MAIN_WINDOW_HEIGHT,
-        })).map_err(|e| e.to_string())?;
+        // Keep a fixed transparent host around the pill. The webview morphs its
+        // centered compact surface between the handle and pill without resizing.
+        resize_main_window_centered(
+            &main_window,
+            COMPACT_MAIN_WINDOW_WIDTH,
+            COMPACT_MAIN_WINDOW_HEIGHT,
+        ).await?;
     } else {
         // println!("[COMPACT] Setting normal size: {}x{}", DEFAULT_MAIN_WINDOW_WIDTH, DEFAULT_MAIN_WINDOW_HEIGHT);
-        main_window.set_size(tauri::Size::Logical(tauri::LogicalSize {
-            width: DEFAULT_MAIN_WINDOW_WIDTH,
-            height: DEFAULT_MAIN_WINDOW_HEIGHT,
-        })).map_err(|e| e.to_string())?;
+        resize_main_window_centered(
+            &main_window,
+            DEFAULT_MAIN_WINDOW_WIDTH,
+            DEFAULT_MAIN_WINDOW_HEIGHT,
+        ).await?;
     }
     
     // Save compact mode preference without emitting event (UI is handled by main.js toggleCompactMode)
@@ -1161,4 +1227,3 @@ pub async fn reposition_transcript_overlay(app: AppHandle) -> Result<(), String>
     }
     Ok(())
 }
-
