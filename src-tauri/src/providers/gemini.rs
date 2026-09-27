@@ -378,7 +378,7 @@ pub async fn rewrite_text(
         }],
         generation_config: Some(GenerationConfig {
             thinking_config: ThinkingConfig {
-                thinking_level: "MINIMAL".to_string(),
+                thinking_level: "low".to_string(),
             },
         }),
     };
