@@ -90,7 +90,7 @@ body.transitioning.compact-exit {
     contain: layout style;
 }
 
-body:has(.mic-button.recording) .container::after {
+body:has(.mic-button.recording) .container:not([data-visualization="glowing_wave"])::after {
     opacity: 1;
     animation: window-recording-shimmer 4s infinite linear;
 }
@@ -179,6 +179,41 @@ body:has(.mic-button.recording) .container::after {
     background-color: var(--visualizer-bar-bg);
     border-radius: 2px;
     opacity: var(--visualizer-bar-opacity);
+}
+
+/* Preserve the bars' layout slot, but draw the wave on the whole surface. */
+.audio-visualizer[data-visualization="glowing_wave"] {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.glowing-wave-layer {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.glowing-wave-canvas {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.container[data-visualization="glowing_wave"].wave-active > .glowing-wave-layer {
+    display: block;
+}
+
+/* The glow sits above the background and below every interactive control. */
+.container[data-visualization="glowing_wave"] > .main-content,
+.container[data-visualization="glowing_wave"] > .top-bar {
+    z-index: 2;
 }
 
 .main-content {
@@ -525,6 +560,18 @@ body.compact-mode .audio-visualizer {
 
 body.compact-mode .audio-visualizer .bar {
     max-width: 8px;
+}
+
+/* Match the visible 175x35 pill, not its 187x39 transparent animation host. */
+body.compact-mode .container[data-visualization="glowing_wave"] > .glowing-wave-layer {
+    display: block;
+    inset: 2px 6px;
+    opacity: 1;
+    transition: opacity 130ms ease-out;
+}
+
+body.compact-mode.compact-idle .container[data-visualization="glowing_wave"] > .glowing-wave-layer {
+    opacity: 0;
 }
 
 /* API Key Missing Tooltip */

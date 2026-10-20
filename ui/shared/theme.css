@@ -126,6 +126,11 @@
     --visualizer-active-to: rgb(160, 200, 248);
     /* Light blue when active */
     --visualizer-active-opacity-min: 0.5;
+    /* Glowing-wave palette, independent of the unchanged bar/accent colors. */
+    --wave-base-color: rgb(98, 181, 255);
+    --wave-edge-color: rgb(193, 224, 255);
+    --wave-body-color: rgb(33, 138, 243);
+    --wave-shoulder-color: rgb(20, 79, 160);
 
     /* Shimmer Effect */
     --border-off-color: #202020;

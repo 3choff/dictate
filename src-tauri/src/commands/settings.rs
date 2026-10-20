@@ -7,6 +7,15 @@ use std::path::PathBuf;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum VisualizationStyle {
+    GlowingWave,
+    #[default]
+    #[serde(other)]
+    Bars,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub groq_api_key: String,
@@ -32,6 +41,8 @@ pub struct Settings {
     pub prompts: HashMap<String, String>,
     #[serde(default)]
     pub compact_mode: bool,
+    #[serde(default)]
+    pub visualization_style: VisualizationStyle,
     #[serde(default = "default_api_service")]
     pub api_service: String,
     #[serde(default = "default_rewrite_provider")]
@@ -264,6 +275,7 @@ impl Default for Settings {
             crisperwhisper_api_key: String::new(),
             prompts: default_prompts(),
             compact_mode: false,
+            visualization_style: VisualizationStyle::default(),
             api_service: default_api_service(),
             rewrite_provider: default_rewrite_provider(),
             rewrite_mode: default_rewrite_mode(),

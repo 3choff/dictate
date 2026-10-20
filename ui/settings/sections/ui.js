@@ -10,6 +10,10 @@ export class UISection {
     constructor() {
         this.darkModeToggle = new ToggleSwitch('dark-mode-enabled', i18n.t('interface.darkMode'));
         this.compactModeToggle = new ToggleSwitch('compact-mode-enabled', i18n.t('interface.compactMode'));
+        this.visualizationField = new SelectField('visualization-style', i18n.t('interface.visualization'), [
+            { value: 'bars', label: i18n.t('interface.visualizationBars') },
+            { value: 'glowing_wave', label: i18n.t('interface.visualizationWave') }
+        ]);
         this.startHiddenToggle = new ToggleSwitch('start-hidden', i18n.t('interface.startHidden'));
         this.closeToTrayToggle = new ToggleSwitch('close-to-tray', i18n.t('interface.closeToTray'));
         this.autostartToggle = new ToggleSwitch('autostart-enabled', i18n.t('interface.autostart'));
@@ -53,6 +57,7 @@ export class UISection {
         appearanceBody.appendChild(this.languageField.render());
         appearanceBody.appendChild(this.darkModeToggle.render());
         appearanceBody.appendChild(this.compactModeToggle.render());
+        appearanceBody.appendChild(this.visualizationField.render());
         appearanceGroup.appendChild(appearanceBody);
         section.appendChild(appearanceGroup);
         
@@ -151,6 +156,7 @@ export class UISection {
     }
 
     loadValues(settings) {
+        this.visualizationField.setValue(settings.visualizationStyle || 'bars');
         if (settings.darkModeEnabled !== undefined) {
             this.darkModeToggle.setValue(settings.darkModeEnabled);
         }
@@ -178,6 +184,7 @@ export class UISection {
         // Note: compactMode is NOT included here - it's handled by toggle_compact_mode command
         return {
             darkModeEnabled: this.darkModeToggle.getValue(),
+            visualizationStyle: this.visualizationField.getValue(),
             startHidden: this.startHiddenToggle.getValue(),
             closeToTray: this.closeToTrayToggle.getValue(),
             autostartEnabled: this.autostartToggle.getValue(),

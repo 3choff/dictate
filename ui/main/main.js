@@ -332,6 +332,10 @@ async function loadSettings() {
         // Apply theme
         const theme = (settings.dark_mode_enabled !== false) ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
+        if (!visualizer) {
+            visualizer = new AudioVisualizer(visualizerContainer?.querySelectorAll('.bar') || []);
+        }
+        visualizer.setStyle(settings.visualization_style || 'bars');
     } catch (error) {
         console.error('Failed to load settings:', error);
     } finally {

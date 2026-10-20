@@ -1,3 +1,5 @@
+import { GlowingWave } from './glowing-wave.js';
+
 /**
  * Frontend Audio Visualizer using Web Audio API
  * Replaces backend FFT analysis with native AnalyserNode
@@ -14,6 +16,39 @@ export class AudioVisualizer {
         
         // Cache for CSS variables (updated on theme changes)
         this.colors = this.getColorsFromCSS();
+        this.container = this.barElements[0]?.parentElement;
+        this.surface = this.container?.closest('.container');
+        this.style = 'bars';
+        this.wave = null;
+        this.timeData = null;
+        this.waveLevel = 0;
+        this.speechBands = new Array(5).fill(0);
+        this.frequencyData = null;
+        this.frequencyBinHz = 0;
+        this.lastFrameTime = null;
+    }
+
+    setStyle(style) {
+        const next = style === 'glowing_wave' ? 'glowing_wave' : 'bars';
+        const changed = next !== this.style;
+        this.style = next;
+        this.colors = this.getColorsFromCSS();
+        if (this.container) {
+            this.container.dataset.visualization = next;
+            if (next === 'glowing_wave' && !this.wave && this.surface) {
+                this.wave = new GlowingWave(this.surface, this.colors);
+            }
+        }
+        if (this.surface) {
+            this.surface.dataset.visualization = next;
+            this.surface.classList.toggle('wave-active', this.isActive);
+        }
+        this.wave?.setColors(this.colors);
+        if (changed) {
+            this.waveLevel = 0;
+            this.lastFrameTime = null;
+        }
+        if (!this.isActive) this.wave?.reset();
     }
     
     /**
@@ -24,6 +59,17 @@ export class AudioVisualizer {
         
         // Parse RGB string like "rgb(0, 169, 255)" to {r, g, b}
         const parseRGB = (rgbString) => {
+            const hex = rgbString.match(/^#([\da-f]{6}|[\da-f]{3})$/i);
+            if (hex) {
+                const expanded = hex[1].length === 3
+                    ? hex[1].split('').map(char => char + char).join('')
+                    : hex[1];
+                return {
+                    r: parseInt(expanded.slice(0, 2), 16),
+                    g: parseInt(expanded.slice(2, 4), 16),
+                    b: parseInt(expanded.slice(4, 6), 16)
+                };
+            }
             const match = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
             if (match) {
                 return { r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]) };
@@ -32,6 +78,10 @@ export class AudioVisualizer {
         };
         
         return {
+            waveBase: parseRGB(styles.getPropertyValue('--wave-base-color').trim()),
+            waveEdge: parseRGB(styles.getPropertyValue('--wave-edge-color').trim()),
+            waveBody: parseRGB(styles.getPropertyValue('--wave-body-color').trim()),
+            waveShoulder: parseRGB(styles.getPropertyValue('--wave-shoulder-color').trim()),
             activeFrom: parseRGB(styles.getPropertyValue('--visualizer-active-from').trim()),
             activeTo: parseRGB(styles.getPropertyValue('--visualizer-active-to').trim()),
             inactiveBg: styles.getPropertyValue('--visualizer-bar-bg').trim(),
@@ -55,6 +105,9 @@ export class AudioVisualizer {
         
         // Create data array for frequency data
         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        this.timeData = new Float32Array(this.analyser.fftSize);
+        this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);
+        this.frequencyBinHz = audioContext.sampleRate / this.analyser.fftSize;
         
         // Connect source → analyser (don't connect to destination to avoid feedback)
         sourceNode.connect(this.analyser);
@@ -67,6 +120,10 @@ export class AudioVisualizer {
         if (this.isActive) return;
         
         this.isActive = true;
+        this.surface?.classList.add('wave-active');
+        this.colors = this.getColorsFromCSS();
+        this.wave?.setColors(this.colors);
+        this.lastFrameTime = null;
         this.updateBars();
     }
 
@@ -77,6 +134,29 @@ export class AudioVisualizer {
         if (!this.isActive || !this.analyser) return;
         
         this.animationId = requestAnimationFrame(() => this.updateBars());
+
+        if (this.style === 'glowing_wave' && this.wave) {
+            // Time-domain energy bypasses the FFT smoothing used by the bars.
+            // A short attack acknowledges speech promptly; a long release avoids
+            // bouncing down between individual syllables and words.
+            this.analyser.getFloatTimeDomainData(this.timeData);
+            let sum = 0;
+            let mean = 0;
+            for (const sample of this.timeData) {
+                sum += sample * sample;
+                mean += sample;
+            }
+            mean /= this.timeData.length;
+            const rms = Math.sqrt(Math.max(0, sum / this.timeData.length - mean * mean));
+            const target = Math.pow(Math.min(1, Math.max(0, (rms - 0.004) / 0.065)), 0.6);
+            const now = performance.now();
+            const elapsed = this.lastFrameTime === null ? 1 / 60 : Math.min(0.05, (now - this.lastFrameTime) / 1000);
+            this.lastFrameTime = now;
+            const response = target > this.waveLevel ? 0.035 : 0.22;
+            this.waveLevel += (target - this.waveLevel) * (1 - Math.exp(-elapsed / response));
+            this.wave.update(this.waveLevel, elapsed, this.getSpeechBands());
+            return;
+        }
         
         // Get frequency data from analyser
         this.analyser.getByteFrequencyData(this.dataArray);
@@ -117,6 +197,35 @@ export class AudioVisualizer {
             
             bar.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
         });
+    }
+
+    /** Relative spectral energy shapes the wave independently of overall loudness. */
+    getSpeechBands() {
+        // Float dB values avoid the display floor/ceiling of byte frequency data.
+        this.analyser.getFloatFrequencyData(this.frequencyData);
+        const ranges = [[85, 300], [300, 700], [700, 1500], [1500, 3000], [3000, 6000]];
+        const gains = [1, 1.25, 1.65, 2.2, 2.8];
+        let strongest = 0;
+        ranges.forEach(([low, high], index) => {
+            const start = Math.max(1, Math.floor(low / this.frequencyBinHz));
+            const end = Math.min(this.frequencyData.length, Math.ceil(high / this.frequencyBinHz));
+            let energy = 0;
+            for (let bin = start; bin < end; bin++) {
+                const decibels = this.frequencyData[bin];
+                if (Number.isFinite(decibels)) energy += 10 ** (decibels / 10);
+            }
+            // Average linear power per band, then compensate gently for the
+            // natural falloff toward consonants/high-frequency speech energy.
+            const amplitude = Math.sqrt(energy / Math.max(1, end - start)) * gains[index];
+            this.speechBands[index] = amplitude;
+            strongest = Math.max(strongest, amplitude);
+        });
+        for (let index = 0; index < this.speechBands.length; index++) {
+            this.speechBands[index] = strongest > 0.00005 && this.waveLevel > 0.005
+                ? Math.pow(this.speechBands[index] / strongest, 0.7)
+                : 0;
+        }
+        return this.speechBands;
     }
 
     /**
@@ -193,6 +302,7 @@ export class AudioVisualizer {
      */
     stop() {
         this.isActive = false;
+        this.surface?.classList.remove('wave-active');
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -201,9 +311,13 @@ export class AudioVisualizer {
         
         // Reset smoothing buffer
         this.smoothedLevels = new Array(9).fill(0);
+        this.waveLevel = 0;
+        this.lastFrameTime = null;
         
         // Update colors from CSS (in case theme changed)
         this.colors = this.getColorsFromCSS();
+        this.wave?.setColors(this.colors);
+        this.wave?.reset();
         
         // Reset all bars to inactive state using theme colors
         this.barElements.forEach(bar => {
@@ -226,5 +340,7 @@ export class AudioVisualizer {
         }
         
         this.dataArray = null;
+        this.timeData = null;
+        this.frequencyData = null;
     }
 }
