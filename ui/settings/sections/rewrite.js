@@ -16,7 +16,8 @@ export class RewriteSection {
             { value: 'gemini-flash-lite', label: 'Gemini 3.5 Flash Lite' },
             { value: 'gemini-flash', label: 'Gemini 3.8 Flash' },
             { value: 'mistral', label: 'Mistral Small' },
-            { value: 'inception', label: 'Mercury 2' }
+            { value: 'inception', label: 'Mercury 2' },
+            { value: 'inception-mercury-3', label: 'Mercury 3' }
         ]);
 
         const placeholder = i18n.t('rewrite.apiKeys.placeholder');
@@ -126,7 +127,8 @@ export class RewriteSection {
         const keyMap = {
             'gemini-flash': 'gemini',
             'gemini-flash-lite': 'gemini',
-            'inception': 'inception'
+            'inception': 'inception',
+            'inception-mercury-3': 'inception'
         };
         const lookupKey = keyMap[provider] || provider;
         

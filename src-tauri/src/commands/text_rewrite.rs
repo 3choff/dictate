@@ -24,7 +24,7 @@ pub async fn rewrite_text(app: AppHandle, text: String, prompt: String, api_key:
         "fireworks" => &settings.fireworks_api_key,
         "gemini-flash" | "gemini-flash-lite" => &settings.gemini_api_key,
         "mistral" => &settings.mistral_api_key,
-        "inception" => &settings.inception_api_key,
+        "inception" | "inception-mercury-3" => &settings.inception_api_key,
         _ => &settings.groq_api_key,  // Default to groq
     };
     
@@ -46,7 +46,8 @@ pub async fn rewrite_text(app: AppHandle, text: String, prompt: String, api_key:
         "gemini-flash-lite" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.5-flash-lite".to_string()).await,
         "gemini-flash" => providers::gemini::rewrite_text(text, prompt, active_key.to_string(), "gemini-3.8-flash".to_string()).await,
         "mistral" => providers::mistral::rewrite_text(text, prompt, active_key.to_string()).await,
-        "inception" => providers::inception::rewrite_text(text, prompt, active_key.to_string()).await,
+        "inception" => providers::inception::rewrite_text(text, prompt, active_key.to_string(), "mercury-2").await,
+        "inception-mercury-3" => providers::inception::rewrite_text(text, prompt, active_key.to_string(), "mercury-3").await,
         _ => providers::groq::rewrite_text(text, prompt, active_key.to_string()).await,
     };
     

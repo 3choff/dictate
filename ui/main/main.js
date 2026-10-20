@@ -341,6 +341,7 @@ async function loadSettings() {
 
 // Toggle settings window on pointerdown for faster response
 settingsBtn.addEventListener('pointerdown', async (e) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     ignoreNextSettingsClick = true;
@@ -389,7 +390,9 @@ if (closeBtnCompact) {
 // Instant pressed-state feedback for all buttons
 for (const el of [micButton, settingsBtn, rewriteBtn]) {
     if (!el) continue;
-    el.addEventListener('pointerdown', () => el.classList.add('pressed'));
+    el.addEventListener('pointerdown', (e) => {
+        if (e.button === 0) el.classList.add('pressed');
+    });
     el.addEventListener('pointerup', () => el.classList.remove('pressed'));
     el.addEventListener('pointercancel', () => el.classList.remove('pressed'));
     el.addEventListener('mouseleave', () => el.classList.remove('pressed'));
@@ -397,6 +400,7 @@ for (const el of [micButton, settingsBtn, rewriteBtn]) {
 
 // Start/stop on pointerdown for faster response
 micButton.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     ignoreNextMicClick = true; // prevent the synthesized click from toggling again
@@ -521,7 +525,8 @@ async function performRewrite() {
             'gemini-flash': GEMINI_API_KEY,
             'gemini-flash-lite': GEMINI_API_KEY,
             'mistral': MISTRAL_API_KEY,
-            'inception': INCEPTION_API_KEY
+            'inception': INCEPTION_API_KEY,
+            'inception-mercury-3': INCEPTION_API_KEY
         };
         
         const rewriteApiKey = rewriteApiKeyMap[REWRITE_PROVIDER];
@@ -599,6 +604,7 @@ async function performRewrite() {
 
 // Text rewrite on pointerdown for faster response
 rewriteBtn.addEventListener('pointerdown', async (e) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     ignoreNextRewriteClick = true;
@@ -840,6 +846,16 @@ const EXIT_CLASS = 'compact-exit';
 const COMPACT_COLLAPSE_DELAY_MS = 250;
 let compactCollapseTimer = null;
 let compactPointerInside = false;
+let mainContextMenuOpen = false;
+
+function setMainContextMenuOpen(open) {
+    mainContextMenuOpen = open;
+    if (open) {
+        expandCompactWindow();
+    } else if (!compactPointerInside) {
+        scheduleCompactWindowCollapse();
+    }
+}
 
 function isCompactMode() {
     return document.body.classList.contains(COMPACT_CLASS);
@@ -850,7 +866,7 @@ function isCompactActivityActive() {
 }
 
 function beginCompactCollapse() {
-    if (!isCompactMode() || isCompactActivityActive()) {
+    if (!isCompactMode() || isCompactActivityActive() || mainContextMenuOpen) {
         return;
     }
 
@@ -868,12 +884,12 @@ function expandCompactWindow() {
 
 function scheduleCompactWindowCollapse() {
     clearTimeout(compactCollapseTimer);
-    if (!isCompactMode() || isCompactActivityActive()) {
+    if (!isCompactMode() || isCompactActivityActive() || mainContextMenuOpen) {
         return;
     }
 
     compactCollapseTimer = setTimeout(() => {
-        if (!compactPointerInside && !isCompactActivityActive()) {
+        if (!compactPointerInside && !isCompactActivityActive() && !mainContextMenuOpen) {
             beginCompactCollapse();
         }
     }, COMPACT_COLLAPSE_DELAY_MS);
@@ -965,11 +981,21 @@ async function toggleCompactMode(targetState) {
     });
 }
 
-// // Right-click to toggle compact mode
-// document.body.addEventListener('contextmenu', (event) => {
-//     event.preventDefault();
-//     toggleCompactMode();
-// });
+// Reuse the tray menu instead of WebView2's browser context menu in both views.
+listen('app-menu-closed', () => setMainContextMenuOpen(false));
+
+document.addEventListener('contextmenu', async (event) => {
+    event.preventDefault();
+    // Pin immediately, before the pointer can leave for the separate menu window.
+    setMainContextMenuOpen(true);
+    try {
+        const opened = await invoke('show_main_context_menu');
+        if (!opened) setMainContextMenuOpen(false);
+    } catch (error) {
+        setMainContextMenuOpen(false);
+        console.error('Failed to open context menu:', error);
+    }
+});
 
 // Listen for global shortcut (Ctrl+Shift+V) with debounce
 let lastToggleTime = 0;

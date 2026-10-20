@@ -33,7 +33,10 @@ struct ChatCompletionRequest {
     model: String,
     messages: Vec<ChatMessage>,
     temperature: f32,
-    max_tokens: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_completion_tokens: Option<u32>,
     reasoning_effort: String,
 }
 
@@ -53,15 +56,16 @@ struct ChatCompletionResponse {
 }
 
 // ============================================================================
-// Chat Completion API (Mercury 2)
+// Chat Completion API (Mercury 2 and Mercury 3)
 // ============================================================================
 
-/// Rewrite text using Inception Mercury 2 model
+/// Rewrite text using the selected Inception Mercury model with instant reasoning.
 /// Uses OpenAI-compatible API at api.inceptionlabs.ai
 pub async fn rewrite_text(
     text: String,
     prompt: String,
     api_key: String,
+    model: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // Validate inputs
     if prompt.trim().is_empty() {
@@ -76,13 +80,16 @@ pub async fn rewrite_text(
     
     // Construct the request body
     let request_body = ChatCompletionRequest {
-        model: "mercury-2".to_string(),
+        model: model.to_string(),
         messages: vec![ChatMessage {
             role: "user".to_string(),
             content: format!("{}\n\n{}", prompt, text),
         }],
         temperature: 0.6,
-        max_tokens: 1024,
+        // Preserve Mercury 2's request format; Mercury 3 uses the documented
+        // completion-token limit. Only one limit field is sent per request.
+        max_tokens: if model == "mercury-3" { None } else { Some(1024) },
+        max_completion_tokens: if model == "mercury-3" { Some(1024) } else { None },
         reasoning_effort: "instant".to_string(),
     };
     

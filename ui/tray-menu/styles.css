@@ -33,7 +33,11 @@ body {
 }
 
 .menu-item:hover {
-    background-color: var(--button-hover-bg);
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="light"] .menu-item:not(.danger):hover {
+    background-color: rgba(0, 0, 0, 0.10);
 }
 
 .menu-item:active {

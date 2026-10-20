@@ -133,19 +133,243 @@ use enigo::{Enigo, Settings as EnigoSettings};
 pub struct QuitState(pub AtomicBool);
 pub struct EnigoState(pub Mutex<Enigo>);
 
-fn tray_labels(lang: &str) -> (&'static str, &'static str, &'static str) {
-    match lang {
-        "it" => ("Esci", "Impostazioni", "Mostra/Nascondi"),
-        "es" => ("Salir", "Configuración", "Mostrar/Ocultar"),
-        "fr" => ("Quitter", "Paramètres", "Afficher/Masquer"),
-        "de" => ("Beenden", "Einstellungen", "Anzeigen/Verbergen"),
-        "nl" => ("Afsluiten", "Instellingen", "Weergeven/Verbergen"),
-        "pt" => ("Sair", "Configurações", "Mostrar/Ocultar"),
-        "zh" => ("退出", "设置", "显示/隐藏"),
-        "ja" => ("終了", "設定", "表示/非表示"),
-        "ru" => ("Выход", "Настройки", "Показать/Скрыть"),
-        _ => ("Quit", "Settings", "Show/Hide"),
+fn tray_labels(lang: &str, main_visible: bool) -> (&'static str, &'static str, &'static str) {
+    let (quit, settings, show, hide) = match lang {
+        "it" => ("Esci", "Impostazioni", "Mostra", "Nascondi"),
+        "es" => ("Salir", "Configuración", "Mostrar", "Ocultar"),
+        "fr" => ("Quitter", "Paramètres", "Afficher", "Masquer"),
+        "de" => ("Beenden", "Einstellungen", "Anzeigen", "Verbergen"),
+        "nl" => ("Afsluiten", "Instellingen", "Weergeven", "Verbergen"),
+        "pt" => ("Sair", "Configurações", "Mostrar", "Ocultar"),
+        "zh" => ("退出", "设置", "显示", "隐藏"),
+        "ja" => ("終了", "設定", "表示", "非表示"),
+        "ru" => ("Выход", "Настройки", "Показать", "Скрыть"),
+        _ => ("Quit", "Settings", "Show", "Hide"),
+    };
+    (quit, settings, if main_visible { hide } else { show })
+}
+
+fn tray_view_label(lang: &str, compact: bool) -> &'static str {
+    let (compact_view, expanded_view) = match lang {
+        "it" => ("Compatta", "Estesa"),
+        "es" => ("Compacta", "Ampliada"),
+        "fr" => ("Compacte", "Étendue"),
+        "de" => ("Kompakt", "Erweitert"),
+        "nl" => ("Compact", "Uitgebreid"),
+        "pt" => ("Compacta", "Expandida"),
+        "zh" => ("紧凑", "展开"),
+        "ja" => ("コンパクト", "拡大"),
+        "ru" => ("Компактный", "Развёрнутый"),
+        _ => ("Compact", "Expanded"),
+    };
+    if compact { expanded_view } else { compact_view }
+}
+
+// Shared by the tray icon and the main window's context menu.
+fn show_app_menu(app: &AppHandle, position: tauri::PhysicalPosition<f64>) {
+    let settings = commands::settings::get_settings_sync(app).unwrap_or_default();
+    let theme = if settings.dark_mode_enabled { "dark" } else { "light" };
+    // Refresh the action label from the actual window visibility on every open.
+    // The compact handle still counts as a visible main window.
+    let main_visible = app.get_webview_window("main")
+        .and_then(|window| window.is_visible().ok())
+        .unwrap_or(false);
+    let (quit_label, settings_label, show_label) = tray_labels(settings.app_language.as_str(), main_visible);
+    let labels = json!({
+        "quit": quit_label,
+        "settings": settings_label,
+        "show": show_label,
+        "view": tray_view_label(settings.app_language.as_str(), settings.compact_mode)
+    });
+
+    // Get pre-created tray menu window
+    let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") else {
+        return;
+    };
+
+    let _ = tray_menu_wnd.eval(&format!(
+        "document.documentElement.setAttribute('data-theme', '{}');",
+        theme
+    ));
+
+    let _ = tray_menu_wnd.eval(&format!(
+        "window.__TRAY_LABELS__ = {}; if (window.__applyTrayLabels__) window.__applyTrayLabels__();",
+        labels.to_string()
+    ));
+
+    if tray_menu_wnd.is_visible().unwrap_or(false) {
+        let _ = tray_menu_wnd.hide();
+        return;
     }
+
+    let scale = tray_menu_wnd.scale_factor().unwrap_or(1.0);
+    let gap_px = 12.0 * scale;
+
+    let (menu_w_px, menu_h_px) = if let Ok(size_guard) =
+        app.state::<commands::settings::TrayMenuSizeState>().0.lock()
+    {
+        if let Some((w, h)) = *size_guard {
+            let _ = tray_menu_wnd
+                .set_size(tauri::Size::Logical(tauri::LogicalSize { width: w, height: h }));
+            (w * scale, h * scale)
+        } else {
+            let current_size = tray_menu_wnd.inner_size().ok();
+            (
+                current_size.as_ref().map(|s| s.width as f64).unwrap_or(200.0 * scale),
+                current_size.as_ref().map(|s| s.height as f64).unwrap_or(170.0 * scale),
+            )
+        }
+    } else {
+        let current_size = tray_menu_wnd.inner_size().ok();
+        (
+            current_size.as_ref().map(|s| s.width as f64).unwrap_or(200.0 * scale),
+            current_size.as_ref().map(|s| s.height as f64).unwrap_or(170.0 * scale),
+        )
+    };
+
+    let anchor_x = position.x;
+    let anchor_y = position.y;
+
+    let (work_left, work_top, work_right, work_bottom) = {
+        #[cfg(target_os = "windows")]
+        {
+            services::windows_focus::get_work_area_for_point(
+                anchor_x as i32,
+                anchor_y as i32,
+            )
+            .unwrap_or((0, 0, i32::MAX, i32::MAX))
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            (0, 0, i32::MAX, i32::MAX)
+        }
+    };
+
+    if let Ok(mut anchor_guard) =
+        app.state::<commands::settings::TrayMenuAnchorState>().0.lock()
+    {
+        *anchor_guard = Some(commands::settings::TrayMenuAnchor {
+            anchor_x,
+            anchor_y_top: anchor_y,
+            anchor_y_bottom: anchor_y,
+            work_left,
+            work_top,
+            work_right,
+            work_bottom,
+        });
+    }
+
+    let min_x = (work_left as f64) + gap_px;
+    let min_y = (work_top as f64) + gap_px;
+    let max_x = (work_right as f64) - menu_w_px - gap_px;
+    let max_y = (work_bottom as f64) - menu_h_px - gap_px;
+
+    let clamp = |value: f64, min: f64, max: f64| -> f64 {
+        if max < min {
+            return min;
+        }
+        value.max(min).min(max)
+    };
+
+    let mut x = clamp(anchor_x - (menu_w_px / 2.0), min_x, max_x);
+    let y_below = anchor_y + gap_px;
+    let y_above = anchor_y - menu_h_px - gap_px;
+    let mut y = if y_below + menu_h_px <= work_bottom as f64 {
+        y_below
+    } else if y_above >= min_y {
+        y_above
+    } else {
+        clamp(anchor_y - (menu_h_px / 2.0), min_y, max_y)
+    };
+
+    x = clamp(x, min_x, max_x);
+    y = clamp(y, min_y, max_y);
+
+    let _ = tray_menu_wnd.set_position(tauri::Position::Physical(
+        tauri::PhysicalPosition { x: x as i32, y: y as i32 },
+    ));
+    let _ = tray_menu_wnd.show();
+    {
+        let wnd = tray_menu_wnd.clone();
+        tauri::async_runtime::spawn(async move {
+            sleep(Duration::from_millis(10)).await;
+            let _ = wnd.set_focus();
+        });
+    }
+
+    {
+        let wnd = tray_menu_wnd.clone();
+        tauri::async_runtime::spawn(async move {
+            #[cfg(target_os = "windows")]
+            use windows::Win32::Foundation::POINT;
+            #[cfg(target_os = "windows")]
+            use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
+            #[cfg(target_os = "windows")]
+            use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+
+            loop {
+                sleep(Duration::from_millis(25)).await;
+
+                if !wnd.is_visible().unwrap_or(false) {
+                    // Covers every dismissal path: Escape, action selection,
+                    // focus loss, outside clicks, or another window hiding it.
+                    if let Some(main) = wnd.app_handle().get_webview_window("main") {
+                        let _ = main.emit("app-menu-closed", ());
+                    }
+                    break;
+                }
+
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    let mut pt = POINT { x: 0, y: 0 };
+                    if GetCursorPos(&mut pt).is_err() {
+                        continue;
+                    }
+
+                    let l = GetAsyncKeyState(0x01);
+                    let r = GetAsyncKeyState(0x02);
+                    let is_down = ((l as u16) & 0x8000) != 0
+                        || ((r as u16) & 0x8000) != 0;
+                    if !is_down {
+                        continue;
+                    }
+
+                    if let (Ok(pos), Ok(size)) = (wnd.outer_position(), wnd.outer_size()) {
+                        let left = pos.x;
+                        let top = pos.y;
+                        let right = left + size.width as i32;
+                        let bottom = top + size.height as i32;
+
+                        let inside = pt.x >= left
+                            && pt.x <= right
+                            && pt.y >= top
+                            && pt.y <= bottom;
+                        if !inside {
+                            let _ = wnd.hide();
+                            continue;
+                        }
+                    } else {
+                        let _ = wnd.hide();
+                        continue;
+                    }
+                }
+            }
+        });
+    }
+}
+
+#[tauri::command]
+fn show_main_context_menu(app: AppHandle, window: tauri::WebviewWindow) -> Result<bool, String> {
+    if window.label() != "main" {
+        return Err("This context menu is only available from the main window".to_string());
+    }
+    // Native screen coordinates account for display scaling and negative monitor positions.
+    let position = window.cursor_position().map_err(|error| error.to_string())?;
+    show_app_menu(&app, position);
+    app.get_webview_window("tray_menu")
+        .ok_or_else(|| "Context menu window is unavailable".to_string())?
+        .is_visible()
+        .map_err(|error| error.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -240,183 +464,7 @@ pub fn run() {
                             rect: _,
                             ..
                         } => {
-                            let app = tray.app_handle();
-
-                            let settings = commands::settings::get_settings_sync(app).unwrap_or_default();
-                            let theme = if settings.dark_mode_enabled { "dark" } else { "light" };
-                            let (quit_label, settings_label, show_label) = tray_labels(settings.app_language.as_str());
-                            let labels = json!({
-                                "quit": quit_label,
-                                "settings": settings_label,
-                                "show": show_label
-                            });
-
-                            // Get pre-created tray menu window
-                            let Some(tray_menu_wnd) = app.get_webview_window("tray_menu") else {
-                                return;
-                            };
-
-                            let _ = tray_menu_wnd.eval(&format!(
-                                "document.documentElement.setAttribute('data-theme', '{}');",
-                                theme
-                            ));
-
-                            let _ = tray_menu_wnd.eval(&format!(
-                                "window.__TRAY_LABELS__ = {}; if (window.__applyTrayLabels__) window.__applyTrayLabels__();",
-                                labels.to_string()
-                            ));
-
-                            if tray_menu_wnd.is_visible().unwrap_or(false) {
-                                let _ = tray_menu_wnd.hide();
-                                return;
-                            }
-
-                            let scale = tray_menu_wnd.scale_factor().unwrap_or(1.0);
-                            let gap_px = 12.0 * scale;
-
-                            let (menu_w_px, menu_h_px) = if let Ok(size_guard) =
-                                app.state::<commands::settings::TrayMenuSizeState>().0.lock()
-                            {
-                                if let Some((w, h)) = *size_guard {
-                                    let _ = tray_menu_wnd
-                                        .set_size(tauri::Size::Logical(tauri::LogicalSize { width: w, height: h }));
-                                    (w * scale, h * scale)
-                                } else {
-                                    let current_size = tray_menu_wnd.inner_size().ok();
-                                    (
-                                        current_size.as_ref().map(|s| s.width as f64).unwrap_or(200.0 * scale),
-                                        current_size.as_ref().map(|s| s.height as f64).unwrap_or(170.0 * scale),
-                                    )
-                                }
-                            } else {
-                                let current_size = tray_menu_wnd.inner_size().ok();
-                                (
-                                    current_size.as_ref().map(|s| s.width as f64).unwrap_or(200.0 * scale),
-                                    current_size.as_ref().map(|s| s.height as f64).unwrap_or(170.0 * scale),
-                                )
-                            };
-
-                            let anchor_x = position.x;
-                            let anchor_y = position.y;
-
-                            let (work_left, work_top, work_right, work_bottom) = {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    services::windows_focus::get_work_area_for_point(
-                                        anchor_x as i32,
-                                        anchor_y as i32,
-                                    )
-                                    .unwrap_or((0, 0, i32::MAX, i32::MAX))
-                                }
-                                #[cfg(not(target_os = "windows"))]
-                                {
-                                    (0, 0, i32::MAX, i32::MAX)
-                                }
-                            };
-
-                            if let Ok(mut anchor_guard) =
-                                app.state::<commands::settings::TrayMenuAnchorState>().0.lock()
-                            {
-                                *anchor_guard = Some(commands::settings::TrayMenuAnchor {
-                                    anchor_x,
-                                    anchor_y_top: anchor_y,
-                                    anchor_y_bottom: anchor_y,
-                                    work_left,
-                                    work_top,
-                                    work_right,
-                                    work_bottom,
-                                });
-                            }
-
-                            let min_x = (work_left as f64) + gap_px;
-                            let min_y = (work_top as f64) + gap_px;
-                            let max_x = (work_right as f64) - menu_w_px - gap_px;
-                            let max_y = (work_bottom as f64) - menu_h_px - gap_px;
-
-                            let clamp = |value: f64, min: f64, max: f64| -> f64 {
-                                if max < min {
-                                    return min;
-                                }
-                                value.max(min).min(max)
-                            };
-
-                            let mut x = clamp(anchor_x - (menu_w_px / 2.0), min_x, max_x);
-                            let y_below = anchor_y + gap_px;
-                            let y_above = anchor_y - menu_h_px - gap_px;
-                            let mut y = if y_below + menu_h_px <= work_bottom as f64 {
-                                y_below
-                            } else if y_above >= min_y {
-                                y_above
-                            } else {
-                                clamp(anchor_y - (menu_h_px / 2.0), min_y, max_y)
-                            };
-
-                            x = clamp(x, min_x, max_x);
-                            y = clamp(y, min_y, max_y);
-
-                            let _ = tray_menu_wnd.set_position(tauri::Position::Physical(
-                                tauri::PhysicalPosition { x: x as i32, y: y as i32 },
-                            ));
-                            let _ = tray_menu_wnd.show();
-                            {
-                                let wnd = tray_menu_wnd.clone();
-                                tauri::async_runtime::spawn(async move {
-                                    sleep(Duration::from_millis(10)).await;
-                                    let _ = wnd.set_focus();
-                                });
-                            }
-
-                            #[cfg(target_os = "windows")]
-                            {
-                                let wnd = tray_menu_wnd.clone();
-                                tauri::async_runtime::spawn(async move {
-                                    use windows::Win32::Foundation::POINT;
-                                    use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
-                                    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
-
-                                    loop {
-                                        sleep(Duration::from_millis(25)).await;
-
-                                        if !wnd.is_visible().unwrap_or(false) {
-                                            break;
-                                        }
-
-                                        unsafe {
-                                            let mut pt = POINT { x: 0, y: 0 };
-                                            if GetCursorPos(&mut pt).is_err() {
-                                                continue;
-                                            }
-
-                                            let l = GetAsyncKeyState(0x01);
-                                            let r = GetAsyncKeyState(0x02);
-                                            let is_down = ((l as u16) & 0x8000) != 0
-                                                || ((r as u16) & 0x8000) != 0;
-                                            if !is_down {
-                                                continue;
-                                            }
-
-                                            if let (Ok(pos), Ok(size)) = (wnd.outer_position(), wnd.outer_size()) {
-                                                let left = pos.x;
-                                                let top = pos.y;
-                                                let right = left + size.width as i32;
-                                                let bottom = top + size.height as i32;
-
-                                                let inside = pt.x >= left
-                                                    && pt.x <= right
-                                                    && pt.y >= top
-                                                    && pt.y <= bottom;
-                                                if !inside {
-                                                    let _ = wnd.hide();
-                                                    break;
-                                                }
-                                            } else {
-                                                let _ = wnd.hide();
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                            }
+                            show_app_menu(tray.app_handle(), position);
                         }
                         _ => {}
                     }
@@ -563,6 +611,7 @@ pub fn run() {
             commands::open_settings_window,
             commands::exit_app,
             commands::tray_menu_ready,
+            show_main_context_menu,
             commands::toggle_main_window,
             commands::toggle_compact_mode,
             commands::emit_toggle_view,

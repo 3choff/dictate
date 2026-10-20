@@ -22,10 +22,12 @@ function applyLabels() {
     if (!labels) return;
 
     const toggleBtn = document.getElementById('tray-action-toggle');
+    const viewBtn = document.getElementById('tray-action-view');
     const settingsBtn = document.getElementById('tray-action-settings');
     const quitBtn = document.getElementById('tray-action-quit');
 
     if (toggleBtn && labels.show) toggleBtn.textContent = labels.show;
+    if (viewBtn && labels.view) viewBtn.textContent = labels.view;
     if (settingsBtn && labels.settings) settingsBtn.textContent = labels.settings;
     if (quitBtn && labels.quit) quitBtn.textContent = labels.quit;
 }
@@ -94,12 +96,19 @@ async function init() {
     } catch (_) {}
 
     const toggleBtn = document.getElementById('tray-action-toggle');
+    const viewBtn = document.getElementById('tray-action-view');
     const settingsBtn = document.getElementById('tray-action-settings');
     const quitBtn = document.getElementById('tray-action-quit');
 
     toggleBtn?.addEventListener('click', async () => {
         await safeHide();
         await safeInvoke('toggle_main_window');
+    });
+
+    viewBtn?.addEventListener('click', async () => {
+        await safeHide();
+        // Reuse the main window's existing transition and preference-saving path.
+        await safeInvoke('emit_toggle_view');
     });
 
     settingsBtn?.addEventListener('click', async () => {
