@@ -1,5 +1,8 @@
 import { GlowingWave } from './glowing-wave.js';
 
+const WAVE_RENDERERS = { glowing_wave: GlowingWave };
+const LEGACY_WAVES = new Set(['glowing_wave_1', 'glowing_wave_3', 'glowing_wave_4']);
+
 /**
  * Frontend Audio Visualizer using Web Audio API
  * Replaces backend FFT analysis with native AnalyserNode
@@ -20,6 +23,7 @@ export class AudioVisualizer {
         this.surface = this.container?.closest('.container');
         this.style = 'bars';
         this.wave = null;
+        this.waves = new Map();
         this.timeData = null;
         this.waveLevel = 0;
         this.speechBands = new Array(5).fill(0);
@@ -29,18 +33,35 @@ export class AudioVisualizer {
     }
 
     setStyle(style) {
-        const next = style === 'glowing_wave' ? 'glowing_wave' : 'bars';
+        if (LEGACY_WAVES.has(style)) style = 'glowing_wave';
+        const isWave = Object.hasOwn(WAVE_RENDERERS, style);
+        const next = isWave ? style : 'bars';
         const changed = next !== this.style;
         this.style = next;
         this.colors = this.getColorsFromCSS();
+        if (changed && this.wave) {
+            this.wave.reset();
+            this.wave.container.hidden = true;
+        }
+        // Cache the wave canvas when switching between Bars and Glowing wave.
+        const layoutStyle = isWave ? 'glowing_wave' : 'bars';
         if (this.container) {
-            this.container.dataset.visualization = next;
-            if (next === 'glowing_wave' && !this.wave && this.surface) {
-                this.wave = new GlowingWave(this.surface, this.colors);
+            this.container.dataset.visualization = layoutStyle;
+            if (isWave && !this.waves.has(next) && this.surface) {
+                const Renderer = WAVE_RENDERERS[next];
+                try {
+                    this.waves.set(next, new Renderer(this.surface, this.colors));
+                } catch (error) {
+                    console.warn('Glowing wave unavailable; using Bars', error);
+                    this.setStyle('bars');
+                    return;
+                }
             }
         }
+        this.wave = isWave ? this.waves.get(next) : null;
+        if (this.wave) this.wave.container.hidden = false;
         if (this.surface) {
-            this.surface.dataset.visualization = next;
+            this.surface.dataset.visualization = layoutStyle;
             this.surface.classList.toggle('wave-active', this.isActive);
         }
         this.wave?.setColors(this.colors);
@@ -78,10 +99,6 @@ export class AudioVisualizer {
         };
         
         return {
-            waveBase: parseRGB(styles.getPropertyValue('--wave-base-color').trim()),
-            waveEdge: parseRGB(styles.getPropertyValue('--wave-edge-color').trim()),
-            waveBody: parseRGB(styles.getPropertyValue('--wave-body-color').trim()),
-            waveShoulder: parseRGB(styles.getPropertyValue('--wave-shoulder-color').trim()),
             activeFrom: parseRGB(styles.getPropertyValue('--visualizer-active-from').trim()),
             activeTo: parseRGB(styles.getPropertyValue('--visualizer-active-to').trim()),
             inactiveBg: styles.getPropertyValue('--visualizer-bar-bg').trim(),
@@ -135,7 +152,7 @@ export class AudioVisualizer {
         
         this.animationId = requestAnimationFrame(() => this.updateBars());
 
-        if (this.style === 'glowing_wave' && this.wave) {
+        if (this.wave) {
             // Time-domain energy bypasses the FFT smoothing used by the bars.
             // A short attack acknowledges speech promptly; a long release avoids
             // bouncing down between individual syllables and words.

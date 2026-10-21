@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum VisualizationStyle {
+    // Migrate every previously saved wave selection to the retained renderer.
+    #[serde(alias = "glowing_wave_1", alias = "glowing_wave_3", alias = "glowing_wave_4")]
     GlowingWave,
     #[default]
     #[serde(other)]

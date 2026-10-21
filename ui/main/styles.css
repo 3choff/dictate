@@ -152,6 +152,8 @@ body:has(.mic-button.recording) .container:not([data-visualization="glowing_wave
 
 /* Audio visualizer - hidden by default in normal mode */
 .audio-visualizer {
+    z-index: 0;
+    pointer-events: none;
     display: none;
     align-items: flex-end;
     /* Bars expand upward from bottom */
@@ -197,6 +199,11 @@ body:has(.mic-button.recording) .container:not([data-visualization="glowing_wave
     pointer-events: none;
 }
 
+/* A cached renderer must stay hidden even when the selected wave is active. */
+.glowing-wave-layer[hidden] {
+    display: none !important;
+}
+
 .glowing-wave-canvas {
     display: block;
     position: absolute;
@@ -226,6 +233,13 @@ body:has(.mic-button.recording) .container:not([data-visualization="glowing_wave
     padding: 0 10px 10px 10px;
     /* Let unused space fall through to the container's drag handler. */
     pointer-events: none;
+}
+
+/* Controls composite above the bars, retaining their transparent backgrounds. */
+.main-content > .icon-button,
+.main-content > .mic-button-wrapper {
+    position: relative;
+    z-index: 1;
 }
 
 .icon-button,
